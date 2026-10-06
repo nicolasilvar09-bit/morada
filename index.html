@@ -1,9 +1,9 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Morada"><meta name="theme-color" content="#159c93"><meta name="description" content="Uma casinha, duas pessoas e uma vida inteira pra cuidar."><link rel="icon" type="image/png" href="favicon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><meta property="og:type" content="website"><meta property="og:title" content="Morada"><meta property="og:description" content="Uma casinha, duas pessoas e uma vida inteira pra cuidar."><meta property="og:image" content="https://nicolasilvar09-bit.github.io/morada/capa.jpg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:url" content="https://nicolasilvar09-bit.github.io/morada/"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://nicolasilvar09-bit.github.io/morada/capa.jpg"><style>[hidden]{display:none!important}</style></head><body>
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Morada"><meta name="theme-color" content="#159c93"><meta name="description" content="Uma casinha, duas pessoas e uma vida inteira pra cuidar."><link rel="icon" type="image/png" href="favicon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><meta property="og:type" content="website"><meta property="og:title" content="Morada"><meta property="og:description" content="Uma casinha, duas pessoas e uma vida inteira pra cuidar."><meta property="og:image" content="https://nicolasilvar09-bit.github.io/morada/capa.jpg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:url" content="https://nicolasilvar09-bit.github.io/morada/"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://nicolasilvar09-bit.github.io/morada/capa.jpg"><style>[hidden]{display:none!important}</style></head><body>
 <title>Morada</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@600;700;800;900&family=Caveat:wght@500;700&display=swap" rel="stylesheet">
-<style>
+<style>html,body{touch-action:manipulation;-webkit-text-size-adjust:100%;overscroll-behavior:none}*{-webkit-tap-highlight-color:transparent}
 :root{
   /* Layout: full-bleed isometric canvas; glass HUD floats in the corners —
      people + action queue top-left, clock/money/modes top-right, needs bottom-left, catalog bottom. */
@@ -2458,5 +2458,10 @@ function frameBody(ts){
 }
 requestAnimationFrame(frame);
 addEventListener('visibilitychange',()=>{if(document.hidden)save();});
+/* bloqueia o zoom do navegador no celular (pinça e toque duplo); o zoom do jogo continua no canvas */
+['gesturestart','gesturechange','gestureend'].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));
+document.addEventListener('touchmove',e=>{if(e.touches.length>1&&e.target!==cv)e.preventDefault();},{passive:false});
+{let lastT=0;document.addEventListener('touchend',e=>{const n=Date.now();if(n-lastT<350&&e.target.tagName!=='INPUT'){e.preventDefault();if(e.target.click&&e.target!==cv)e.target.click();}lastT=n;},{passive:false});}
+document.addEventListener('dblclick',e=>e.preventDefault(),{passive:false});
 </script>
 </body></html>

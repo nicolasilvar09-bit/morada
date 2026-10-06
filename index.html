@@ -243,6 +243,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--teal);outline-o
     <div class="tbtns">
       <button id="btnCont" class="btn pri" hidden>Continuar</button>
       <button id="btnNew" class="btn">Criar o casal</button>
+      <button id="btnCloud" class="btn" style="font-size:14px">☁️ Já tenho um código do casal</button>
     </div>
     <div class="foot">Toque nos móveis para agir · arraste para mover a câmera · pinça ou roda para zoom</div>
   </div>
@@ -299,6 +300,20 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--teal);outline-o
   </div>
 </div>
 
+<div id="cloud" class="screen" hidden>
+  <div class="mcard glass" style="width:min(420px,100%)">
+    <h2>☁️ Jogo na nuvem</h2>
+    <p class="hint" id="clHint" style="margin:0 0 4px"></p>
+    <label class="pml">Código do casal<input id="clCode" maxlength="40" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="ex.: isabel-e-nico-0901"></label>
+    <p class="hint" id="clMsg" style="min-height:18px;margin:4px 0"></p>
+    <div id="clChoice" hidden style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px">
+      <button class="btn pri" id="clLoad">Carregar o jogo da nuvem</button>
+      <button class="btn warn" id="clOver">Substituir pelo jogo deste aparelho</button>
+    </div>
+    <div class="cfoot"><button class="btn" id="clBack">Fechar</button><button class="btn pri" id="clGo">Conectar</button></div>
+  </div>
+</div>
+
 <div id="menu" class="screen" hidden>
   <div class="mcard glass">
     <h2>Menu</h2>
@@ -309,6 +324,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--teal);outline-o
     <button class="btn" id="mnLetters">Cartas recebidas <span>💌</span></button>
     <button class="btn" id="mnFix">Destravar personagens <span>🛠️</span></button>
     <button class="btn" id="mnSave">Salvar agora <span>💾</span></button>
+    <button class="btn" id="mnCloud">Jogo na nuvem <span id="mnCloudV">☁️</span></button>
     <button class="btn warn" id="mnNew">Começar do zero <span>↺</span></button>
     <div id="mnConfirm" hidden style="display:flex;flex-direction:column;gap:8px">
       <p style="margin:4px 0;font-size:13px;color:var(--ink2)">A casa e o casal atuais serão apagados. Tem certeza?</p>
@@ -2442,7 +2458,7 @@ function drawPetModal(){if($('#petm').hidden)return;pmCtx.setTransform(1,0,0,1,0
 
 /* ================= save / load ================= */
 const SAVE_KEY='morada.save.v1';
-function serialize(){return JSON.stringify({v:3,fw2:1,couples:G.couples||{},preg:G.preg||null,dow0:G.dow0||0,rels:G.rels,partners:G.partners,townies:G.townies,pendingVisits:G.pendingVisits,welcomed:G.welcomed,nextSimId:G.nextSimId,pizzaAt:G.pizzaAt,sushiAt:G.sushiAt,luck:1,money:G.money,min:G.min,speed:G.speed||1,sel:G.sel,nextId:G.nextId,freeWill:G.freeWill,wallsHigh:G.wallsHigh,sound:G.sound,music:G.music,
+function serialize(){return JSON.stringify({v:3,fw2:1,savedAt:Date.now(),couples:G.couples||{},preg:G.preg||null,dow0:G.dow0||0,rels:G.rels,partners:G.partners,townies:G.townies,pendingVisits:G.pendingVisits,welcomed:G.welcomed,nextSimId:G.nextSimId,pizzaAt:G.pizzaAt,sushiAt:G.sushiAt,luck:1,money:G.money,min:G.min,speed:G.speed||1,sel:G.sel,nextId:G.nextId,freeWill:G.freeWill,wallsHigh:G.wallsHigh,sound:G.sound,music:G.music,
   walls:[...G.walls],floor:G.floor,wcol:G.wcol,mail:G.mail,weather:G.weather,lastDay:G.lastDay,celebrated:G.celebrated,
   objects:G.objects.map(o=>({id:o.id,type:o.type,x:o.x,y:o.y,rot:o.rot,color:o.color,food:o.food||0,slices:o.slices||0,baby:o.baby?Object.assign({},o.baby,{held:false,cry:false}):undefined})),
   pet:G.pet?{breed:G.pet.breed||null,kind:G.pet.kind,name:G.pet.name,color:G.pet.color,pattern:G.pet.pattern,needs:G.pet.needs,x:G.pet.bed&&G.pet.app?G.pet.app[0]+.5:G.pet.x,y:G.pet.bed&&G.pet.app?G.pet.app[1]+.5:G.pet.y}:null,
@@ -2540,5 +2556,49 @@ addEventListener('visibilitychange',()=>{if(document.hidden)save();});
 document.addEventListener('touchmove',e=>{if(e.touches.length>1&&e.target!==cv)e.preventDefault();},{passive:false});
 {let lastT=0;document.addEventListener('touchend',e=>{const n=Date.now();if(n-lastT<350&&e.target.tagName!=='INPUT'){e.preventDefault();if(e.target.click&&e.target!==cv)e.target.click();}lastT=n;},{passive:false});}
 document.addEventListener('dblclick',e=>e.preventDefault(),{passive:false});
+/* ================= jogo na nuvem (Supabase) ================= */
+const CLOUD={url:'https://efsajtariawxlhwfgpzg.supabase.co',key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmc2FqdGFyaWF3eGxod2ZncHpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA2MDM2MjIsImV4cCI6MjEwNjE3OTYyMn0.0zy7jyLLTW6C1paFkJn70uzBLZ0KostufSGkGINZCQ8'};
+const CLOUD_KEY='morada.cloud';
+let cloudCode=null;try{cloudCode=localStorage.getItem(CLOUD_KEY);}catch(_){}
+let cloudBusy=false,cloudSig='',cloudLast=0,cloudErr=false,clMode='menu',clPending=null;
+function normCode(c){return String(c||'').trim().toLowerCase().replace(/\s+/g,'-');}
+async function cloudRpc(fn,args,keep){const ctl=new AbortController();const tm=setTimeout(()=>ctl.abort(),9000);
+  try{const r=await fetch(CLOUD.url+'/rest/v1/rpc/'+fn,{method:'POST',headers:{apikey:CLOUD.key,Authorization:'Bearer '+CLOUD.key,'Content-Type':'application/json'},body:JSON.stringify(args),keepalive:!!keep,signal:keep?undefined:ctl.signal});
+    if(!r.ok)throw new Error('nuvem '+r.status);const t=await r.text();return t?JSON.parse(t):null;}finally{clearTimeout(tm);}}
+async function cloudPush(force,keep){if(!cloudCode||!G||G.demo||cloudBusy)return false;const data=serialize();const body=data.replace(/"savedAt":\d+,/,'');if(!force&&body===cloudSig)return true;
+  cloudBusy=true;try{await cloudRpc('morada_put',{p_code:cloudCode,p_data:JSON.parse(data)},keep&&data.length<60000);cloudSig=body;cloudLast=Date.now();cloudErr=false;return true;}catch(e){cloudErr=true;return false;}finally{cloudBusy=false;}}
+async function cloudFetch(code){return await cloudRpc('morada_get',{p_code:code});}
+function setCloudCode(c){cloudCode=c;try{if(c)localStorage.setItem(CLOUD_KEY,c);else localStorage.removeItem(CLOUD_KEY);}catch(_){}updCloudMenu();}
+function updCloudMenu(){const v=$('#mnCloudV');if(v)v.textContent=cloudCode?(cloudErr?'⚠️ sem conexão':'✓ conectado'):'desligado';const b=$('#btnCloud');if(b)b.hidden=!!cloudCode;if(cloudCode)$('#btnCont').hidden=false;}
+function openCloud(mode){clMode=mode;clPending=null;$('#clChoice').hidden=true;$('#clGo').hidden=false;$('#clCode').value=cloudCode||'';$('#clMsg').textContent='';
+  $('#clHint').textContent=mode==='title'?'Digite o código que vocês criaram para continuar o jogo de onde pararam, em qualquer aparelho.':
+    cloudCode?`Este aparelho está salvando na nuvem com o código "${cloudCode}". Use o mesmo código no celular ou no computador para continuar de onde parou.`:'Crie um código só de vocês (por exemplo, isabel-e-nico-0901). O jogo passa a ser salvo na nuvem e dá para continuar em qualquer aparelho.';
+  $('#clGo').textContent=cloudCode&&mode==='menu'?'Trocar código':'Conectar';$('#cloud').hidden=false;if(mode==='menu')pauseFor();}
+$('#clBack').onclick=()=>{$('#cloud').hidden=true;if(clMode==='menu')resumeFrom();};
+function fmtWhen(d){try{return new Date(d).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});}catch(_){return'';}}
+$('#clGo').onclick=async()=>{const code=normCode($('#clCode').value);if(code.length<6){$('#clMsg').textContent='O código precisa ter pelo menos 6 letras ou números.';return;}
+  $('#clMsg').textContent='Conectando…';$('#clGo').disabled=true;
+  try{const d=await cloudFetch(code);
+    if(clMode==='title'){if(!d){$('#clMsg').textContent='Não achei nenhum jogo com esse código. Confira se digitou igualzinho.';return;}setCloudCode(code);cloudSig='';$('#cloud').hidden=true;startFromSave(d,'☁️ Jogo carregado da nuvem!');return;}
+    if(d){clPending={code,d};$('#clMsg').textContent=`Já existe um jogo salvo com esse código (${(d.sims||[]).map(s=>s.name).join(' e ')}, salvo em ${fmtWhen(d.savedAt)}). O que fazer?`;$('#clChoice').hidden=false;$('#clGo').hidden=true;return;}
+    setCloudCode(code);cloudSig='';const ok=await cloudPush(true);$('#clMsg').textContent=ok?'Pronto! Agora o jogo fica salvo na nuvem. Use esse código nos outros aparelhos.':'Não consegui salvar agora. Vou tentar de novo sozinho.';toast('☁️ Jogo conectado à nuvem!','good');
+  }catch(e){$('#clMsg').textContent='Sem conexão com a nuvem agora. Tente de novo em instantes.';}
+  finally{$('#clGo').disabled=false;}};
+$('#clLoad').onclick=()=>{if(!clPending)return;setCloudCode(clPending.code);cloudSig='';$('#cloud').hidden=true;modalPrevSpeed=null;startFromSave(clPending.d,'☁️ Jogo carregado da nuvem!');};
+$('#clOver').onclick=async()=>{if(!clPending)return;setCloudCode(clPending.code);cloudSig='';const ok=await cloudPush(true);$('#clMsg').textContent=ok?'Pronto! O jogo deste aparelho agora está na nuvem.':'Não consegui salvar agora.';$('#clChoice').hidden=true;$('#clGo').hidden=false;};
+$('#mnCloud').onclick=()=>{$('#menu').hidden=true;openCloud('menu');};
+$('#btnCloud').onclick=()=>{ensureAudio();openCloud('title');};
+function startFromSave(d,msg){try{localStorage.setItem(SAVE_KEY,JSON.stringify(d));}catch(_){}G=fromSave(d);$('#menu').hidden=true;enterGame();toast(msg||'Bem-vindos de volta!','good');
+  if(!d.luck&&!G.pet){G.pet=makePet('cachorro','Luck','#d9b07a','pug');save();}}
+$('#btnCont').onclick=async()=>{ensureAudio();const local=load();let d=local;
+  if(cloudCode){const b=$('#btnCont');b.disabled=true;b.textContent='Buscando na nuvem…';
+    try{const c=await cloudFetch(cloudCode);if(c&&(!local||(c.savedAt||0)>(local.savedAt||0)))d=c;}catch(_){toast('Sem conexão com a nuvem: abrindo o jogo deste aparelho.');}
+    b.disabled=false;b.textContent='Continuar';}
+  if(!d){toast('Nenhum jogo salvo encontrado.','bad');return;}startFromSave(d,d===local?'Bem-vindos de volta!':'☁️ Jogo atualizado da nuvem!');};
+setInterval(()=>{if(G&&!G.demo&&cloudCode)cloudPush(false).then(updCloudMenu);},45000);
+addEventListener('visibilitychange',()=>{if(document.hidden&&G&&!G.demo&&cloudCode){save();cloudPush(true,true);}});
+addEventListener('pagehide',()=>{if(G&&!G.demo&&cloudCode)cloudPush(true,true);});
+{const old=$('#mnSave').onclick;$('#mnSave').onclick=()=>{old&&old();if(cloudCode)cloudPush(true).then(ok=>{updCloudMenu();toast(ok?'☁️ Salvo na nuvem também.':'Não deu para salvar na nuvem agora.',ok?'good':'bad');});};}
+updCloudMenu();
 </script>
 </body></html>

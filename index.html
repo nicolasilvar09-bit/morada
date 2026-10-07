@@ -2675,6 +2675,26 @@ function drawBuildPreview(ctx){if(!(mode==='build'&&buildTool))return;const k=bu
 let hoverPt=null,lastHintKey='';
 function bMove(sx,sy){if(!buildTool||!isTwoTap(buildTool.kind))return;const [gx,gy]=pickGround(sx,sy).g,pt=bPoint(gx,gy,buildTool.kind);hoverPt=pt;hoverTile=[Math.floor(gx),Math.floor(gy)];if(!bAnchor)return;bEnd=pt;
   const key=isLineTool(buildTool.kind)?pt.join(','):JSON.stringify(rectOf(bAnchor,pt));if(key===lastHintKey)return;lastHintKey=key;buildHint();}
+/* ================= mover móveis: arrastar + atalho no modo Viver ================= */
+function canMoveObj(o){const d=DEF[o.type];if(d.fixed){toast('Isso faz parte do terreno.','bad');return false;}if(inUse(o)){toast('Alguém está usando isso agora.','bad');return false;}return true;}
+function startMove(o){if(!canMoveObj(o))return;if(mode!=='buy')setMode('buy');if((o.l||0)!==viewL)setViewLevel(o.l||0,true);
+  ghost={type:o.type,x:o.x,y:o.y,rot:o.rot,color:o.color,moving:o,locked:true};selObj=null;showPlaceBar();SFX.click();
+  toast('Arraste o móvel, ou toque onde quer colocar. Depois “Colocar aqui”.','good');}
+function moveItem(o){return DEF[o.type].fixed||DEF[o.type].stairs&&false?null:{icon:'✥',label:'Mover este móvel',hint:'arrastar para outro lugar',fn:()=>startMove(o)};}
+/* drag in buy mode */
+function buyDragStart(e){if(mode!=='buy'||!G||G.demo)return false;const wx=(e.clientX-cam.x)/cam.z,wy=(e.clientY-cam.y)/cam.z;
+  let o=null;if(ghost&&ghost.moving){o=ghost.moving;const [fw,fd]=fp(ghost);const [gx,gy]=s2g(e.clientX,e.clientY,LZ());if(!(gx>=ghost.x-.3&&gx<=ghost.x+fw+.3&&gy>=ghost.y-.3&&gy<=ghost.y+fd+.3))return false;}
+  else if(ghost)return false;else{o=hitObj(wx,wy);if(!o||DEF[o.type].fixed)return false;}
+  const [gx,gy]=s2g(e.clientX,e.clientY,LZ());const bx=ghost&&ghost.moving?ghost.x:o.x,by=ghost&&ghost.moving?ghost.y:o.y;
+  drag.obj=o;drag.off=[bx-gx,by-gy];return true;}
+function buyDragMove(e){const d=drag;if(!d||!d.obj)return false;const dx=e.clientX-d.x,dy=e.clientY-d.y;
+  if(!d.moving){if(Math.hypot(dx,dy)<9)return true;if(!(ghost&&ghost.moving===d.obj)){if(inUse(d.obj)){toast('Alguém está usando isso agora.','bad');d.obj=null;return true;}ghost={type:d.obj.type,x:d.obj.x,y:d.obj.y,rot:d.obj.rot,color:d.obj.color,moving:d.obj,locked:true};selObj=null;}
+    d.moving=true;d.moved=true;closePie();$('#placeBar').hidden=true;}
+  const [gx,gy]=s2g(e.clientX,e.clientY,LZ());const nx=Math.round(gx+d.off[0]),ny=Math.round(gy+d.off[1]);if(nx!==ghost.x||ny!==ghost.y){ghost.x=nx;ghost.y=ny;}return true;}
+function buyDragEnd(){const d=drag;if(!d||!d.obj||!d.moving||!ghost)return false;
+  if(canPlace(ghost.type,ghost.x,ghost.y,ghost.rot,ghost.moving,viewL)){tryPlace();}
+  else{ghost.locked=true;showPlaceBar();toast('Não cabe aí. Arraste para um espaço livre.','bad');SFX.bad();}
+  return true;}
 /* ================= rendering ================= */
 let mode='live',ghost=null,selObj=null,hoverTile=null,hoverEdge=null,buildTool=null,lastList=[];
 function regionTiles(r,l){const RS=REGSL[l==null?viewL:l]||[];return r>0&&RS[r]?RS[r].tiles:[];}
@@ -2799,7 +2819,7 @@ function strokeApply(x,y){const pg=pickGround(x,y),[gx,gy]=pg.g;const kind=build
     hoverEdge=k;if(stroke.done.has(k))return;stroke.done.add(k);applyEdge(k,stroke.done.size>1);}
   else{const tx=Math.floor(gx),ty=Math.floor(gy),key=tx+','+ty;hoverTile=[tx,ty];if(stroke.done.has(key))return;stroke.done.add(key);if(kind==='floor')applyFloor(tx,ty);else if(kind==='paint')applyPaint(tx,ty);}}
 cv.addEventListener('pointerdown',e=>{ensureAudio();try{cv.setPointerCapture(e.pointerId);}catch(_){}ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
-  if(ptrs.size===1){drag={x:e.clientX,y:e.clientY,cx:cam.x,cy:cam.y,moved:false};
+  if(ptrs.size===1){drag={x:e.clientX,y:e.clientY,cx:cam.x,cy:cam.y,moved:false};if(e.button===0||e.pointerType!=='mouse')buyDragStart(e);
     if(mode==='build'&&buildTool&&isTwoTap(buildTool.kind)&&e.pointerType==='mouse'&&e.button===0&&G&&!G.demo){const [gx,gy]=pickGround(e.clientX,e.clientY).g,pt=bPoint(gx,gy,buildTool.kind);drag.paint=true;closePie();if(!bAnchor){bAnchor=pt;bEnd=pt;drag.rect='new';buildHint();}else drag.rect='second';}
     else if(mode==='build'&&buildTool&&buildTool.kind!=='view'&&e.pointerType==='mouse'&&e.button===0&&G&&!G.demo){stroke={done:new Set(),dir:null};drag.paint=true;closePie();strokeApply(e.clientX,e.clientY);}}
   else if(ptrs.size===2){const [a,b]=[...ptrs.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y)||1,z:cam.z,mx:(a.x+b.x)/2,my:(a.y+b.y)/2,cx:cam.x,cy:cam.y,ang:Math.atan2(b.y-a.y,b.x-a.x)};drag=null;stroke=null;}});
@@ -2808,10 +2828,11 @@ cv.addEventListener('pointermove',e=>{
   if(pinch&&ptrs.size===2){const [a,b]=[...ptrs.values()];{let da=Math.atan2(b.y-a.y,b.x-a.x)-pinch.ang;da=Math.atan2(Math.sin(da),Math.cos(da));if(Math.abs(da)>.7){rotateView(da>0?1:-1);const q=[...ptrs.values()];pinch={d:Math.hypot(q[0].x-q[1].x,q[0].y-q[1].y)||1,z:cam.z,mx:(q[0].x+q[1].x)/2,my:(q[0].y+q[1].y)/2,cx:cam.x,cy:cam.y,ang:Math.atan2(q[1].y-q[0].y,q[1].x-q[0].x)};return;}}const d=Math.hypot(a.x-b.x,a.y-b.y);const nz=clamp(pinch.z*d/pinch.d,.35,2.6);const mx=(a.x+b.x)/2,my=(a.y+b.y)/2;cam.z=nz;cam.x=mx-(pinch.mx-pinch.cx)*(nz/pinch.z);cam.y=my-(pinch.my-pinch.cy)*(nz/pinch.z);return;}
   if(drag&&drag.paint&&stroke){strokeApply(e.clientX,e.clientY);return;}
   if(drag&&drag.rect){bMove(e.clientX,e.clientY);return;}
+  if(drag&&drag.obj&&ptrs.size===1&&buyDragMove(e))return;
   if(drag){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(!drag.moved&&Math.hypot(dx,dy)>8)drag.moved=true;if(drag.moved){cam.x=drag.cx+dx;cam.y=drag.cy+dy;}}
   if(e.pointerType==='mouse'&&!drag)hover(e.clientX,e.clientY);
 });
-const endPtr=e=>{if(drag&&drag.rect&&e.type==='pointerup'&&buildTool){const [gx,gy]=pickGround(e.clientX,e.clientY).g,pt=bPoint(gx,gy,buildTool.kind);if(drag.rect==='second'||(bAnchor&&Math.hypot(pt[0]-bAnchor[0],pt[1]-bAnchor[1])>.45))bTap(gx,gy);}const was=drag&&!drag.moved&&!drag.paint;ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;if(was&&ptrs.size===0&&e.type==='pointerup')click(e.clientX,e.clientY,e.pointerType);if(ptrs.size===0){drag=null;stroke=null;}};
+const endPtr=e=>{if(drag&&drag.obj&&drag.moving&&e.type==='pointerup'){buyDragEnd();ptrs.delete(e.pointerId);if(ptrs.size===0){drag=null;stroke=null;}if(ptrs.size<2)pinch=null;return;}if(drag&&drag.rect&&e.type==='pointerup'&&buildTool){const [gx,gy]=pickGround(e.clientX,e.clientY).g,pt=bPoint(gx,gy,buildTool.kind);if(drag.rect==='second'||(bAnchor&&Math.hypot(pt[0]-bAnchor[0],pt[1]-bAnchor[1])>.45))bTap(gx,gy);}const was=drag&&!drag.moved&&!drag.paint;ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;if(was&&ptrs.size===0&&e.type==='pointerup')click(e.clientX,e.clientY,e.pointerType);if(ptrs.size===0){drag=null;stroke=null;}};
 cv.addEventListener('pointerup',endPtr);cv.addEventListener('pointercancel',endPtr);
 cv.addEventListener('wheel',e=>{e.preventDefault();zoomAt(Math.exp(-e.deltaY*.0015),e.clientX,e.clientY);},{passive:false});
 addEventListener('keydown',e=>{if(!G||G.demo||e.target.tagName==='INPUT')return;
@@ -2873,14 +2894,14 @@ function closePie(){const p=$('#pie');p.hidden=true;p.innerHTML='';}
 function objPie(o,x,y){if(DEF[o.type].stairs){const st=stairInfo(o),me=sel();openPie(x,y,'Escada',[{icon:'⬆️',label:'Subir a escada',fn:()=>{queueWalk(me,st.top[0],st.top[1],st.l+1);}},{icon:'⬇️',label:'Descer a escada',fn:()=>{queueWalk(me,st.bot[0],st.bot[1],st.l);}}]);return;}
   const d=Object.assign({},DEF[o.type]),me=sel();if(o.baby){const lo=babyNeedLow(o.baby);d.n=`${o.baby.name} · ${o.baby.sleep?'dormindo':o.baby.cry?'chorando':lo[1]<45?{fome:'com fome',energia:'com sono',higiene:'fralda suja',diversao:'entediado(a)'}[lo[0]]:'feliz'}`;}
   const acts=(d.actions||[]).filter(a=>!a.hidden&&(!a.showIf||a.showIf(o,me)));
-  if(!acts.length){openPie(x,y,d.n,[{icon:'✨',label:'Só decoração',hint:'deixa o cômodo mais agradável',disabled:true,fn:()=>{}}]);return;}
+  const mv=moveItem(o);if(!acts.length){openPie(x,y,d.n,[{icon:'✨',label:'Só decoração',hint:'deixa o cômodo mais agradável',disabled:true,fn:()=>{}}].concat(mv?[mv]:[]));return;}
   openPie(x,y,d.n,acts.map(a=>{const bl=actBlock(me,o,a);let hint=bl||'';
     if(!bl&&a.wage)hint=`+${fmt(a.wage*((trOf(me)).wage||1))}/hora`;
     if(!bl&&a.work&&me.job)hint=`${CAREERS[me.job.id].lv[me.job.level]} · +${fmt(wageOf(me))}/hora`;
     if(!bl&&a.study&&me.study)hint=`${COURSES[me.study.course].n} · ${Math.round(me.study.credits)}%`;
     if(!bl&&a.skill)hint=hint||`treina ${SKILLS[a.skill][0]}`;
     if(a.onDone==='mail')hint=G.mail.pending?'tem carta nova!':'nada novo';
-    return{icon:a.icon,label:a.label,disabled:!!bl,hint,fn:()=>queueAct(me,o,a,false)};}));}
+    return{icon:a.icon,label:a.label,disabled:!!bl,hint,fn:()=>queueAct(me,o,a,false)};}).concat(mv?[mv]:[]));}
 function simPie(s,x,y){const me=sel();
   if(s===me){const hh=household().filter(t=>t!==s&&!t.away);const trips=[];
     if(s.workPending)trips.push({icon:'🚗',label:'Ir trabalhar',hint:'a carona passa até 9h45',fn:()=>sendTrip(s,'work')});
@@ -2955,7 +2976,8 @@ $('#spToggle').onclick=()=>{panelOpen=!panelOpen;$('#spBody').hidden=!panelOpen;
 document.querySelectorAll('#speeds button').forEach(b=>b.onclick=()=>{setSpeed(+b.dataset.s);SFX.click();});
 
 /* ================= modes, catalog, build panel ================= */
-function setMode(m){if(m==='build'&&G&&G.wallMode===2){G._roofWas=1;setWallMode(0);}else if(m!=='build'&&G&&G._roofWas){G._roofWas=0;setWallMode(2);}mode=m;bAnchor=null;bEnd=null;closePie();ghost=null;selObj=null;buildTool=null;hoverEdge=null;
+let tipMoveShown=false;
+function setMode(m){if(m==='buy'&&!tipMoveShown&&G&&!G.demo){tipMoveShown=true;setTimeout(()=>toast('Dica: arraste qualquer móvel para mudar de lugar. Toque nele para girar, trocar a cor ou vender.','good'),300);}if(m==='build'&&G&&G.wallMode===2){G._roofWas=1;setWallMode(0);}else if(m!=='build'&&G&&G._roofWas){G._roofWas=0;setWallMode(2);}mode=m;bAnchor=null;bEnd=null;closePie();ghost=null;selObj=null;buildTool=null;hoverEdge=null;
   $('#mLive').classList.toggle('on',m==='live');$('#mBuy').classList.toggle('on',m==='buy');$('#mBuild').classList.toggle('on',m==='build');
   $('#simPanel').hidden=m!=='live';$('#catalog').hidden=m!=='buy';$('#buildPanel').hidden=m!=='build';$('#placeBar').hidden=true;
   if(m!=='live'){if(G.speed&&G._pre==null)G._pre=G.speed;setSpeed(0);}else if(G._pre!=null){setSpeed(G._pre);G._pre=null;}

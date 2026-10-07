@@ -815,7 +815,7 @@ function segInfoV(k,l){if(!VR)return segInfo(k,l);const sd=edgeSides(k),vn=vdir(
 function edgeRot(k,r){const p=k.split(','),x=+p[1],y=+p[2];const a=rotXY(x,y,r),b=rotXY(p[0]==='W'?x:x+1,p[0]==='W'?y+1:y,r);return a[0]===b[0]?'W,'+a[0]+','+Math.min(a[1],b[1]):'N,'+Math.min(a[0],b[0])+','+a[1];}
 let SEGL=0;const hasWallV=k=>WL(SEGL).has(VR?edgeRot(k,4-VR):k);
 function segInfoAB(a,b,l){l=l||0;const pIn=isIndoor(b[0],b[1],l),mIn=isIndoor(a[0],a[1],l);
-  const type=pIn&&!mIn?'back':(pIn?'int':'front');const h=l<viewL||G.wallMode===2?HALL:type==='back'?HALL:type==='front'?.34:(G.wallsHigh?HALL:.95);
+  const type=pIn&&!mIn?'back':(pIn?'int':'front'),free=!pIn&&!mIn;const lowB=typeof mode!=='undefined'&&mode==='build'&&buildTool&&['room','expand','wall','wipe','floor','remove'].includes(buildTool.kind);const h=l<viewL||G.wallMode===2?HALL:type==='back'?(lowB?.55:HALL):type==='front'&&!free?.34:(G.wallsHigh&&!lowB?HALL:lowB?.55:.95);
   const wv=pIn?String(WC(l)[TI(b[0],b[1])]):'';return{type,h,col:pIn?wv.split('|')[0]:(G.extCol||'#e9e1d5'),pat:pIn?wv.split('|')[1]:G.extPat,plus:b};}
 function drawSeg(c,k,w,l){l=l||0;SEGL=l;ZO=l*HALL;try{if(!VR)return drawSegRaw(c,k,w,segInfo(k,l));const S=segInfoV(k,l);RAW=true;try{drawSegRaw(c,edgeRot(k,VR),w,S);}finally{RAW=false;}}finally{ZO=0;SEGL=0;}}
 function drawSegRaw(c,k,w,S){
@@ -2955,7 +2955,7 @@ $('#spToggle').onclick=()=>{panelOpen=!panelOpen;$('#spBody').hidden=!panelOpen;
 document.querySelectorAll('#speeds button').forEach(b=>b.onclick=()=>{setSpeed(+b.dataset.s);SFX.click();});
 
 /* ================= modes, catalog, build panel ================= */
-function setMode(m){mode=m;bAnchor=null;bEnd=null;closePie();ghost=null;selObj=null;buildTool=null;hoverEdge=null;
+function setMode(m){if(m==='build'&&G&&G.wallMode===2){G._roofWas=1;setWallMode(0);}else if(m!=='build'&&G&&G._roofWas){G._roofWas=0;setWallMode(2);}mode=m;bAnchor=null;bEnd=null;closePie();ghost=null;selObj=null;buildTool=null;hoverEdge=null;
   $('#mLive').classList.toggle('on',m==='live');$('#mBuy').classList.toggle('on',m==='buy');$('#mBuild').classList.toggle('on',m==='build');
   $('#simPanel').hidden=m!=='live';$('#catalog').hidden=m!=='buy';$('#buildPanel').hidden=m!=='build';$('#placeBar').hidden=true;
   if(m!=='live'){if(G.speed&&G._pre==null)G._pre=G.speed;setSpeed(0);}else if(G._pre!=null){setSpeed(G._pre);G._pre=null;}

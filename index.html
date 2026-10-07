@@ -37,6 +37,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--teal);outline-o
 .qi .x{opacity:.65;font-size:11px}
 .qi.auto{opacity:.75}
 #topR{top:calc(12px + env(safe-area-inset-top,0px));right:12px;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+#topR,#rowR{pointer-events:none}#topR>*,#rowR>*{pointer-events:auto}
 #clockBox{display:flex;align-items:center;gap:10px;padding:7px 8px 7px 14px}
 #clk b{font:800 24px/1 var(--display);display:block;font-variant-numeric:tabular-nums;letter-spacing:.01em}
 #clk span{font-size:11px;color:var(--ink2);font-weight:800}
@@ -87,7 +88,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--teal);outline-o
 .relbar{height:12px;border-radius:99px;background:rgba(238,93,124,.14);overflow:hidden}
 .relbar i{display:block;height:100%;background:linear-gradient(90deg,#f7a3b5,var(--pink));border-radius:99px;transition:width .4s}
 .hint{font-size:12px;color:var(--ink2);margin:10px 0 0}
-.hint b{color:var(--ink)}#syncBanner,#verBanner{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));z-index:60;padding:12px 18px;border-radius:999px;border:0;font-weight:900;font-size:14px;color:#fff;background:#159c93;box-shadow:0 8px 24px rgba(0,0,0,.2);cursor:pointer;max-width:calc(100vw - 24px)}#verBanner{background:#2b3a5c;top:calc(64px + env(safe-area-inset-top,0px))}#appVer{text-align:center;font-size:12px;color:var(--ink2);margin-top:10px;opacity:.7}
+.hint b{color:var(--ink)}#syncBanner,#verBanner{position:fixed;left:50%;transform:translateX(-50%);top:calc(200px + env(safe-area-inset-top,0px));z-index:60;padding:9px 14px;border-radius:999px;border:0;font-weight:900;font-size:13px;white-space:nowrap;color:#fff;background:#159c93;box-shadow:0 8px 24px rgba(0,0,0,.2);cursor:pointer;max-width:calc(100vw - 24px)}#verBanner{background:#2b3a5c;top:calc(252px + env(safe-area-inset-top,0px))}#appVer{text-align:center;font-size:12px;color:var(--ink2);margin-top:10px;opacity:.7}
 .bp-act{display:inline-flex;gap:6px;margin-left:6px;vertical-align:middle}.mini-ok{padding:6px 14px;border-radius:999px;border:0;background:#159c93;color:#fff;font-weight:800;font-size:13px;cursor:pointer}.mini-cancel{padding:4px 10px;border-radius:999px;border:0;background:#f3d6d6;color:#b23a3a;font-weight:800;font-size:12px;cursor:pointer}
 .wishes{display:flex;flex-direction:column;gap:6px}
 .wish{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:14px;background:rgba(34,48,74,.05)}
@@ -3502,13 +3503,13 @@ function cloudIncoming(r){cloudKnown=r.savedAt||Date.now();cloudSig='';
   if(busy){showSyncBanner(r);return;}
   startFromSave(r,'☁️ Jogo atualizado: teve mudança no outro aparelho.');}
 function showSyncBanner(r){let b=$('#syncBanner');if(!b){b=document.createElement('button');b.id='syncBanner';b.className='glass';document.body.appendChild(b);}
-  b.textContent='☁️ O jogo mudou no outro aparelho · tocar para carregar';b.hidden=false;b.onclick=()=>{b.hidden=true;startFromSave(r,'☁️ Jogo atualizado da nuvem!');};}
+  b.textContent='☁️ Mudou no outro aparelho · tocar para carregar';b.hidden=false;b.onclick=()=>{b.hidden=true;startFromSave(r,'☁️ Jogo atualizado da nuvem!');};}
 setInterval(()=>{if(!document.hidden)cloudCheck();},20000);
 /* ---- aviso de versão nova do jogo ---- */
-const APPV='v21';
+const APPV='v22';
 async function checkAppVersion(){try{const t=await fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'');const m=t.match(/const APPV='([^']+)'/);
   if(m&&m[1]!==APPV){let b=$('#verBanner');if(!b){b=document.createElement('button');b.id='verBanner';b.className='glass';document.body.appendChild(b);}
-    b.textContent=`✨ Versão nova do jogo (${m[1]}) · tocar para atualizar`;b.hidden=false;b.onclick=()=>{try{if(G&&!G.demo)save();}catch(_){}const go=()=>location.replace(location.pathname+'?v='+m[1]+'-'+Date.now());if(cloudCode&&G&&!G.demo)cloudPush(true).finally(go);else go();};}}catch(_){}}
+    b.textContent=`✨ Versão nova (${m[1]}) · tocar para atualizar`;b.hidden=false;b.onclick=()=>{try{if(G&&!G.demo)save();}catch(_){}const go=()=>location.replace(location.pathname+'?v='+m[1]+'-'+Date.now());if(cloudCode&&G&&!G.demo)cloudPush(true).finally(go);else go();};}}catch(_){}}
 if(location.protocol.startsWith('http')){setTimeout(checkAppVersion,4000);setInterval(checkAppVersion,180000);addEventListener('visibilitychange',()=>{if(!document.hidden)checkAppVersion();});}
 {const v=document.createElement('div');v.id='appVer';v.textContent='Morada '+APPV;const m=$('#menu .mcard')||$('#menu');m&&m.appendChild(v);}
 </script>

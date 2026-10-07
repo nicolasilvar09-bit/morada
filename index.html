@@ -87,7 +87,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--teal);outline-o
 .relbar{height:12px;border-radius:99px;background:rgba(238,93,124,.14);overflow:hidden}
 .relbar i{display:block;height:100%;background:linear-gradient(90deg,#f7a3b5,var(--pink));border-radius:99px;transition:width .4s}
 .hint{font-size:12px;color:var(--ink2);margin:10px 0 0}
-.hint b{color:var(--ink)}.bp-act{display:inline-flex;gap:6px;margin-left:6px;vertical-align:middle}.mini-ok{padding:6px 14px;border-radius:999px;border:0;background:#159c93;color:#fff;font-weight:800;font-size:13px;cursor:pointer}.mini-cancel{padding:4px 10px;border-radius:999px;border:0;background:#f3d6d6;color:#b23a3a;font-weight:800;font-size:12px;cursor:pointer}
+.hint b{color:var(--ink)}#syncBanner,#verBanner{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));z-index:60;padding:12px 18px;border-radius:999px;border:0;font-weight:900;font-size:14px;color:#fff;background:#159c93;box-shadow:0 8px 24px rgba(0,0,0,.2);cursor:pointer;max-width:calc(100vw - 24px)}#verBanner{background:#2b3a5c;top:calc(64px + env(safe-area-inset-top,0px))}#appVer{text-align:center;font-size:12px;color:var(--ink2);margin-top:10px;opacity:.7}
+.bp-act{display:inline-flex;gap:6px;margin-left:6px;vertical-align:middle}.mini-ok{padding:6px 14px;border-radius:999px;border:0;background:#159c93;color:#fff;font-weight:800;font-size:13px;cursor:pointer}.mini-cancel{padding:4px 10px;border-radius:999px;border:0;background:#f3d6d6;color:#b23a3a;font-weight:800;font-size:12px;cursor:pointer}
 .wishes{display:flex;flex-direction:column;gap:6px}
 .wish{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:14px;background:rgba(34,48,74,.05)}
 .wish .st{font-size:16px}
@@ -3265,13 +3266,16 @@ document.addEventListener('dblclick',e=>e.preventDefault(),{passive:false});
 const CLOUD={url:'https://efsajtariawxlhwfgpzg.supabase.co',key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmc2FqdGFyaWF3eGxod2ZncHpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA2MDM2MjIsImV4cCI6MjEwNjE3OTYyMn0.0zy7jyLLTW6C1paFkJn70uzBLZ0KostufSGkGINZCQ8'};
 const CLOUD_KEY='morada.cloud';
 let cloudCode=null;try{cloudCode=localStorage.getItem(CLOUD_KEY);}catch(_){}
+let cloudKnown=0,cloudChecking=false;
 let cloudBusy=false,cloudSig='',cloudLast=0,cloudErr=false,clMode='menu',clPending=null;
 function normCode(c){return String(c||'').trim().toLowerCase().replace(/\s+/g,'-');}
 async function cloudRpc(fn,args,keep){const ctl=new AbortController();const tm=setTimeout(()=>ctl.abort(),9000);
   try{const r=await fetch(CLOUD.url+'/rest/v1/rpc/'+fn,{method:'POST',headers:{apikey:CLOUD.key,Authorization:'Bearer '+CLOUD.key,'Content-Type':'application/json'},body:JSON.stringify(args),keepalive:!!keep,signal:keep?undefined:ctl.signal});
     if(!r.ok)throw new Error('nuvem '+r.status);const t=await r.text();return t?JSON.parse(t):null;}finally{clearTimeout(tm);}}
 async function cloudPush(force,keep){if(!cloudCode||!G||G.demo||cloudBusy)return false;const data=serialize();const body=data.replace(/"savedAt":\d+,/,'');if(!force&&body===cloudSig)return true;
-  cloudBusy=true;try{await cloudRpc('morada_put',{p_code:cloudCode,p_data:JSON.parse(data)},keep&&data.length<60000);cloudSig=body;cloudLast=Date.now();cloudErr=false;return true;}catch(e){cloudErr=true;return false;}finally{cloudBusy=false;}}
+  cloudBusy=true;try{
+    if(!keep){const r=await cloudFetch(cloudCode);if(r&&(r.savedAt||0)>cloudKnown){cloudBusy=false;cloudIncoming(r);return false;}}
+    const pd=JSON.parse(data);await cloudRpc('morada_put',{p_code:cloudCode,p_data:pd},keep&&data.length<60000);cloudKnown=pd.savedAt||Date.now();cloudSig=body;cloudLast=Date.now();cloudErr=false;return true;}catch(e){cloudErr=true;return false;}finally{cloudBusy=false;}}
 async function cloudFetch(code){return await cloudRpc('morada_get',{p_code:code});}
 function setCloudCode(c){cloudCode=c;try{if(c)localStorage.setItem(CLOUD_KEY,c);else localStorage.removeItem(CLOUD_KEY);}catch(_){}updCloudMenu();}
 function updCloudMenu(){const v=$('#mnCloudV');if(v)v.textContent=cloudCode?(cloudErr?'⚠️ sem conexão':'✓ conectado'):'desligado';const b=$('#btnCloud');if(b)b.hidden=!!cloudCode;if(cloudCode)$('#btnCont').hidden=false;}
@@ -3293,17 +3297,36 @@ $('#clLoad').onclick=()=>{if(!clPending)return;setCloudCode(clPending.code);clou
 $('#clOver').onclick=async()=>{if(!clPending)return;setCloudCode(clPending.code);cloudSig='';const ok=await cloudPush(true);$('#clMsg').textContent=ok?'Pronto! O jogo deste aparelho agora está na nuvem.':'Não consegui salvar agora.';$('#clChoice').hidden=true;$('#clGo').hidden=false;};
 $('#mnCloud').onclick=()=>{$('#menu').hidden=true;openCloud('menu');};
 $('#btnCloud').onclick=()=>{ensureAudio();openCloud('title');};
-function startFromSave(d,msg){try{localStorage.setItem(SAVE_KEY,JSON.stringify(d));}catch(_){}G=fromSave(d);$('#menu').hidden=true;enterGame();toast(msg||'Bem-vindos de volta!','good');
+function startFromSave(d,msg){cloudKnown=Math.max(cloudKnown,d.savedAt||0);try{localStorage.setItem(SAVE_KEY,JSON.stringify(d));}catch(_){}G=fromSave(d);$('#menu').hidden=true;enterGame();toast(msg||'Bem-vindos de volta!','good');
   if(!d.luck&&!G.pet){G.pet=makePet('cachorro','Luck','#d9b07a','pug');save();}}
 $('#btnCont').onclick=async()=>{ensureAudio();const local=load();let d=local;
   if(cloudCode){const b=$('#btnCont');b.disabled=true;b.textContent='Buscando na nuvem…';
-    try{const c=await cloudFetch(cloudCode);if(c&&(!local||(c.savedAt||0)>(local.savedAt||0)))d=c;}catch(_){toast('Sem conexão com a nuvem: abrindo o jogo deste aparelho.');}
+    try{const c=await cloudFetch(cloudCode);if(c)cloudKnown=c.savedAt||0;if(c&&(!local||(c.savedAt||0)>(local.savedAt||0)))d=c;}catch(_){toast('Sem conexão com a nuvem: abrindo o jogo deste aparelho.');}
     b.disabled=false;b.textContent='Continuar';}
   if(!d){toast('Nenhum jogo salvo encontrado.','bad');return;}startFromSave(d,d===local?'Bem-vindos de volta!':'☁️ Jogo atualizado da nuvem!');};
 setInterval(()=>{if(G&&!G.demo&&cloudCode)cloudPush(false).then(updCloudMenu);},45000);
-addEventListener('visibilitychange',()=>{if(document.hidden&&G&&!G.demo&&cloudCode){save();cloudPush(true,true);}});
+addEventListener('visibilitychange',()=>{if(!G||G.demo||!cloudCode)return;if(document.hidden){save();cloudPush(true,true);}else cloudCheck();});
+addEventListener('pageshow',e=>{if(e.persisted&&G&&!G.demo&&cloudCode)cloudCheck();});
 addEventListener('pagehide',()=>{if(G&&!G.demo&&cloudCode)cloudPush(true,true);});
 {const old=$('#mnSave').onclick;$('#mnSave').onclick=()=>{old&&old();if(cloudCode)cloudPush(true).then(ok=>{updCloudMenu();toast(ok?'☁️ Salvo na nuvem também.':'Não deu para salvar na nuvem agora.',ok?'good':'bad');});};}
 updCloudMenu();
+
+/* ---- sincronização entre aparelhos: nunca sobrescrever um jogo mais novo ---- */
+async function cloudCheck(){if(!cloudCode||!G||G.demo||cloudChecking||cloudBusy)return;cloudChecking=true;
+  try{const r=await cloudFetch(cloudCode);if(r&&(r.savedAt||0)>cloudKnown)cloudIncoming(r);}catch(_){}finally{cloudChecking=false;}}
+function cloudIncoming(r){cloudKnown=r.savedAt||Date.now();cloudSig='';
+  const busy=mode!=='live'||(ghost)||!$('#cas').hidden;
+  if(busy){showSyncBanner(r);return;}
+  startFromSave(r,'☁️ Jogo atualizado: teve mudança no outro aparelho.');}
+function showSyncBanner(r){let b=$('#syncBanner');if(!b){b=document.createElement('button');b.id='syncBanner';b.className='glass';document.body.appendChild(b);}
+  b.textContent='☁️ O jogo mudou no outro aparelho · tocar para carregar';b.hidden=false;b.onclick=()=>{b.hidden=true;startFromSave(r,'☁️ Jogo atualizado da nuvem!');};}
+setInterval(()=>{if(!document.hidden)cloudCheck();},20000);
+/* ---- aviso de versão nova do jogo ---- */
+const APPV='v20';
+async function checkAppVersion(){try{const t=await fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'');const m=t.match(/const APPV='([^']+)'/);
+  if(m&&m[1]!==APPV){let b=$('#verBanner');if(!b){b=document.createElement('button');b.id='verBanner';b.className='glass';document.body.appendChild(b);}
+    b.textContent=`✨ Versão nova do jogo (${m[1]}) · tocar para atualizar`;b.hidden=false;b.onclick=()=>{try{if(G&&!G.demo)save();}catch(_){}const go=()=>location.replace(location.pathname+'?v='+m[1]+'-'+Date.now());if(cloudCode&&G&&!G.demo)cloudPush(true).finally(go);else go();};}}catch(_){}}
+if(location.protocol.startsWith('http')){setTimeout(checkAppVersion,4000);setInterval(checkAppVersion,180000);addEventListener('visibilitychange',()=>{if(!document.hidden)checkAppVersion();});}
+{const v=document.createElement('div');v.id='appVer';v.textContent='Morada '+APPV;const m=$('#menu .mcard')||$('#menu');m&&m.appendChild(v);}
 </script>
 </body></html>

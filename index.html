@@ -2641,7 +2641,7 @@ function applyPlan(kind,plan){const l=viewL,F=FL(l),C=WC(l),WM=WL(l);
   for(const [x,y] of plan.floors){const i=TI(x,y);F[i]=f;C[i]=kind==='room'?'#f2f1ee':col;}
   for(const k of plan.delW)WM.delete(k);
   for(const k of plan.addW)WM.set(k,{});
-  SFX.build();if(!l)dirtyLayer();afterBuild();
+  SFX.build();if(!l)dirtyLayer();if(l)autoFloorUp(l);afterBuild();
   if(kind!=='wall')toast(kind==='expand'?`Casa ampliada! ${plan.floors.length} m² novos.`:`Cômodo pronto! ${plan.floors.length} m² · lembre de colocar uma porta 🚪`);
   return true;}
 let bPend=false;
@@ -2695,6 +2695,34 @@ function buyDragEnd(){const d=drag;if(!d||!d.obj||!d.moving||!ghost)return false
   if(canPlace(ghost.type,ghost.x,ghost.y,ghost.rot,ghost.moving,viewL)){tryPlace();}
   else{ghost.locked=true;showPlaceBar();toast('Não cabe aí. Arraste para um espaço livre.','bad');SFX.bad();}
   return true;}
+/* ================= construir pra cima: parede sobre parede, piso automático, subir casa ================= */
+function wallBelow(k,l){return l>0&&WL(l-1).has(k);}
+/* closes rooms upstairs: any area fully enclosed by walls (over an indoor area below) gets a floor */
+function autoFloorUp(l){if(!l)return 0;const F=FL(l),C=WC(l),WM=WL(l),seen=new Uint8Array(NT);let added=0,cost=0;const comps=[];
+  for(let i=0;i<NT;i++){if(seen[i]||F[i])continue;const x=TX(i),y=TY(i);if(!isIndoor(x,y,l-1))continue;
+    const comp=[],st=[[x,y]];seen[i]=1;let leak=false;
+    while(st.length){const [cx,cy]=st.pop();comp.push([cx,cy]);
+      for(const [dx,dy] of DIRS){const nx=cx+dx,ny=cy+dy;if(WM.has(edgeKey(cx,cy,nx,ny)))continue;if(!inLot(nx,ny)){leak=true;continue;}const j=TI(nx,ny);if(F[j])continue;if(!isIndoor(nx,ny,l-1)){leak=true;continue;}if(!seen[j]){seen[j]=1;st.push([nx,ny]);}}}
+    if(!leak&&comp.length<=300)comps.push(comp);}
+  for(const comp of comps){const c=comp.length*COST.floor;if(G.money<c)continue;G.money-=c;cost+=c;
+    let col='#f2f1ee';for(const [x,y] of comp){const nb=DIRS.map(([dx,dy])=>[x+dx,y+dy]).find(([a,b])=>inLot(a,b)&&F[TI(a,b)]&&!WM.has(edgeKey(x,y,a,b)));if(nb){col=C[TI(nb[0],nb[1])]||col;break;}}
+    for(const [x,y] of comp){const i=TI(x,y);F[i]='madeira';C[i]=col;added++;}}
+  if(added){toast(`Cômodo fechado lá em cima: piso colocado sozinho (${added} m²).`,'good');}
+  return added;}
+/* copy the whole house one floor up */
+function raiseHouse(){const l=viewL;if(l+1>=NL){toast('Já é o último andar.','bad');SFX.bad();return;}
+  const F0=FL(l),up=l+1;ensureUp(G);const F1=FL(up),C0=WC(l),C1=WC(up),W0=WL(l),W1=WL(up);
+  const tiles=[];for(let i=0;i<NT;i++)if(isIndoor(TX(i),TY(i),l))tiles.push(i);
+  if(!tiles.length){toast(l?'Não tem cômodo neste andar para subir.':'Construa a casa primeiro.','bad');return;}
+  const newF=tiles.filter(i=>!F1[i]),newW=[...W0].filter(([k])=>!W1.has(k)&&(()=>{const [a,b]=edgeSides(k);return(inLot(a[0],a[1])&&isIndoor(a[0],a[1],l))||(inLot(b[0],b[1])&&isIndoor(b[0],b[1],l));})());
+  const cost=newF.length*COST.floor+newW.length*COST.wall;if(!newF.length&&!newW.length){toast('O andar de cima já está igual ao de baixo.','bad');return;}
+  if(!spend(cost))return;
+  for(const i of newF){F1[i]=F0[i]&&!FLOORS[F0[i]].outdoor?F0[i]:'madeira';C1[i]=C0[i]||'#f2f1ee';}
+  for(const [k,w] of newW){const [a,b]=edgeSides(k),ext=!(inLot(a[0],a[1])&&isIndoor(a[0],a[1],l))||!(inLot(b[0],b[1])&&isIndoor(b[0],b[1],l));
+    const nw={};if(w.win||(ext&&w.door))nw.win=1;else if(w.door)nw.door=1;W1.set(k,nw);}
+  SFX.build();afterBuild();setViewLevel(up,true);
+  const hasStair=G.objects.some(o=>DEF[o.type].stairs&&(o.l||0)===l);
+  toast(`Casa subiu um andar! ${newF.length} m² e ${newW.length} paredes · ${fmt(cost)}.${hasStair?'':' Agora coloque uma escada: Comprar → Escadas (no andar de baixo).'}`,'good');}
 /* ================= rendering ================= */
 let mode='live',ghost=null,selObj=null,hoverTile=null,hoverEdge=null,buildTool=null,lastList=[];
 function regionTiles(r,l){const RS=REGSL[l==null?viewL:l]||[];return r>0&&RS[r]?RS[r].tiles:[];}
@@ -2784,7 +2812,7 @@ function inUse(o){return G.sims.some(s=>s.cur&&s.cur.c&&(s.cur.c.seatObj===o||s.
 
 /* ================= build tools ================= */
 function pickEdge(gx,gy){const fx=gx-Math.floor(gx),fy=gy-Math.floor(gy);if(Math.min(fx,1-fx)<Math.min(fy,1-fy))return'W,'+Math.round(gx)+','+Math.floor(gy);return'N,'+Math.floor(gx)+','+Math.round(gy);}
-function edgeInLot(k){const p=k.split(','),x=+p[1],y=+p[2];if(!(p[0]==='W'?x>=LX0&&x<=LX1&&y>=LY0&&y<LY1:y>=LY0&&y<=LY1&&x>=LX0&&x<LX1))return false;if(!viewL)return true;const [a,b]=edgeSides(k);return!!(inLot(a[0],a[1])&&FL(viewL)[TI(a[0],a[1])])||!!(inLot(b[0],b[1])&&FL(viewL)[TI(b[0],b[1])]);}
+function edgeInLot(k){const p=k.split(','),x=+p[1],y=+p[2];if(!(p[0]==='W'?x>=LX0&&x<=LX1&&y>=LY0&&y<LY1:y>=LY0&&y<=LY1&&x>=LX0&&x<LX1))return false;if(!viewL)return true;if(WL(viewL-1).has(k))return true;const [a,b]=edgeSides(k);return!!(inLot(a[0],a[1])&&FL(viewL)[TI(a[0],a[1])])||!!(inLot(b[0],b[1])&&FL(viewL)[TI(b[0],b[1])]);}
 function edgeBlocked(k){const [a,b]=edgeSides(k);if(!inLot(a[0],a[1])||!inLot(b[0],b[1]))return false;const oa=occAt(a[0],a[1],viewL),ob=occAt(b[0],b[1],viewL);if(oa&&oa===ob)return true;
   return G.objects.some(o=>(o.l||0)===viewL&&DEF[o.type].flat&&tilesOf(o).some(t=>t[0]===a[0]&&t[1]===a[1])&&tilesOf(o).some(t=>t[0]===b[0]&&t[1]===b[1]));}
 function edgeToolOk(k,kind){if(!edgeInLot(k))return false;const w=WL(viewL).get(k);
@@ -2793,7 +2821,7 @@ const COST={wall:40,door:150,doorNew:190,window:120,floor:15,paint:60};
 function spend(v){if(G.money<v){toast('Dinheiro insuficiente.','bad');SFX.bad();return false;}G.money-=v;return true;}
 function applyEdge(k,silent){const kind=buildTool.kind;if(!edgeToolOk(k,kind)){if(!silent){toast(kind==='window'?'Janelas vão numa parede sem porta.':kind==='art'?'Quadros vão numa parede sem porta nem janela.':'Não dá para fazer isso aqui.','bad');SFX.bad();}return;}
   const WM=WL(viewL),w=WM.get(k);
-  if(kind==='wall'){if(!spend(COST.wall))return;WM.set(k,{});}
+  if(kind==='wall'){if(!spend(COST.wall))return;WM.set(k,{});if(viewL&&!silent)autoFloorUp(viewL);}
   else if(kind==='door'){if(w){if(!spend(COST.door))return;w.door=1;w.win=0;w.art=0;}else{if(!spend(COST.doorNew))return;WM.set(k,{door:1});}}
   else if(kind==='window'){if(w.win){w.win=0;}else{if(!spend(COST.window))return;w.win=1;w.art=0;}}
   else if(kind==='art'){if(!w.art&&!spend(200))return;w.art=((w.art||0)+1)%6;}
@@ -3031,12 +3059,13 @@ function tryPlace(){
     for(const s of G.sims)checkWish(s,'buy');ghost.locked=false;if(G.money<d.price){ghost=null;$('#placeBar').hidden=true;}buildCatalog();}
   rebuildOcc();if(placed)stairPlaced(placed);repathAll();save();
 }
-const TOOLS=[['room','⬛','Cômodo'],['expand','➕','Ampliar'],['wall','🧱','Parede'],['door','🚪','Porta'],['window','🪟','Janela'],['art','🖼️','Quadro'],['remove','🔨','Derrubar'],['wipe','💥','Demolir'],['floor','🟫','Piso'],['paint','🎨','Pintar'],['view','👁️','Visão']];
-const TOOL_HINT={room:`Toque num canto e depois no canto oposto: nasce um cômodo com piso e paredes (${fmt(COST.floor)}/m² + ${fmt(COST.wall)}/parede). Depois coloque uma porta.`,expand:`Para aumentar a casa: toque num canto encostado na casa e depois no canto oposto, do lado de fora. A parede antiga some e as novas sobem sozinhas.`,wipe:'Toque num canto e no canto oposto: derruba todas as paredes e tira o piso dessa área.',art:`Toque numa parede para pendurar um quadro (troca a cada toque) · ${fmt(200)}. Aparece com as paredes altas.`,wall:`Toque onde a parede começa e depois onde termina (numa reta) · ${fmt(COST.wall)} por parede.`,door:`Toque numa parede para colocar uma porta · ${fmt(COST.door)}.`,window:`Toque numa parede para colocar ou tirar uma janela · ${fmt(COST.window)}. Aparece nas paredes altas.`,remove:'Toque numa parede para derrubar.',floor:`Escolha o piso e toque nos quadrados · ${fmt(COST.floor)} cada. Piso interno no quintal aumenta a casa! Para construir em cima: ▲ e coloque piso sobre a casa (depois compre uma Escada em Comprar → Escadas).`,paint:`Escolha a cor e toque num cômodo · ${fmt(COST.paint)}.`,view:'Paredes baixas mostram melhor a casa; altas mostram janelas e quadros.'};
+const TOOLS=[['raise','⏫','Subir casa'],['room','⬛','Cômodo'],['expand','➕','Ampliar'],['wall','🧱','Parede'],['door','🚪','Porta'],['window','🪟','Janela'],['art','🖼️','Quadro'],['remove','🔨','Derrubar'],['wipe','💥','Demolir'],['floor','🟫','Piso'],['paint','🎨','Pintar'],['view','👁️','Visão']];
+const TOOL_HINT={raise:'Copia a casa inteira (piso e paredes) para o andar de cima com um toque no botão abaixo. Depois é só colocar uma escada.',room:`Toque num canto e depois no canto oposto: nasce um cômodo com piso e paredes (${fmt(COST.floor)}/m² + ${fmt(COST.wall)}/parede). Depois coloque uma porta.`,expand:`Para aumentar a casa: toque num canto encostado na casa e depois no canto oposto, do lado de fora. A parede antiga some e as novas sobem sozinhas.`,wipe:'Toque num canto e no canto oposto: derruba todas as paredes e tira o piso dessa área.',art:`Toque numa parede para pendurar um quadro (troca a cada toque) · ${fmt(200)}. Aparece com as paredes altas.`,wall:`Toque onde a parede começa e depois onde termina (numa reta) · ${fmt(COST.wall)} por parede.`,door:`Toque numa parede para colocar uma porta · ${fmt(COST.door)}.`,window:`Toque numa parede para colocar ou tirar uma janela · ${fmt(COST.window)}. Aparece nas paredes altas.`,remove:'Toque numa parede para derrubar.',floor:`Escolha o piso e toque nos quadrados · ${fmt(COST.floor)} cada. Piso interno no quintal aumenta a casa! Para construir em cima: ▲ e coloque piso sobre a casa (depois compre uma Escada em Comprar → Escadas).`,paint:`Escolha a cor e toque num cômodo · ${fmt(COST.paint)}.`,view:'Paredes baixas mostram melhor a casa; altas mostram janelas e quadros.'};
 function buildBuildPanel(){
   $('#bpTools').innerHTML=TOOLS.map(([k,ic,n])=>`<button data-k="${k}" class="${buildTool&&buildTool.kind===k?'on':''}"><span class="tool-ic">${ic}</span>${n}</button>`).join('');
   $('#bpTools').onclick=e=>{const b=e.target.closest('button');if(!b)return;const k=b.dataset.k;const prev=buildTool||{};bAnchor=null;bEnd=null;buildTool={kind:k,floor:prev.floor||'madeira',color:prev.color||WALLCOLS[0],pat:prev.pat||'',fill:!!prev.fill};buildBuildPanel();SFX.click();};
   let opts='';const t=buildTool;
+  if(t&&t.kind==='raise')opts=`<div class="bp-opts chips"><button id="bpRaise" class="on">⏫ Subir a casa ${viewL?viewL+'º':'térreo'} → ${viewL+1}º andar</button></div>`;
   if(t&&(t.kind==='room'||t.kind==='expand'))opts=`<div class="bp-opts chips" id="bpFloor">${Object.entries(FLOORS).filter(([k,f])=>!f.outdoor).map(([k,f])=>`<button data-f="${k}" class="${roomFloor()===k?'on':''}">${f.n}</button>`).join('')}</div>`;
   if(t&&t.kind==='floor')opts=`<div class="bp-opts chips" id="bpFloor">${Object.entries(FLOORS).map(([k,f])=>`<button data-f="${k}" class="${t.floor===k?'on':''}">${f.n}</button>`).join('')}<button data-f="grama" class="${t.floor==='grama'?'on':''}">Grama (tirar piso)</button></div><div class="bp-opts chips" id="bpFill"><button data-v="0" class="${!t.fill?'on':''}">Um quadrado</button><button data-v="1" class="${t.fill?'on':''}">Cômodo inteiro</button></div>`;
   if(t&&t.kind==='paint')opts=`<div class="bp-opts sw" id="bpWall">${WALLCOLS.map(c=>`<button style="background:${c}" data-c="${c}" class="${t.color===c?'on':''}" aria-label="Cor de parede"></button>`).join('')}</div><div class="bp-opts chips" id="bpPat" style="margin-top:6px">${WALLPATS.map(([k,n])=>`<button data-p="${k}" class="${(t.pat||'')===k?'on':''}">${n}</button>`).join('')}</div><div class="bp-opts sw" id="bpExt" style="margin-top:6px"><span style="font-size:12px;font-weight:800;color:var(--ink2);align-self:center">Fachada:</span>${['#e9e1d5','#f6e3b4','#cfe0f2','#f3d1d8','#d5e8cf','#e6dcf0','#b9a58f','#f4f1ec','#a85a3c'].map(c=>`<button style="background:${c}" data-x="${c}" class="${(G.extCol||'#e9e1d5')===c?'on':''}" aria-label="Cor da fachada"></button>`).join('')}</div>`;
@@ -3045,6 +3074,7 @@ function buildBuildPanel(){
   const f=$('#bpFloor');if(f)f.onclick=e=>{const b=e.target.closest('button');if(b){buildTool.floor=b.dataset.f;buildBuildPanel();}};
   const fl=$('#bpFill');if(fl)fl.onclick=e=>{const b=e.target.closest('button');if(b){buildTool.fill=b.dataset.v==='1';buildBuildPanel();}};
   const w=$('#bpWall');if(w)w.onclick=e=>{const b=e.target.closest('button');if(b){buildTool.color=b.dataset.c;buildBuildPanel();}};
+  const br=$('#bpRaise');if(br)br.onclick=()=>{raiseHouse();buildBuildPanel();};
   const bp=$('#bpPat');if(bp)bp.onclick=e=>{const b=e.target.closest('button');if(b){buildTool.pat=b.dataset.p;buildBuildPanel();}};
   const bx=$('#bpExt');if(bx)bx.onclick=e=>{const b=e.target.closest('button');if(b&&b.dataset.x){if(G.extCol!==b.dataset.x&&!spend(150))return;G.extCol=b.dataset.x;SFX.build();buildBuildPanel();save();}};
   const rf=$('#bpRoof');const v=$('#bpView');if(rf)rf.onclick=e=>v.onclick(e);if(v)v.onclick=e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.v!=null)setWallMode(+b.dataset.v);if(b.dataset.rc){G.roofColor=b.dataset.rc;roofVer++;}buildBuildPanel();save();};

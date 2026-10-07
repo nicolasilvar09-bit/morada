@@ -626,7 +626,11 @@ function resize(){DPR=Math.min(innerWidth<700?1.5:2,devicePixelRatio||1);W=inner
 function fitCam(){const narrow=W<640;let z,cx,cy;
   if(narrow){z=clamp(Math.min((W+60)/700,(H-300)/380),.5,1.2);cx=P(6,5,0)[0];cy=P(6,5,0)[1]-20;cam.y=H*.47-cy*z;}
   else{z=clamp(Math.min((W-24)/930,(H-190)/540),.4,1.6);cx=P(9,5,0)[0];cy=P(9,5,0)[1]-25;cam.y=H/2+10-cy*z;}
-  cam.z=z;cam.x=W/2-cx*z;}
+  cam.z=z;cam.fitZ=z;cam.x=W/2-cx*z;}
+/* zoom em: telhado some e dá para ver dentro (igual The Sims) */
+function roofA(){if(!G||G.wallMode!==2)return 0;const f=cam.fitZ||1;return clamp((f*1.45-cam.z)/(f*.3),0,1);}
+const roofOn=()=>roofA()>0;
+const zoomedIn=()=>cam.z>(cam.fitZ||1)*1.35;
 addEventListener('resize',()=>{resize();fitCam();});
 resize();
 
@@ -817,7 +821,7 @@ function segInfoV(k,l){if(!VR)return segInfo(k,l);const sd=edgeSides(k),vn=vdir(
 function edgeRot(k,r){const p=k.split(','),x=+p[1],y=+p[2];const a=rotXY(x,y,r),b=rotXY(p[0]==='W'?x:x+1,p[0]==='W'?y+1:y,r);return a[0]===b[0]?'W,'+a[0]+','+Math.min(a[1],b[1]):'N,'+Math.min(a[0],b[0])+','+a[1];}
 let SEGL=0;const hasWallV=k=>WL(SEGL).has(VR?edgeRot(k,4-VR):k);
 function segInfoAB(a,b,l){l=l||0;const pIn=isIndoor(b[0],b[1],l),mIn=isIndoor(a[0],a[1],l);
-  const type=pIn&&!mIn?'back':(pIn?'int':'front'),free=!pIn&&!mIn;const lowB=typeof mode!=='undefined'&&mode==='build'&&buildTool&&['room','expand','wall','wipe','floor','remove'].includes(buildTool.kind);const h=l<viewL||G.wallMode===2?HALL:type==='back'?(lowB?.55:HALL):type==='front'&&!free?.34:(G.wallsHigh&&!lowB?HALL:lowB?.55:.95);
+  const type=pIn&&!mIn?'back':(pIn?'int':'front'),free=!pIn&&!mIn;const lowB=typeof mode!=='undefined'&&mode==='build'&&buildTool&&['room','expand','wall','wipe','floor','remove'].includes(buildTool.kind);const h=l<viewL||roofOn()?HALL:type==='back'?(lowB?.55:HALL):type==='front'&&!free?.34:(G.wallsHigh&&!lowB?HALL:lowB?.55:.95);
   const wv=pIn?String(WC(l)[TI(b[0],b[1])]):'';return{type,h,col:pIn?wv.split('|')[0]:(G.extCol||'#e9e1d5'),pat:pIn?wv.split('|')[1]:G.extPat,plus:b};}
 function drawSeg(c,k,w,l){l=l||0;SEGL=l;ZO=l*HALL;try{if(!VR)return drawSegRaw(c,k,w,segInfo(k,l));const S=segInfoV(k,l);RAW=true;try{drawSegRaw(c,edgeRot(k,VR),w,S);}finally{RAW=false;}}finally{ZO=0;SEGL=0;}}
 function drawSegRaw(c,k,w,S){
@@ -1151,7 +1155,7 @@ const PARTS=[];
 function puff(kind,x,y,z,o){o=o||{};if(PARTS.length>220)return;PARTS.push({kind,x,y,z,vx:o.vx!=null?o.vx:rand(-.1,.1),vy:o.vy!=null?o.vy:rand(-.1,.1),vz:o.vz!=null?o.vz:rand(.5,.8),life:o.life||1.8,t:0,txt:o.txt,col:o.col,size:o.size||14,g:o.g||0});}
 function updateParts(dt){for(let i=PARTS.length-1;i>=0;i--){const p=PARTS[i];p.t+=dt;p.vz-=p.g*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.z+=p.vz*dt;if(p.t>p.life)PARTS.splice(i,1);}}
 function drawParts(c){
-  for(const p of PARTS){if(G&&G.wallMode===2&&isIndoor(Math.floor(p.x),Math.floor(p.y),0))continue;const a=1-p.t/p.life;const q=P(p.x,p.y,p.z);c.globalAlpha=clamp(a*1.4,0,1);
+  for(const p of PARTS){if(G&&roofOn()&&isIndoor(Math.floor(p.x),Math.floor(p.y),0))continue;const a=1-p.t/p.life;const q=P(p.x,p.y,p.z);c.globalAlpha=clamp(a*1.4,0,1);
     if(p.kind==='steam'||p.kind==='bubble'||p.kind==='smoke'){c.fillStyle=p.kind==='steam'?'rgba(255,255,255,.75)':p.kind==='smoke'?'rgba(120,120,130,.45)':'rgba(220,245,255,.85)';circ(c,q[0],q[1],3+p.t*4);if(p.kind==='bubble'){c.strokeStyle='rgba(120,190,230,.7)';c.lineWidth=1;c.stroke();}}
     else if(p.kind==='confetti'){c.fillStyle=p.col;c.save();c.translate(q[0],q[1]);c.rotate(p.t*6+p.x);c.fillRect(-3,-1.5,6,3);c.restore();}
     else if(p.kind==='drop'){c.fillStyle='rgba(200,235,255,.9)';circ(c,q[0],q[1],2);}
@@ -2095,7 +2099,7 @@ function venueClick(gx,gy){for(const v of Object.values(VENUES)){if(v.indoor){co
 function updateStaff(dt){for(const v of Object.values(VENUES))for(const m of v.staffSims){m.animT-=dt;if(m.animT<0){m.animT=rand(3,8);m.anim=pick(m.staff.anims);}m.blinkT-=dt;if(m.blinkT<0){m.blink=.14;m.blinkT=rand(2,5);}if(m.blink>0)m.blink-=dt;
   if(v.key==='uni'&&m.anim==='talk'){const any=G.sims.some(s=>s.vin==='uni');if(!any)m.anim=null;}}}
 /* drawing: venue interiors (cutaway) */
-function venueOpen(v){return G.sims.some(s=>s.vin===v.key);}
+function venueOpen(v){if(G.sims.some(s=>s.vin===v.key))return true;if(!v.h||!zoomedIn())return false;const c=s2g(W/2,H/2,0),h=v.h;return Math.hypot(c[0]-(h.x+h.w/2),c[1]-(h.y+h.d/2))<Math.max(h.w,h.d)/2+3;}
 function drawVenueInside(c,v){const h=v.h,x0=h.x,y0=h.y,x1=x0+h.w,y1=y0+h.d,Hh=2.3,items=[];
   poly(c,[[x0,y0,0],[x1,y0,0],[x1,y1,0],[x0,y1,0]],v.floor,false);
   c.strokeStyle='rgba(0,0,0,.08)';c.lineWidth=.7;for(let x=x0+1;x<x1;x++)line(c,[x,y0,.005],[x,y1,.005]);for(let y=y0+1;y<y1;y++)line(c,[x0,y,.005],[x1,y,.005]);
@@ -2911,10 +2915,11 @@ function raiseHouse(){const l=viewL;if(l+1>=NL){toast('Já é o último andar.',
 /* ================= rendering ================= */
 let mode='live',ghost=null,selObj=null,hoverTile=null,hoverEdge=null,buildTool=null,lastList=[];
 function regionTiles(r,l){const RS=REGSL[l==null?viewL:l]||[];return r>0&&RS[r]?RS[r].tiles:[];}
-const LZ=()=>viewL*HALL,DLV=()=>G&&G.wallMode===2?NL-1:viewL;
+const LZ=()=>viewL*HALL,DLV=()=>G&&roofOn()?NL-1:viewL;
 function render(){
   ctx.setTransform(DPR,0,0,DPR,0,0);drawSky();
   if(!G)return;
+  if(!G.demo&&!window._tipZ&&G.wallMode===2&&roofA()<1&&mode==='live'){window._tipZ=1;toast('Chegando perto, o telhado some e dá para ver dentro da casa. Afaste para ver o telhado de novo.','good');}
   ctx.setTransform(cam.z*DPR,0,0,cam.z*DPR,cam.x*DPR,cam.y*DPR);INWORLD=true;
   ensureLayer(ptrs.size>0||!!camGoal);ctx.drawImage(LAYER.cv,LAYER.x0,LAYER.y0,LAYER.w,LAYER.h);drawWindowLight(ctx);
   for(const o of G.objects)if(DEF[o.type].flat&&!(o.l||0)&&o!==(ghost&&ghost.moving))drawObject(ctx,o);
@@ -2937,10 +2942,10 @@ function render(){
   if(G.pet&&!(G.pet.bed&&G.pet.state==='sleep'))items.push({b:[G.pet.x-.2,G.pet.y-.2,0,G.pet.x+.2,G.pet.y+.2,.6],pet:G.pet});
   for(let l=0;l<=DLV();l++)for(const [k,w] of WL(l)){const p=k.split(','),x=+p[1],y=+p[2],h=segInfoV(k,l).h,z=l*HALL;items.push({b:p[0]==='W'?[x,y,z,x,y+1,z+h]:[x,y,z,x+1,y,z+h],wall:k,w,l});}
   for(const [d,x,y] of fenceList())items.push({b:d==='W'?[x,y,0,x,y+1,.6]:[x,y,0,x+1,y,.6],fence:[d,x,y]});
-  if(G.wallMode===2)roofItems(items);
+  if(roofOn())roofItems(items);
   for(const [x,y,s] of TREES)items.push({b:[x-.3,y-.3,0,x+.3,y+.3,3],tree:[x,y,s]});
   const sorted=topo(items);lastList=sorted;
-  for(const it of sorted){if(it.o)drawObject(ctx,it.o);else if(it.s)drawSimAt(ctx,it.s);else if(it.nb){if(it.venue)drawVenueInside(ctx,it.venue);else drawNBCached(ctx,it.nb,ptrs.size>0||!!camGoal);}else if(it.staff){const p=P(it.staff.x,it.staff.y,0);drawSim(ctx,it.staff,p[0],p[1]);}else if(it.umbrella||it.bchair||it.kiosk||it.palm||it.castle||it.pk)drawBeachItem(ctx,it);else if(it.cafe)drawCafeTables(ctx,it.cafe);else if(it.lamp)drawLamp(ctx,...it.lamp);else if(it.car)drawCar(ctx,it.car);else if(it.walker){const p=P(it.walker.s.x,it.walker.s.y,0);drawSim(ctx,it.walker.s,p[0],p[1]);}else if(it.dog){const w=it.dog,p=P(w.s.x+.4,w.s.y+w.dir*.3,0);drawPet(ctx,w.dog,p[0],p[1]);}else if(it.pet)drawPetAt(ctx,it.pet);else if(it.wall)drawSeg(ctx,it.wall,it.w,it.l);else if(it.roof)drawRoof(ctx,it.roof);else if(it.upf){const [x,y,l,f]=it.upf;ZO=l*HALL;try{floorTile(ctx,x,y,f,l);}finally{ZO=0;}}else if(it.fence)drawFence(ctx,...it.fence);else drawTree(ctx,...it.tree);}
+  for(const it of sorted){if(it.o)drawObject(ctx,it.o);else if(it.s)drawSimAt(ctx,it.s);else if(it.nb){if(it.venue)drawVenueInside(ctx,it.venue);else drawNBCached(ctx,it.nb,ptrs.size>0||!!camGoal);}else if(it.staff){const p=P(it.staff.x,it.staff.y,0);drawSim(ctx,it.staff,p[0],p[1]);}else if(it.umbrella||it.bchair||it.kiosk||it.palm||it.castle||it.pk)drawBeachItem(ctx,it);else if(it.cafe)drawCafeTables(ctx,it.cafe);else if(it.lamp)drawLamp(ctx,...it.lamp);else if(it.car)drawCar(ctx,it.car);else if(it.walker){const p=P(it.walker.s.x,it.walker.s.y,0);drawSim(ctx,it.walker.s,p[0],p[1]);}else if(it.dog){const w=it.dog,p=P(w.s.x+.4,w.s.y+w.dir*.3,0);drawPet(ctx,w.dog,p[0],p[1]);}else if(it.pet)drawPetAt(ctx,it.pet);else if(it.wall)drawSeg(ctx,it.wall,it.w,it.l);else if(it.roof){ctx.globalAlpha=roofA();drawRoof(ctx,it.roof);ctx.globalAlpha=1;}else if(it.upf){const [x,y,l,f]=it.upf;ZO=l*HALL;try{floorTile(ctx,x,y,f,l);}finally{ZO=0;}}else if(it.fence)drawFence(ctx,...it.fence);else drawTree(ctx,...it.tree);}
   ZO=LZ();
   if(mode==='build'&&buildTool&&hoverEdge&&['door','window','remove','art'].includes(buildTool.kind)){const ok=edgeToolOk(hoverEdge,buildTool.kind);const p=hoverEdge.split(','),x=+p[1],y=+p[2],col=ok?'rgba(21,156,147,.45)':'rgba(236,95,92,.45)';
     if(p[0]==='W')poly(ctx,[[x,y,0],[x,y+1,0],[x,y+1,1],[x,y,1]],col,ok?'#159c93':'#ec5f5c');else poly(ctx,[[x,y,0],[x+1,y,0],[x+1,y,1],[x,y,1]],col,ok?'#159c93':'#ec5f5c');}
@@ -3506,7 +3511,7 @@ function showSyncBanner(r){let b=$('#syncBanner');if(!b){b=document.createElemen
   b.textContent='☁️ Mudou no outro aparelho · tocar para carregar';b.hidden=false;b.onclick=()=>{b.hidden=true;startFromSave(r,'☁️ Jogo atualizado da nuvem!');};}
 setInterval(()=>{if(!document.hidden)cloudCheck();},20000);
 /* ---- aviso de versão nova do jogo ---- */
-const APPV='v22';
+const APPV='v23';
 async function checkAppVersion(){try{const t=await fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'');const m=t.match(/const APPV='([^']+)'/);
   if(m&&m[1]!==APPV){let b=$('#verBanner');if(!b){b=document.createElement('button');b.id='verBanner';b.className='glass';document.body.appendChild(b);}
     b.textContent=`✨ Versão nova (${m[1]}) · tocar para atualizar`;b.hidden=false;b.onclick=()=>{try{if(G&&!G.demo)save();}catch(_){}const go=()=>location.replace(location.pathname+'?v='+m[1]+'-'+Date.now());if(cloudCode&&G&&!G.demo)cloudPush(true).finally(go);else go();};}}catch(_){}}

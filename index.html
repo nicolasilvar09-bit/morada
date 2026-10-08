@@ -125,6 +125,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--teal);outline-o
 .pie-btn .pi{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--teal2);font-size:16px}
 .pie-btn small{display:block;font-size:10px;color:var(--ink2);font-weight:800}
 .pie-btn.dis{opacity:.5}
+.pie-btn.cmp{padding:3px 11px 3px 4px;font-size:12.5px}.pie-btn.cmp .pi{width:24px;height:24px;font-size:13px}.pie-btn.cmp small{display:none}
 .pie-btn:hover{background:#f3fbfa}
 @keyframes pop{from{opacity:0;transform:translate(-50%,-50%) scale(.6)}}
 #toasts{position:fixed;top:calc(84px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:30;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:min(420px,calc(100vw - 32px))}
@@ -182,6 +183,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--teal);outline-o
 .bp-opts{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:2px 0 6px}
 #buildPanel .bp-opts.chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}#buildPanel .bp-opts.chips::-webkit-scrollbar{display:none}#buildPanel .bp-opts.chips button{flex:none}
 @media (max-width:640px){
+  #portraits{max-width:calc(100vw - 258px);overflow-x:auto;overflow-y:visible;padding:3px 3px 12px;margin:-3px -3px -12px;scrollbar-width:none}#portraits::-webkit-scrollbar{display:none}
+  #portraits.many .por{width:44px;height:44px;flex:none}#portraits.many .por .nm{font-size:9px;padding:2px 5px}#portraits.many .por .md{width:12px;height:12px;border-width:2px}
   .cgrid{grid-template-columns:1fr}
   .cprev canvas{width:150px;height:188px}
   #clk b{font-size:20px}
@@ -1442,7 +1445,7 @@ function updateSim(s,dt,mv,dtR){
     if(s.queue.length)return startNext(s);
     s.idleT+=dt;s.fidgetT-=dtR;if(s.fidgetT<0){s.fidgetT=rand(8,18);s.anim=pick(['stretch','wave']);s.fidgetDur=1.6;}
     const me=G.sims.indexOf(s)===G.sel&&!G.demo;
-    if(s.outside){if(s.auto)outsideAutonomy(s);}
+    if(s.outside){if(s.auto||s.idleT>90)outsideAutonomy(s);}
     else if((s.visitor||G.demo||s.auto)&&s.idleT>(me?8:1.5))autonomy(s);
     return;
   }
@@ -3189,12 +3192,12 @@ function click(x,y,ptype){
 /* ================= pie menus ================= */
 function openPie(sx,sy,title,items){
   const pie=$('#pie');pie.innerHTML='';pie.hidden=false;const n=items.length;
-  const list=n<=3||W<520||n>7;const R=list?0:n<=5?84:100;const cx=W<520?W/2:clamp(sx,R*1.3+110,W-R*1.3-110),cy=list?clamp(sy-n*23,90,H-n*46-30):clamp(sy,R+70,H-R-60);
+  const list=n<=3||W<520||n>7;const R=list?0:n<=5?84:100;const step=list?clamp((H-110)/n,30,48):48,cmp=step<47;const cx=W<520?W/2:clamp(sx,R*1.3+110,W-R*1.3-110),cy=list?Math.max(64,Math.min(sy-n*step/2,H-n*step-24)):clamp(sy,R+70,H-R-60);
   const t=document.createElement('div');t.className='pie-title';t.textContent=title;t.style.left=cx+'px';t.style.top=(list?cy-30:cy)+'px';pie.appendChild(t);
   items.forEach((it,i)=>{const a=-Math.PI/2+(i/n)*Math.PI*2;
-    const b=document.createElement('button');b.className='pie-btn'+(it.disabled?' dis':'');
+    const b=document.createElement('button');b.className='pie-btn'+(it.disabled?' dis':'')+(cmp?' cmp':'');
     b.innerHTML=`<span class="pi">${it.icon}</span><span>${esc(it.label)}${it.hint?`<small>${esc(it.hint)}</small>`:''}</span>`;
-    if(list){b.style.left=cx+'px';b.style.top=(cy+14+i*46)+'px';}else{b.style.left=(cx+Math.cos(a)*R*1.3)+'px';b.style.top=(cy+Math.sin(a)*R)+'px';}b.style.animationDelay=(i*22)+'ms';
+    if(list){b.style.left=cx+'px';b.style.top=(cy+14+i*step)+'px';}else{b.style.left=(cx+Math.cos(a)*R*1.3)+'px';b.style.top=(cy+Math.sin(a)*R)+'px';}b.style.animationDelay=(i*22)+'ms';
     b.onclick=e=>{e.stopPropagation();if(it.disabled){SFX.bad();return;}closePie();SFX.pop();it.fn();};pie.appendChild(b);});
   SFX.click();
 }
@@ -3246,7 +3249,7 @@ function openPanel(){panelOpen=true;$('#spBody').hidden=false;$('#spToggle').tex
 function drawPortrait(cv2,s){const c=cv2.getContext('2d');c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,cv2.width,cv2.height);
   const fake=Object.assign({},s,{pose:'stand',face:[1,0],anim:null,prop:null,cur:null,selRing:false,walkPh:0});
   c.save();c.scale(cv2.width/58,cv2.width/58);const k=s.age==='crianca'?2.0:2.3;drawSim(c,fake,27,26+65.8*k,{noShadow:true,scale:k,mood:G&&G.sims.includes(s)?moodOf(s):40});c.restore();}
-function buildPortraits(){const box=$('#portraits');box.innerHTML='';household().forEach((s,i)=>{const b=document.createElement('button');b.className='por'+(i===G.sel?' sel':'');b.title=s.name;b.innerHTML=`<canvas width="116" height="116"></canvas><span class="md"></span><span class="nm">${esc(s.name)}</span>${s.auto?'<span class="au">🤖</span>':''}`;b.onclick=()=>selectSim(i);box.appendChild(b);});}
+function buildPortraits(){const box=$('#portraits');box.innerHTML='';box.classList.toggle('many',household().length>2);household().forEach((s,i)=>{const b=document.createElement('button');b.className='por'+(i===G.sel?' sel':'');b.title=s.name;b.innerHTML=`<canvas width="116" height="116"></canvas><span class="md"></span><span class="nm">${esc(s.name)}</span>${s.auto?'<span class="au">🤖</span>':''}`;b.onclick=()=>selectSim(i);box.appendChild(b);});const se=box.querySelector('.sel');if(se&&se.scrollIntoView&&household().length>2)try{se.scrollIntoView({block:'nearest',inline:'nearest'});}catch(_){}}
 function buildNeedsUI(){$('#tab-nec').innerHTML='<div class="needs">'+NEEDS.map(N=>`<div class="need"><span class="ni">${N.i}</span><span class="nl">${N.n}</span><div class="bar"><i id="nb-${N.k}"></i></div></div>`).join('')+'<div id="moodlets"></div></div>';}
 function updHUD(){
   if(!G||G.demo)return;const s=sel(),m=moodOf(s);
@@ -3601,7 +3604,7 @@ function showSyncBanner(r){let b=$('#syncBanner');if(!b){b=document.createElemen
   b.textContent='☁️ Mudou no outro aparelho · tocar para carregar';b.hidden=false;b.onclick=()=>{b.hidden=true;startFromSave(r,'☁️ Jogo atualizado da nuvem!');};}
 setInterval(()=>{if(!document.hidden)cloudCheck();},20000);
 /* ---- aviso de versão nova do jogo ---- */
-const APPV='v24';
+const APPV='v25';
 async function checkAppVersion(){try{const t=await fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'');const m=t.match(/const APPV='([^']+)'/);
   if(m&&m[1]!==APPV){let b=$('#verBanner');if(!b){b=document.createElement('button');b.id='verBanner';b.className='glass';document.body.appendChild(b);}
     b.textContent=`✨ Versão nova (${m[1]}) · tocar para atualizar`;b.hidden=false;b.onclick=()=>{try{if(G&&!G.demo)save();}catch(_){}const go=()=>location.replace(location.pathname+'?v='+m[1]+'-'+Date.now());if(cloudCode&&G&&!G.demo)cloudPush(true).finally(go);else go();};}}catch(_){}}

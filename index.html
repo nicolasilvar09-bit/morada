@@ -840,8 +840,9 @@ function segInfoV(k,l){if(!VR)return segInfo(k,l);const sd=edgeSides(k),vn=vdir(
 function edgeRot(k,r){const p=k.split(','),x=+p[1],y=+p[2];const a=rotXY(x,y,r),b=rotXY(p[0]==='W'?x:x+1,p[0]==='W'?y+1:y,r);return a[0]===b[0]?'W,'+a[0]+','+Math.min(a[1],b[1]):'N,'+Math.min(a[0],b[0])+','+a[1];}
 let SEGL=0;const hasWallV=k=>WL(SEGL).has(VR?edgeRot(k,4-VR):k);
 function segInfoAB(a,b,l){l=l||0;const pIn=isIndoor(b[0],b[1],l),mIn=isIndoor(a[0],a[1],l);
-  const type=pIn&&!mIn?'back':(pIn?'int':'front'),free=!pIn&&!mIn;const lowB=typeof mode!=='undefined'&&mode==='build'&&buildTool&&['room','expand','wall','wipe','floor','remove'].includes(buildTool.kind);const h=l<viewL||roofOn()?HALL:type==='back'?(lowB?.55:HALL):type==='front'&&!free?.34:(G.wallsHigh&&!lowB?HALL:lowB?.55:.95);
-  const wv=pIn?String(WC(l)[TI(b[0],b[1])]):'';return{type,h,col:pIn?wv.split('|')[0]:(G.extCol||'#e9e1d5'),pat:pIn?wv.split('|')[1]:G.extPat,plus:b};}
+  const type=pIn&&!mIn?'back':(pIn?'int':'front'),free=!pIn&&!mIn;const lowB=typeof mode!=='undefined'&&mode==='build'&&buildTool&&['room','expand','wall','wipe','floor','remove','push'].includes(buildTool.kind);const h=l<viewL||roofOn()?HALL:type==='back'?(lowB?.55:HALL):type==='front'&&!free?.34:(G.wallsHigh&&!lowB?HALL:lowB?.55:.95);
+  const h2=(G.wallMode===3&&!(l<viewL)&&!roofOn()&&!lowB&&type!=='back')?cutH(a,b,l,type,free,h):h;
+  const wv=pIn?String(WC(l)[TI(b[0],b[1])]):'';return{type,h:h2,col:pIn?wv.split('|')[0]:(G.extCol||'#e9e1d5'),pat:pIn?wv.split('|')[1]:G.extPat,plus:b};}
 function drawSeg(c,k,w,l){l=l||0;SEGL=l;ZO=l*HALL;try{if(!VR)return drawSegRaw(c,k,w,segInfo(k,l));const S=segInfoV(k,l);if(FREE())return drawSegFree(c,k,w,S);RAW=true;try{drawSegRaw(c,edgeRot(k,VR),w,S);}finally{RAW=false;}}finally{ZO=0;SEGL=0;}}
 function drawSegRaw(c,k,w,S){
   const p=k.split(','),d=p[0],x=+p[1],y=+p[2],h=S.h,cap='#f4efe8';
@@ -958,15 +959,16 @@ function drawHead(c,s,hx,hy,back,closed,mood,K,part){
   else{for(const [ex,w] of [[ex1,1.85],[ex2,1.65]]){c.fillStyle='#fbfaf8';c.beginPath();c.ellipse(ex,ey,w,1.2,0,0,7);c.fill();c.fillStyle=eyeC;circ(c,ex+.35,ey+.05,1.02);c.fillStyle='#1d1512';circ(c,ex+.4,ey+.05,.5);c.fillStyle='#fff';circ(c,ex+.7,ey-.35,.28);
       c.strokeStyle='#2b2020';c.lineWidth=.75;c.beginPath();c.ellipse(ex,ey,w,1.2,0,Math.PI*1.05,Math.PI*1.95);c.stroke();}}
   // brows
-  c.strokeStyle=shade(hc,.8);c.lineWidth=1.05;c.lineCap='round';const sad=mood<-25?1:0;
-  c.beginPath();c.moveTo(ex1-1.9,ey-2.4+sad*.6);c.quadraticCurveTo(ex1,ey-3.3,ex1+1.8,ey-2.9-sad*.6);c.moveTo(ex2-1.5,ey-2.9-sad*.6);c.quadraticCurveTo(ex2+.2,ey-3.4,ex2+1.7,ey-2.6+sad*.6);c.stroke();c.lineCap='butt';
+  c.strokeStyle=shade(hc,.8);c.lineWidth=1.05;c.lineCap='round';const sad=mood<-25?1:0,ang=s.react?reactAngry(s):0;
+  c.beginPath();c.moveTo(ex1-1.9,ey-2.4+sad*.6);c.quadraticCurveTo(ex1,ey-3.3,ex1+1.8,ey-2.9-sad*.6+ang*1.5);c.moveTo(ex2-1.5,ey-2.9-sad*.6+ang*1.5);c.quadraticCurveTo(ex2+.2,ey-3.4,ex2+1.7,ey-2.6+sad*.6);c.stroke();c.lineCap='butt';
   // nose
   c.strokeStyle=shade(skin,.72);c.lineWidth=.85;c.beginPath();c.moveTo(hx+8.4,hy+.2);c.quadraticCurveTo(hx+9.9,hy+3,hx+9.1,hy+3.6);c.quadraticCurveTo(hx+8.3,hy+3.9,hx+7.6,hy+3.5);c.stroke();
   c.fillStyle='rgba(120,60,40,.12)';c.beginPath();c.ellipse(hx+8.1,hy+2.6,1.2,1.6,0,0,7);c.fill();
   if(!has('barba')){c.fillStyle='rgba(235,110,120,.16)';circ(c,hx+.6,hy+4,2.2);circ(c,hx+8.6,hy+4.6,1.6);}
   // mouth
   const lip=has('batom')?'#c92f58':shade(skin,.62);
-  if(s.anim==='kiss'){c.fillStyle=has('batom')?'#c92f58':'#c96a73';c.beginPath();c.ellipse(hx+5,hy+6.6,1.3,1,0,0,7);c.fill();}
+  if(s.react&&reactMouth(c,s,hx,hy)){}
+  else if(s.anim==='kiss'){c.fillStyle=has('batom')?'#c92f58':'#c96a73';c.beginPath();c.ellipse(hx+5,hy+6.6,1.3,1,0,0,7);c.fill();}
   else{c.strokeStyle=lip;c.lineWidth=has('batom')?1.4:1;c.beginPath();
     if(mood>15){c.moveTo(hx+2.6,hy+6.1);c.quadraticCurveTo(hx+4.9,hy+7.8,hx+7.1,hy+5.9);}
     else if(mood<-25){c.moveTo(hx+2.8,hy+7.4);c.quadraticCurveTo(hx+4.9,hy+6.2,hx+6.9,hy+7.3);}
@@ -997,6 +999,7 @@ function drawHead(c,s,hx,hy,back,closed,mood,K,part){
   c.restore();
 }
 function armAngle(s,side,T){
+  {const r=extraArm(s,side,T);if(r!=null)return r;}
   const a=s.anim,ph=s.walkPh;
   if(s.pose==='walk'||s.pose==='run')return side*Math.sin(ph)*(s.pose==='run'?.9:.5);
   switch(a){
@@ -1026,7 +1029,7 @@ function limb(c,x1,y1,x2,y2,w,col){c.strokeStyle=col;c.lineWidth=w;c.lineCap='ro
 const dirV=(a,l)=>[-Math.sin(a)*l,Math.cos(a)*l];
 function drawSim(c,s,X,Y,opt){
   opt=opt||{};if(s.wed)s=Object.assign({},s,wedLook(s));const T=TT;const pose=s.pose||'stand';const fi=faceInfo(s.face||[1,0]);const back=fi.back;
-  const mood=opt.mood!=null?opt.mood:(G&&G.sims&&G.sims.includes(s)?moodOf(s):40);
+  const mood=opt.mood!=null?opt.mood:s.react&&reactMood(s)!=null?reactMood(s):(G&&G.sims&&G.sims.includes(s)?moodOf(s):40);
   c.save();c.translate(X,Y);if(opt.scale)c.scale(opt.scale,opt.scale);
   if(!opt.noShadow&&!['lie','bath','swim'].includes(pose)){c.fillStyle='rgba(20,20,40,.2)';c.beginPath();c.ellipse(0,0,11,4.5,0,0,7);c.fill();}
   if(s.selRing){const pulse=1+Math.sin(T*4)*.06;c.strokeStyle=moodCol(mood);c.lineWidth=2.5;c.globalAlpha=.9;c.beginPath();c.ellipse(0,0,15*pulse,7*pulse,0,0,7);c.stroke();c.globalAlpha=1;}
@@ -1041,7 +1044,7 @@ function drawSim(c,s,X,Y,opt){
   if(pose==='floor'){c.rotate(-1.45);c.translate(14,8);}
   const walking=pose==='walk'||pose==='run',sit=pose==='sit',kneel=pose==='kneel',run=pose==='run';
   const bob=walking?Math.abs(Math.sin(s.walkPh))*(run?2.4:1.3):(s.anim==='dance'?Math.abs(Math.sin(T*6))*3:Math.sin(T*2+s.id)*.35);
-  c.translate(0,-bob);
+  c.translate(0,-bob-(s.react?reactJump(s):0));
   const hipY=sit?-1:kneel?-17:-33,ty=hipY-23;
   const PANTS=PANTS_OUT.includes(o)||o==='macacao',pantC=o==='macacao'?top:PANTS?bot:skin,thighC=o==='shorts'?bot:pantC;
   const shoe=o==='social'?'#1f1a22':(o==='shorts'||o==='moletom'||o==='cropped')?'#f4f1ec':o==='vestido'||o==='saia'?shade(top,.7):'#3a3340';
@@ -1058,7 +1061,7 @@ function drawSim(c,s,X,Y,opt){
   const skirtEnd=sit?hipY+3:kneel?hipY+12:hipY+15;
   const drawSkirt=(col,y0,len,flare)=>{c.fillStyle=col;c.beginPath();c.moveTo(-6.4,y0);c.lineTo(6.4,y0);if(sit){c.lineTo(14,hipY+1);c.lineTo(14,hipY+5);c.lineTo(-7,hipY+4);}else{c.lineTo(6.4+flare,y0+len);c.quadraticCurveTo(0,y0+len+2,-6.4-flare,y0+len);}c.closePath();c.fill();c.fillStyle='rgba(0,0,0,.08)';c.fillRect(-6.4,y0,4,sit?6:len);};
   // arms
-  const drawArm=(x,side,far)=>{const a=armAngle(s,side,T),eb=.22+(['eat','read','game','type','cook','use','rock','pet'].includes(s.anim)?.35:0);
+  const drawArm=(x,side,far)=>{const a=armAngle(s,side,T),eb=.22+(['eat','read','game','type','cook','use','rock','pet'].includes(s.anim)?.35:0)+(s.react?reactEb(s,side):0);
     const sh=[x,ty+3.5],u=dirV(a,11.5),el=[sh[0]+u[0],sh[1]+u[1]],f=dirV(a-eb*(side>0?1:1),10.5),wr=[el[0]+f[0],el[1]+f[1]];
     const sk=far?dskin:skin,tc=far?shade(top,.86):top,longS=o==='social'||o==='moletom'||outLong(o0),noSl=outSleeveless(o0);
     limb(c,sh[0],sh[1],el[0],el[1],4.6,noSl||o==='vestido'&&!s.wed?sk:o==='cropped'?sk:tc);
@@ -1095,6 +1098,7 @@ function drawSim(c,s,X,Y,opt){
     else if(p==='panela'){c.fillStyle='#9aa5b1';rr(c,9,ty+12,9,5.5,2);c.fill();}
     else if(p==='carta'){c.fillStyle='#fff6e8';rr(c,8,ty+10,10,7,1);c.fill();c.strokeStyle='#ee5d7c';c.lineWidth=.9;c.beginPath();c.moveTo(8,ty+10);c.lineTo(13,ty+13.5);c.lineTo(18,ty+10);c.stroke();}
     else if(p==='anel'){c.fillStyle='#c0392b';rr(c,14,ty+10,6,5,1.3);c.fill();c.strokeStyle='#f0bd45';c.lineWidth=1.2;c.beginPath();c.arc(17,ty+9,2,0,7);c.stroke();c.fillStyle='#dff6ff';circ(c,17,ty+6.8,1.1);}
+    else if(p==='celular'){c.fillStyle='#22252c';rr(c,9,ty+9,4.8,7.6,1.2);c.fill();c.fillStyle='#7fd3ff';c.fillRect(9.8,ty+10,3.2,5.4);}
     else if(p==='coco'){c.fillStyle='#5f9a3a';circ(c,13,ty+14,4.4);c.fillStyle='#f4f1ec';c.fillRect(14,ty+6,.9,6);}
     else if(p==='bebe'){c.fillStyle='#f6d9e6';c.beginPath();c.ellipse(6,ty+15,8,5,-.2,0,7);c.fill();c.fillStyle=s.babySkin||'#f1c6a4';circ(c,12,ty+12,3.6);}
     else if(p==='pincel'){c.fillStyle='#8b5e3c';c.save();c.translate(14,ty+16);c.rotate(-.8);c.fillRect(0,-.9,9,1.8);c.fillStyle='#ee5d7c';c.fillRect(8,-1.4,2.6,2.8);c.restore();}
@@ -1108,6 +1112,7 @@ function simOffset(s){
   const close=a=>a&&['abracar','beijar','dancar'].includes(a.id);
   if(c&&c.kind==='soc'&&c.stage==='act'&&close(c.act)){const t=c.target;const dx=t.x-s.x,dy=t.y-s.y,l=Math.hypot(dx,dy)||1,k=c.act.id==='dancar'?.12:.26;ox=dx/l*k;oy=dy/l*k;}
   if(s.socWith&&!s.cur){const f=simById(s.socWith.from);if(f&&close(s.socWith.act)){const dx=f.x-s.x,dy=f.y-s.y,l=Math.hypot(dx,dy)||1,k=s.socWith.act.id==='dancar'?.12:.26;ox=dx/l*k;oy=dy/l*k;}}
+  if(s.avo){ox+=s.avo[0];oy+=s.avo[1];}
   return[ox,oy];
 }
 function drawSimAt(c,s){const o=simOffset(s);const p=P(s.x+o[0],s.y+o[1],s.z+(s.l||0)*HALL);s.selRing=false;drawSim(c,s,p[0],p[1],{scale:simScale(s)});}
@@ -1458,10 +1463,10 @@ function updateSim(s,dt,mv,dtR){
     if(s.socPending){const f=simById(s.socPending);if(!f||f.away||!(f.cur&&f.cur.kind==='soc'&&f.cur.target===s)&&!f.queue.some(q=>q.kind==='soc'&&q.target===s.id)){s.socPending=null;}}
     if(s.socWith){const f=simById(s.socWith.from);s.anim=s.socWith.act.anim;if(f)s.face=dirTo(s,f);return;}
     if(s.socPending)return;
-    if(s.anim==='stretch'||s.anim==='wave'){s.fidgetDur-=dtR;if(s.fidgetDur<=0)s.anim=null;}else s.anim=null;
+    if(FIDGETS.includes(s.anim)){s.fidgetDur-=dtR;if(s.fidgetDur<=0){s.anim=null;if(s.prop==='celular')s.prop=null;}}else{s.anim=null;if(s.prop==='celular')s.prop=null;}
     s.pose='stand';
     if(s.queue.length)return startNext(s);
-    s.idleT+=dt;s.fidgetT-=dtR;if(s.fidgetT<0){s.fidgetT=rand(8,18);s.anim=pick(['stretch','wave']);s.fidgetDur=1.6;}
+    s.idleT+=dt;s.fidgetT-=dtR;if(s.fidgetT<0){s.fidgetT=rand(8,18);startFidget(s);}
     const me=G.sims.indexOf(s)===G.sel&&!G.demo;
     if(s.outside){if(s.auto||s.idleT>90)outsideAutonomy(s);}
     else if((s.visitor||G.demo||s.auto)&&s.idleT>(me?8:1.5))autonomy(s);
@@ -1588,7 +1593,7 @@ function autonomy(s){
   const cands=G.sims.filter(t=>t!==s&&!!t.outside===!!s.outside&&canSocial(t)&&!t.socPending&&!(t.cur&&t.cur.kind==='soc'));
   if(cands.length){const t=cands.find(x=>x.visitor&&!s.visitor&&Math.random()<.6)||pick(cands);
     const sc=(100-s.needs.social)*.7+(100-s.needs.diversao)*.15+rand(0,10)+(t.visitor||s.visitor?12:0);
-    if(sc>bs&&s.needs.social<85){const r=rel(s,t),opts=Object.values(SOC).filter(S=>r>=S.min&&!S.stand&&!S.skillMin&&!S.special&&(!S.rom||isPartner(s,t))&&(!t.seat||!['abracar'].includes(S.id)));if(opts.length){queueSoc(s,t,pick(opts).id,true);return;}}
+    if(sc>bs&&s.needs.social<85){const r=rel(s,t),opts=Object.values(SOC).filter(S=>r>=S.min&&!S.stand&&!S.skillMin&&!S.special&&!S.noAuto&&(!S.rom||isPartner(s,t))&&(!t.seat||!['abracar'].includes(S.id)));if(opts.length){queueSoc(s,t,pick(opts).id,true);return;}}
   }
   if(best&&bs>10){queueAct(s,best.o,best.a,true);return;}
   if(Math.random()<.35){const x=s.tx+((Math.random()*11)|0)-5,y=s.ty+((Math.random()*11)|0)-5,l=s.l||0;const dd=bdist(b,x,y,l);if(walkable(x,y,l)&&dd>0&&dd<6)s.queue.push({kind:'walk',x,y,l,label:'Passear',icon:'👣',auto:true});}
@@ -2791,7 +2796,7 @@ function takePhoto(){if(!G)return;const hud=$('#hud');hud.style.visibility='hidd
 /* ================= build v2: cômodo, ampliar, parede em linha, demolir ================= */
 let bAnchor=null,bEnd=null;
 const AREA_TOOLS=['room','expand','wipe'],LINE_TOOLS=['wall'];
-const isAreaTool=k=>AREA_TOOLS.includes(k),isLineTool=k=>LINE_TOOLS.includes(k),isTwoTap=k=>isAreaTool(k)||isLineTool(k);
+const isAreaTool=k=>AREA_TOOLS.includes(k),isLineTool=k=>LINE_TOOLS.includes(k),isTwoTap=k=>isAreaTool(k)||isLineTool(k)||k==='push';
 function bPoint(gx,gy,kind){return isLineTool(kind)?[Math.round(gx),Math.round(gy)]:[gx,gy];}
 /* precise picking: if the tap is on a visible wall, project onto that wall's line instead of the ground behind it */
 function wallScreenPoly(k,l,h){const p=k.split(','),x=+p[1],y=+p[2],z=l*HALL,pts=p[0]==='W'?[[x,y,z],[x,y+1,z],[x,y+1,z+h],[x,y,z+h]]:[[x,y,z],[x+1,y,z],[x+1,y,z+h],[x,y,z+h]];const oz=ZO;ZO=0;const r=pts.map(q=>{const s=P(q[0],q[1],q[2]);return[s[0]*cam.z+cam.x,s[1]*cam.z+cam.y];});ZO=oz;return r;}
@@ -2817,7 +2822,7 @@ function lineEdges(a,b){const dx=b[0]-a[0],dy=b[1]-a[1],out=[];
   return out;}
 function roomFloor(){const f=buildTool&&buildTool.floor;return f&&FLOORS[f]&&!FLOORS[f].outdoor?f:'madeira';}
 /* compute what an area/line action would do (no side effects) */
-function planBuild(kind,a,b){const l=viewL,F=FL(l),WM=WL(l),plan={floors:[],addW:[],delW:[],delF:[],cost:0,err:''};
+function planBuild(kind,a,b){if(kind==='push')return planPush(a,b);const l=viewL,F=FL(l),WM=WL(l),plan={floors:[],addW:[],delW:[],delF:[],cost:0,err:''};
   if(isLineTool(kind)){for(const k of lineEdges(a,b))if(edgeToolOk(k,'wall'))plan.addW.push(k);plan.cost=plan.addW.length*COST.wall;return plan;}
   const r=rectOf(a,b);if(!r){plan.err='Fora do terreno.';return plan;}
   const tiles=rectTiles(r),indoor=(x,y)=>isIndoor(x,y,l);
@@ -2839,7 +2844,7 @@ function planBuild(kind,a,b){const l=viewL,F=FL(l),WM=WL(l),plan={floors:[],addW
   if(!plan.floors.length&&!plan.addW.length&&!plan.delW.length)plan.err=kind==='expand'?'Essa área já faz parte da casa.':'Já tem um cômodo aqui.';
   return plan;}
 function edgeInLotRaw(k){const p=k.split(','),x=+p[1],y=+p[2];return p[0]==='W'?x>=LX0&&x<=LX1&&y>=LY0&&y<LY1:y>=LY0&&y<=LY1&&x>=LX0&&x<LX1;}
-function applyPlan(kind,plan){const l=viewL,F=FL(l),C=WC(l),WM=WL(l);
+function applyPlan(kind,plan){if(kind==='push')return applyPush(plan);const l=viewL,F=FL(l),C=WC(l),WM=WL(l);
   if(plan.err){toast(plan.err,'bad');SFX.bad();return false;}
   if(kind==='wipe'){if(!plan.delW.length&&!plan.delF.length){toast('Não tem nada para demolir aqui.','bad');return false;}
     for(const k of plan.delW)WM.delete(k);for(const [x,y] of plan.delF)F[TI(x,y)]=null;addMoney(plan.delW.length*10);
@@ -2857,6 +2862,7 @@ function applyPlan(kind,plan){const l=viewL,F=FL(l),C=WC(l),WM=WL(l);
   return true;}
 let bPend=false;
 function bTap(gx,gy,touch){const kind=buildTool.kind,pt=bPoint(gx,gy,kind);hoverPt=pt;
+  if(!bAnchor&&kind==='push'&&!pushEdgeAt(pt)){toast('Toque em cima de uma parede da casa.','bad');SFX.bad();return;}
   if(!bAnchor){bAnchor=pt;bEnd=pt;bPend=false;buildHint();SFX.click();return;}
   if(touch){bEnd=pt;bPend=true;buildHint();SFX.click();return;}
   if(isLineTool(kind)&&pt[0]===bAnchor[0]&&pt[1]===bAnchor[1]){bCancel();return;}
@@ -2867,11 +2873,11 @@ function buildHint(){const h=$('#bpHint');if(!h||!buildTool)return;const k=build
   if(!isTwoTap(k)){h.textContent=TOOL_HINT[k]||'';return;}
   if(!bAnchor){h.textContent=TOOL_HINT[k];return;}
   const plan=planBuild(k,bAnchor,bEnd||bAnchor);
-  const info=plan.err?plan.err:k==='wipe'?`Vai demolir ${plan.delW.length} parede(s) e ${plan.delF.length} piso(s).`:isLineTool(k)?`${plan.addW.length} ${k==='fence'?'trecho(s) de cerca':'parede(s)'} · ${fmt(plan.cost)}`:`${plan.floors.length} m² de piso, ${plan.addW.length} parede(s)${plan.delW.length?`, abre ${plan.delW.length}`:''} · ${fmt(plan.cost)}`;
-  const msg=bPend?'Confira na tela. Toque em outro ponto para ajustar.':isLineTool(k)?(k==='fence'?'Agora toque onde a cerca termina.':'Agora toque onde a parede termina.'):'Agora toque no canto oposto.';
+  const info=plan.err?plan.err:k==='push'?plan.info:k==='wipe'?`Vai demolir ${plan.delW.length} parede(s) e ${plan.delF.length} piso(s).`:isLineTool(k)?`${plan.addW.length} ${k==='fence'?'trecho(s) de cerca':'parede(s)'} · ${fmt(plan.cost)}`:`${plan.floors.length} m² de piso, ${plan.addW.length} parede(s)${plan.delW.length?`, abre ${plan.delW.length}`:''} · ${fmt(plan.cost)}`;
+  const msg=bPend?'Confira na tela. Toque em outro ponto para ajustar.':k==='push'?'Agora toque até onde a parede vai.':isLineTool(k)?(k==='fence'?'Agora toque onde a cerca termina.':'Agora toque onde a parede termina.'):'Agora toque no canto oposto.';
   h.innerHTML=`<b>${msg}</b> ${info}<span class="bp-act">${bPend&&!plan.err?`<button id="bpOk" class="mini-ok">✓ Construir</button>`:''}<button id="bpCancel" class="mini-cancel">Cancelar</button></span>`;
   const c=$('#bpCancel');if(c)c.onclick=bCancel;const o=$('#bpOk');if(o)o.onclick=bConfirm;}
-function drawBuildPreview(ctx){if(!(mode==='build'&&buildTool))return;const k=buildTool.kind;if(!isTwoTap(k))return;
+function drawBuildPreview(ctx){if(!(mode==='build'&&buildTool))return;const k=buildTool.kind;if(!isTwoTap(k))return;if(k==='push')return drawPushPreview(ctx);
   const a=bAnchor||hoverPt;
   if(isLineTool(k)){const pt=bAnchor;if(!pt){if(hoverPt){const q=P(hoverPt[0],hoverPt[1],0);ctx.fillStyle='rgba(21,156,147,.85)';ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(q[0],q[1],6,0,7);ctx.fill();ctx.stroke();}return;}const e=bEnd||pt;
     for(const ek of lineEdges(pt,e)){const ok=edgeToolOk(ek,k),p=ek.split(','),x=+p[1],y=+p[2],col=ok?'rgba(21,156,147,.45)':'rgba(236,95,92,.45)',sc=ok?'#159c93':'#ec5f5c';
@@ -2884,8 +2890,8 @@ function drawBuildPreview(ctx){if(!(mode==='build'&&buildTool))return;const k=bu
     for(const ek of plan.addW){const p=ek.split(','),x=+p[1],y=+p[2];if(p[0]==='W')poly(ctx,[[x,y,0],[x,y+1,0],[x,y+1,.8],[x,y,.8]],'rgba(21,156,147,.35)','#159c93');else poly(ctx,[[x,y,0],[x+1,y,0],[x+1,y,.8],[x,y,.8]],'rgba(21,156,147,.35)','#159c93');}
     for(const ek of plan.delW){const p=ek.split(','),x=+p[1],y=+p[2];if(p[0]==='W')poly(ctx,[[x,y,0],[x,y+1,0],[x,y+1,.8],[x,y,.8]],'rgba(236,95,92,.35)','#ec5f5c');else poly(ctx,[[x,y,0],[x+1,y,0],[x+1,y,.8],[x,y,.8]],'rgba(236,95,92,.35)','#ec5f5c');}}}
 let hoverPt=null,lastHintKey='';
-function bMove(sx,sy){if(!buildTool||!isTwoTap(buildTool.kind))return;const [gx,gy]=pickGround(sx,sy).g,pt=bPoint(gx,gy,buildTool.kind);hoverPt=pt;hoverTile=[Math.floor(gx),Math.floor(gy)];if(!bAnchor)return;bEnd=pt;
-  const key=isLineTool(buildTool.kind)?pt.join(','):JSON.stringify(rectOf(bAnchor,pt));if(key===lastHintKey)return;lastHintKey=key;buildHint();}
+function bMove(sx,sy){if(!buildTool||!isTwoTap(buildTool.kind))return;const [gx,gy]=bGround(sx,sy),pt=bPoint(gx,gy,buildTool.kind);hoverPt=pt;hoverTile=[Math.floor(gx),Math.floor(gy)];if(!bAnchor)return;bEnd=pt;
+  const key=buildTool.kind==='push'?pt.map(Math.round).join(','):isLineTool(buildTool.kind)?pt.join(','):JSON.stringify(rectOf(bAnchor,pt));if(key===lastHintKey)return;lastHintKey=key;buildHint();}
 /* ================= mover móveis: arrastar + atalho no modo Viver ================= */
 function canMoveObj(o){const d=DEF[o.type];if(d.fixed){toast('Isso faz parte do terreno.','bad');return false;}if(inUse(o)){toast('Alguém está usando isso agora.','bad');return false;}return true;}
 function startMove(o){if(!canMoveObj(o))return;if(mode!=='buy')setMode('buy');if((o.l||0)!==viewL)setViewLevel(o.l||0,true);
@@ -3211,7 +3217,7 @@ cv.addEventListener('pointermove',e=>{
   if(drag){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(!drag.moved&&Math.hypot(dx,dy)>8)drag.moved=true;if(drag.moved){cam.x=drag.cx+dx;cam.y=drag.cy+dy;}}
   if(e.pointerType==='mouse'&&!drag)hover(e.clientX,e.clientY);
 });
-const endPtr=e=>{if(drag&&drag.rot){ptrs.delete(e.pointerId);drag=null;if(ROTATING)rotEnd();return;}if(window._tw){window._tw=0;setTimeout(rotEnd,0);}if(drag&&drag.obj&&drag.moving&&e.type==='pointerup'){buyDragEnd();ptrs.delete(e.pointerId);if(ptrs.size===0){drag=null;stroke=null;}if(ptrs.size<2)pinch=null;return;}if(drag&&drag.rect&&e.type==='pointerup'&&buildTool){const [gx,gy]=pickGround(e.clientX,e.clientY).g,pt=bPoint(gx,gy,buildTool.kind);if(drag.rect==='second'||(bAnchor&&Math.hypot(pt[0]-bAnchor[0],pt[1]-bAnchor[1])>.45))bTap(gx,gy);}const was=drag&&!drag.moved&&!drag.paint;ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;if(was&&ptrs.size===0&&e.type==='pointerup')click(e.clientX,e.clientY,e.pointerType);if(ptrs.size===0){drag=null;stroke=null;}};
+const endPtr=e=>{if(drag&&drag.rot){ptrs.delete(e.pointerId);drag=null;if(ROTATING)rotEnd();return;}if(window._tw){window._tw=0;setTimeout(rotEnd,0);}if(drag&&drag.obj&&drag.moving&&e.type==='pointerup'){buyDragEnd();ptrs.delete(e.pointerId);if(ptrs.size===0){drag=null;stroke=null;}if(ptrs.size<2)pinch=null;return;}if(drag&&drag.rect&&e.type==='pointerup'&&buildTool){const [gx,gy]=bGround(e.clientX,e.clientY),pt=bPoint(gx,gy,buildTool.kind);if(drag.rect==='second'||(bAnchor&&Math.hypot(pt[0]-bAnchor[0],pt[1]-bAnchor[1])>.45))bTap(gx,gy);}const was=drag&&!drag.moved&&!drag.paint;ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;if(was&&ptrs.size===0&&e.type==='pointerup')click(e.clientX,e.clientY,e.pointerType);if(ptrs.size===0){drag=null;stroke=null;}};
 cv.addEventListener('pointerup',endPtr);cv.addEventListener('pointercancel',endPtr);
 cv.addEventListener('wheel',e=>{e.preventDefault();zoomAt(Math.exp(-e.deltaY*.0015),e.clientX,e.clientY);},{passive:false});
 addEventListener('keydown',e=>{if(!G||G.demo||e.target.tagName==='INPUT')return;
@@ -3253,7 +3259,7 @@ function click(x,y,ptype){
   if(mode==='buy'){
     if(ghost){placeGhostAt(gx,gy);if(ptype==='mouse')tryPlace();else{ghost.locked=true;showPlaceBar();}return;}
     const o=hitObj(wx,wy);selObj=o;showPlaceBar();if(o)SFX.click();return;}
-  if(mode==='build'&&buildTool&&isTwoTap(buildTool.kind)){const g=pickGround(x,y).g;bTap(g[0],g[1],ptype!=='mouse');return;}
+  if(mode==='build'&&buildTool&&isTwoTap(buildTool.kind)){const g=bGround(x,y);bTap(g[0],g[1],ptype!=='mouse');return;}
   if(mode==='build'&&buildTool&&buildTool.kind!=='view'){stroke={done:new Set(),dir:null};hoverTile=[tx,ty];strokeApply(x,y);stroke=null;}
 }
 
@@ -3340,7 +3346,7 @@ function updHUD(){
       for(const [k,v] of Object.entries(G.rels)){const [a,b]=k.split('-').map(Number);if(a!==s.id&&b!==s.id)continue;const oid=a===s.id?b:a;const p=personById(oid);if(!p||seen.has(oid))continue;seen.add(oid);list.push({p,v});}
       for(const h of household())if(h!==s&&!seen.has(h.id))list.push({p:h,v:0});
       list.sort((a,b)=>(isPartner(s,b.p)?1e3:0)+b.v-((isPartner(s,a.p)?1e3:0)+a.v));
-      $('#tab-rel').innerHTML='<div style="display:flex;flex-direction:column;gap:8px;max-height:210px;overflow:auto">'+list.map(({p,v},i)=>{const tag=isPartner(s,p)?ST_LABEL[coupleSt(s,p)]:isKid(p)?'criança':household().includes(p)?'mora junto':G.sims.includes(p)?'visitando':'vizinho(a)';return`<div class="relrow"><canvas width="80" height="80" data-ri="${i}" style="width:40px;height:40px"></canvas><div class="info"><b style="font-size:14px">${esc(p.name)}</b><small>${relLabel(v)} · ${tag} · ${Math.round(v)}</small><div class="relbar"><i style="width:${clamp(v,0,100)}%"></i></div></div></div>`;}).join('')+'</div>'+(G.pet?`<p class="hint">🐾 ${esc(G.pet.name)} está ${petMood(G.pet)}.</p>`:'')+'<p class="hint">Use o telefone para chamar amigos, ou toque em quem passa na calçada.</p>';
+      $('#tab-rel').innerHTML='<div style="display:flex;flex-direction:column;gap:8px;max-height:210px;overflow:auto">'+list.map(({p,v},i)=>{const tag=isPartner(s,p)?ST_LABEL[coupleSt(s,p)]:isKid(p)?'criança':household().includes(p)?'mora junto':G.sims.includes(p)?'visitando':'vizinho(a)';return`<div class="relrow"><canvas width="80" height="80" data-ri="${i}" style="width:40px;height:40px"></canvas><div class="info"><b style="font-size:14px">${esc(p.name)}</b><small>${relLabel(v)} · ${tag} · ${Math.round(v)}${relTrend(s,p)}</small><div class="relbar"><i style="width:${clamp(v,0,100)}%"></i></div></div></div>`;}).join('')+'</div>'+(G.pet?`<p class="hint">🐾 ${esc(G.pet.name)} está ${petMood(G.pet)}.</p>`:'')+'<p class="hint">Use o telefone para chamar amigos, ou toque em quem passa na calçada.</p>';
       document.querySelectorAll('#tab-rel canvas[data-ri]').forEach(cv2=>drawPortrait(cv2,list[+cv2.dataset.ri].p));}
     if(curTab==='des'){$('#tab-des').innerHTML=desTabHTML(s);document.querySelectorAll('#tab-des [data-asp]').forEach(b=>b.onclick=()=>{SFX.click();if(b.dataset.asp==='loja')openRewards(s);else openAspPick(s);});}
     if(curTab==='car'){const j=s.job;let jh;
@@ -3410,8 +3416,8 @@ function tryPlace(){
     for(const s of G.sims)checkWish(s,'buy');ghost.locked=false;if(G.money<d.price){ghost=null;$('#placeBar').hidden=true;}buildCatalog();}
   rebuildOcc();if(placed)stairPlaced(placed);repathAll();save();
 }
-const TOOLS=[['raise','⏫','Subir casa'],['room','⬛','Cômodo'],['expand','➕','Ampliar'],['wall','🧱','Parede'],['door','🚪','Porta'],['window','🪟','Janela'],['art','🖼️','Quadro'],['remove','🔨','Derrubar'],['wipe','💥','Demolir'],['floor','🟫','Piso'],['paint','🎨','Pintar'],['view','👁️','Visão']];
-const TOOL_HINT={raise:'Copia a casa inteira (piso e paredes) para o andar de cima com um toque no botão abaixo. Depois é só colocar uma escada.',room:`Toque num canto e depois no canto oposto: nasce um cômodo com piso e paredes (${fmt(COST.floor)}/m² + ${fmt(COST.wall)}/parede). Depois coloque uma porta.`,expand:`Para aumentar a casa: toque num canto encostado na casa e depois no canto oposto, do lado de fora. A parede antiga some e as novas sobem sozinhas.`,wipe:'Toque num canto e no canto oposto: derruba todas as paredes e tira o piso dessa área.',art:`Toque numa parede para pendurar um quadro (troca a cada toque) · ${fmt(200)}. Aparece com as paredes altas.`,wall:`Toque onde a parede começa e depois onde termina (numa reta) · ${fmt(COST.wall)} por parede.`,door:`Toque numa parede para colocar uma porta · ${fmt(COST.door)}.`,window:`Toque numa parede para colocar ou tirar uma janela · ${fmt(COST.window)}. Aparece nas paredes altas.`,remove:'Toque numa parede para derrubar.',floor:`Escolha o piso e toque nos quadrados · ${fmt(COST.floor)} cada. Piso interno no quintal aumenta a casa! Para construir em cima: ▲ e coloque piso sobre a casa (depois compre uma Escada em Comprar → Escadas).`,paint:`Escolha a cor e toque num cômodo · ${fmt(COST.paint)}.`,view:'Paredes baixas mostram melhor a casa; altas mostram janelas e quadros.'};
+const TOOLS=[['raise','⏫','Subir casa'],['room','⬛','Cômodo'],['expand','➕','Ampliar'],['push','↔️','Empurrar'],['wall','🧱','Parede'],['door','🚪','Porta'],['window','🪟','Janela'],['art','🖼️','Quadro'],['remove','🔨','Derrubar'],['wipe','💥','Demolir'],['floor','🟫','Piso'],['paint','🎨','Pintar'],['view','👁️','Visão']];
+const TOOL_HINT={push:'Toque numa parede da casa e depois no lugar para onde ela vai: o cômodo cresce ou diminui, levando portas e janelas junto.',raise:'Copia a casa inteira (piso e paredes) para o andar de cima com um toque no botão abaixo. Depois é só colocar uma escada.',room:`Toque num canto e depois no canto oposto: nasce um cômodo com piso e paredes (${fmt(COST.floor)}/m² + ${fmt(COST.wall)}/parede). Depois coloque uma porta.`,expand:`Para aumentar a casa: toque num canto encostado na casa e depois no canto oposto, do lado de fora. A parede antiga some e as novas sobem sozinhas.`,wipe:'Toque num canto e no canto oposto: derruba todas as paredes e tira o piso dessa área.',art:`Toque numa parede para pendurar um quadro (troca a cada toque) · ${fmt(200)}. Aparece com as paredes altas.`,wall:`Toque onde a parede começa e depois onde termina (numa reta) · ${fmt(COST.wall)} por parede.`,door:`Toque numa parede para colocar uma porta · ${fmt(COST.door)}.`,window:`Toque numa parede para colocar ou tirar uma janela · ${fmt(COST.window)}. Aparece nas paredes altas.`,remove:'Toque numa parede para derrubar.',floor:`Escolha o piso e toque nos quadrados · ${fmt(COST.floor)} cada. Piso interno no quintal aumenta a casa! Para construir em cima: ▲ e coloque piso sobre a casa (depois compre uma Escada em Comprar → Escadas).`,paint:`Escolha a cor e toque num cômodo · ${fmt(COST.paint)}.`,view:'Paredes baixas mostram melhor a casa; altas mostram janelas e quadros.'};
 function buildBuildPanel(){
   $('#bpTools').innerHTML=TOOLS.map(([k,ic,n])=>`<button data-k="${k}" class="${buildTool&&buildTool.kind===k?'on':''}"><span class="tool-ic">${ic}</span>${n}</button>`).join('');
   $('#bpTools').onclick=e=>{const b=e.target.closest('button');if(!b)return;const k=b.dataset.k;const prev=buildTool||{};bAnchor=null;bEnd=null;buildTool={kind:k,floor:prev.floor||'madeira',color:prev.color||WALLCOLS[0],pat:prev.pat||'',fill:!!prev.fill};buildBuildPanel();SFX.click();};
@@ -3420,7 +3426,7 @@ function buildBuildPanel(){
   if(t&&(t.kind==='room'||t.kind==='expand'))opts=`<div class="bp-opts chips" id="bpFloor">${Object.entries(FLOORS).filter(([k,f])=>!f.outdoor).map(([k,f])=>`<button data-f="${k}" class="${roomFloor()===k?'on':''}">${f.n}</button>`).join('')}</div>`;
   if(t&&t.kind==='floor')opts=`<div class="bp-opts chips" id="bpFloor">${Object.entries(FLOORS).map(([k,f])=>`<button data-f="${k}" class="${t.floor===k?'on':''}">${f.n}</button>`).join('')}<button data-f="grama" class="${t.floor==='grama'?'on':''}">Grama (tirar piso)</button></div><div class="bp-opts chips" id="bpFill"><button data-v="0" class="${!t.fill?'on':''}">Um quadrado</button><button data-v="1" class="${t.fill?'on':''}">Cômodo inteiro</button></div>`;
   if(t&&t.kind==='paint')opts=`<div class="bp-opts sw" id="bpWall">${WALLCOLS.map(c=>`<button style="background:${c}" data-c="${c}" class="${t.color===c?'on':''}" aria-label="Cor de parede"></button>`).join('')}</div><div class="bp-opts chips" id="bpPat" style="margin-top:6px">${WALLPATS.map(([k,n])=>`<button data-p="${k}" class="${(t.pat||'')===k?'on':''}">${n}</button>`).join('')}</div><div class="bp-opts sw" id="bpExt" style="margin-top:6px"><span style="font-size:12px;font-weight:800;color:var(--ink2);align-self:center">Fachada:</span>${['#e9e1d5','#f6e3b4','#cfe0f2','#f3d1d8','#d5e8cf','#e6dcf0','#b9a58f','#f4f1ec','#a85a3c'].map(c=>`<button style="background:${c}" data-x="${c}" class="${(G.extCol||'#e9e1d5')===c?'on':''}" aria-label="Cor da fachada"></button>`).join('')}</div>`;
-  if(t&&t.kind==='view')opts=`<div class="bp-opts chips" id="bpView">${['Baixas','Altas','Com telhado'].map((n,i)=>`<button data-v="${i}" class="${(G.wallMode||0)===i?'on':''}">${n}</button>`).join('')}</div><div class="bp-opts sw" id="bpView" style="margin-top:6px">${ROOFCOLS.map(c=>`<button style="background:${c}" data-rc="${c}" class="${(G.roofColor||ROOFCOLS[0])===c?'on':''}" aria-label="Cor do telhado"></button>`).join('')}</div>`;
+  if(t&&t.kind==='view')opts=`<div class="bp-opts chips" id="bpView">${['Baixas','Altas','Com telhado','Recortadas'].map((n,i)=>`<button data-v="${i}" class="${(G.wallMode||0)===i?'on':''}">${n}</button>`).join('')}</div><div class="bp-opts sw" id="bpView" style="margin-top:6px">${ROOFCOLS.map(c=>`<button style="background:${c}" data-rc="${c}" class="${(G.roofColor||ROOFCOLS[0])===c?'on':''}" aria-label="Cor do telhado"></button>`).join('')}</div>`;
   $('#bpOpts').innerHTML=opts;if(t)buildHint();else $('#bpHint').textContent='Escolha uma ferramenta. Para aumentar a casa use ➕ Ampliar; para um cômodo novo, ⬛ Cômodo.';
   const f=$('#bpFloor');if(f)f.onclick=e=>{const b=e.target.closest('button');if(b){buildTool.floor=b.dataset.f;buildBuildPanel();}};
   const fl=$('#bpFill');if(fl)fl.onclick=e=>{const b=e.target.closest('button');if(b){buildTool.fill=b.dataset.v==='1';buildBuildPanel();}};
@@ -3435,7 +3441,7 @@ function buildBuildPanel(){
 let modalPrevSpeed=null;
 function pauseFor(){if(G&&!G.demo&&G.speed){modalPrevSpeed=G.speed;setSpeed(0);}}
 function resumeFrom(){if(modalPrevSpeed){setSpeed(modalPrevSpeed);modalPrevSpeed=null;}}
-function openMenu(){$('#menu').hidden=false;$('#mnConfirm').hidden=true;$('#mnWallsV').textContent=['baixas','altas','com telhado'][G.wallMode||0];$('#mnSoundV').textContent=G.sound===false?'desligados':'ligados';$('#mnMusicV').textContent=G.music===false?'desligada':'ligada';$('#mnAgingV').textContent=G.aging==='on'?'ligado':'desligado';$('#mnAutoV').textContent=G.autopay?'ligado':'desligado';}
+function openMenu(){$('#menu').hidden=false;$('#mnConfirm').hidden=true;$('#mnWallsV').textContent=['baixas','altas','com telhado','recortadas'][G.wallMode||0];$('#mnSoundV').textContent=G.sound===false?'desligados':'ligados';$('#mnMusicV').textContent=G.music===false?'desligada':'ligada';$('#mnAgingV').textContent=G.aging==='on'?'ligado':'desligado';$('#mnAutoV').textContent=G.autopay?'ligado':'desligado';}
 $('#mnClose').onclick=()=>{$('#menu').hidden=true;};
 function setAuto(p,v){p.auto=v;if(!v&&p.cur&&p.cur.req.auto)cancelCur(p);if(!v)p.queue=p.queue.filter(q=>!q.auto);hudSig='';buildPortraits();toast(v?`${p.name} agora está no modo automático e cuida de si mesmo(a).`:`${p.name} voltou para o modo manual: só faz o que você mandar.`,v?'good':'');save();}
 let camGoal=null;
@@ -3445,15 +3451,15 @@ function setViewLevel(l,quiet){l=clamp(l,0,NL-1);if(l===viewL)return;const d=l-v
 function updLevelUI(){const b=$('#lvLbl');if(b)b.textContent=viewL?viewL+'º':'T';const dn=$('#lvDown'),up=$('#lvUp');if(dn)dn.disabled=viewL===0;if(up)up.disabled=viewL>=NL-1;}
 $('#lvDown').onclick=()=>setViewLevel(viewL-1);$('#lvUp').onclick=()=>setViewLevel(viewL+1);
 $('#rotL').onclick=()=>{if(!rotDragged)rotateAnim(-1);};$('#rotR').onclick=()=>{if(!rotDragged)rotateAnim(1);};
-$('#rotW').onclick=()=>{setWallMode(((G.wallMode||0)+1)%3);toast(['Paredes baixas: dá para ver dentro dos cômodos.','Paredes altas: dá para ver janelas e quadros.','Casa fechada com telhado.'][G.wallMode]);SFX.click();save();};
-function setWallMode(m){G.wallMode=m;G.wallsHigh=m>=1;const b=$('#rotW');if(b){b.classList.toggle('on',m>=1);b.textContent=m===2?'🏠':'🧱';}}
+$('#rotW').onclick=()=>{setWallMode(nextWM());toast(WM_TOAST[G.wallMode]);SFX.click();save();};
+function setWallMode(m){G.wallMode=m;G.wallsHigh=m>=1;const b=$('#rotW');if(b){b.classList.toggle('on',m>=1);b.textContent=m===2?'🏠':m===3?'✂️':'🧱';}}
 function lookAt(gx,gy){camGoal=[W/2-P(gx,gy,.5)[0]*cam.z,(W<640?H*.4:H/2)-P(gx,gy,.5)[1]*cam.z];}
 $('#spOut').onclick=()=>{const p=sel();if(!p||p.away)return;SFX.pop();
   if(p.outside||p.queue.some(q=>q.kind==='exit'||q.kind.startsWith('out_'))){if(p.cur&&p.cur.kind!=='self')cancelCur(p);p.queue=p.queue.filter(q=>!(q.kind==='exit'||q.kind.startsWith('out_'))||q===p.queue[0]&&p.cur);queueOut(p,{kind:'enter',label:'Voltar para casa',icon:'🏠'});toast(`${p.name} está voltando para casa.`);}
   else placesPie(p);};
 $('#spCall').onclick=()=>{const p=sel();if(!p||p.away)return;const ph=G.objects.find(o=>o.type==='telefone');if(ph){queueAct(p,ph,findAct(ph,'ligar'),false);SFX.pop();}else openCallList(p);};
 $('#spAuto').onclick=()=>{const p=sel();if(p){setAuto(p,!p.auto);SFX.click();}};
-$('#mnWalls').onclick=()=>{setWallMode(((G.wallMode||0)+1)%3);openMenu();};
+$('#mnWalls').onclick=()=>{setWallMode(nextWM());openMenu();};
 $('#mnSound').onclick=()=>{G.sound=G.sound===false;openMenu();};
 $('#mnMusic').onclick=()=>{G.music=G.music===false;openMenu();};
 $('#mnSave').onclick=()=>{save(true);};
@@ -3510,7 +3516,7 @@ function drawPetModal(){if($('#petm').hidden)return;pmCtx.setTransform(1,0,0,1,0
 
 /* ================= save / load ================= */
 const SAVE_KEY='morada.save.v1';
-function serialize(){return JSON.stringify({v:3,fw2:1,savedAt:Date.now(),couples:G.couples||{},preg:G.preg||null,dow0:G.dow0||0,rels:G.rels,partners:G.partners,townies:G.townies,pendingVisits:G.pendingVisits,welcomed:G.welcomed,nextSimId:G.nextSimId,pizzaAt:G.pizzaAt,sushiAt:G.sushiAt,luck:1,money:G.money,min:G.min,speed:G.speed||1,sel:G.sel,nextId:G.nextId,freeWill:G.freeWill,wallsHigh:G.wallsHigh,sound:G.sound,music:G.music,
+function serialize(){return JSON.stringify({v:3,fw2:1,savedAt:Date.now(),couples:G.couples||{},preg:G.preg||null,dow0:G.dow0||0,rels:G.rels,partners:G.partners,townies:G.townies,pendingVisits:G.pendingVisits,welcomed:G.welcomed,nextSimId:G.nextSimId,pizzaAt:G.pizzaAt,sushiAt:G.sushiAt,luck:1,relT:G.relT||{},seen29:G.seen29||0,money:G.money,min:G.min,speed:G.speed||1,sel:G.sel,nextId:G.nextId,freeWill:G.freeWill,wallsHigh:G.wallsHigh,sound:G.sound,music:G.music,
   walls:[...G.walls],floor:G.floor,wcol:G.wcol,lot2:1,trash:G.trash||0,bill:G.bill||null,maid:!!G.maid,autopay:!!G.autopay,powerOff:!!G.powerOff,pantry:G.pantry||{},techAt:G.techAt||0,party:G.party||null,books:G.books||[],aging:G.aging||'off',extCol:G.extCol,extPat:G.extPat,wallMode:G.wallMode||0,roofColor:G.roofColor,roofStyle:G.roofStyle,viewL,up:(G.up||[]).map(u=>({walls:[...u.walls],floor:u.floor,wcol:u.wcol})),mail:G.mail,weather:G.weather,lastDay:G.lastDay,celebrated:G.celebrated,
   objects:G.objects.map(o=>({id:o.id,type:o.type,x:o.x,y:o.y,l:o.l||0,rot:o.rot,color:o.color,food:o.food||0,slices:o.slices||0,dishes:o.dishes||0,broken:o.broken||0,plant:o.plant||undefined,baby:o.baby?Object.assign({},o.baby,{held:false,cry:false}):undefined})),
   pet:G.pet?{breed:G.pet.breed||null,kind:G.pet.kind,name:G.pet.name,color:G.pet.color,pattern:G.pet.pattern,needs:G.pet.needs,x:G.pet.bed&&G.pet.app?G.pet.app[0]+.5:G.pet.x,y:G.pet.bed&&G.pet.app?G.pet.app[1]+.5:G.pet.y}:null,
@@ -3554,7 +3560,7 @@ function openCreator(m,idx){casMode=m;
   fillCreator();$('#cas').hidden=false;$('#title').hidden=true;}
 $('#casBack').onclick=()=>{if(casMode==='baby'){$('#casGo').click();return;}$('#cas').hidden=true;if(casMode==='new')$('#title').hidden=false;else resumeFrom();};
 let casCrib=null;
-function enterGame(){viewL=0;if(G.wallMode==null)G.wallMode=G.wallsHigh?1:0;setWallMode(G.wallMode);roofVer++;updLevelUI();dirtyLayer();rebuildOcc();computeRegions();G.sims.forEach(fillWishes);$('#title').hidden=true;$('#cas').hidden=true;$('#hud').hidden=false;buildPortraits();buildNeedsUI();mode='live';setMode('live');setSpeed(G.speed||1);fitCam();checkSpecialDates();}
+function enterGame(){viewL=0;if(G.wallMode==null)G.wallMode=G.wallsHigh?1:3;setWallMode(G.wallMode);roofVer++;updLevelUI();dirtyLayer();rebuildOcc();computeRegions();G.sims.forEach(fillWishes);$('#title').hidden=true;$('#cas').hidden=true;$('#hud').hidden=false;buildPortraits();buildNeedsUI();mode='live';setMode('live');setSpeed(G.speed||1);fitCam();checkSpecialDates();}
 $('#casGo').onclick=()=>{
   for(const sp of casSpecs)sp.name=(sp.name||'').trim()||'Sem nome';
   if(casMode==='new'){G=newWorld(casSpecs);G.pet=makePet('cachorro','Luck','#d9b07a','pug');enterGame();save();toast(`Bem-vindos, ${G.sims[0].name} e ${G.sims[1].name}! Toque nos móveis para começar.`,'love');SFX.wish();confetti();}
@@ -3592,7 +3598,7 @@ function frameBody(ts){
     const hh=G.sims.filter(s=>!s.visitor&&!s.away);const sleepAll=hh.length>0&&!G.sims.some(s=>s.visitor)&&hh.every(s=>s.cur&&s.cur.act&&s.cur.act.sleep&&s.cur.stage==='act');
     const sp=G.speed||0;const rate=sp===0?0:(sleepAll?60:SPEEDS[sp]);const dtG=dtR*rate;G.min+=dtG;
     const mv=dtR*MOVE[sp];
-    if(sp>0){for(const s of [...G.sims]){try{if(s.away){awayUpdate(s,dtG);continue;}checkCommute(s);checkClass(s);updateSim(s,dtG,mv,dtR);watchdog(s,dtR);}catch(e){reportErr(e);unstick(s);}}
+    if(sp>0){for(const s of [...G.sims]){try{if(s.away){awayUpdate(s,dtG);continue;}checkCommute(s);checkClass(s);updateSim(s,dtG,simMv(s,mv,dtR),dtR);simPost(s);watchdog(s,dtR);}catch(e){reportErr(e);unstick(s);}}
       try{updateVisitors();}catch(e){reportErr(e);}updateCars(dtR*Math.min(2.2,MOVE[sp]/2.3));updBirds(dtR);updateWalkers(dtR*Math.min(2.2,MOVE[sp]/2.3));
       if(G.sushiAt&&G.min>=G.sushiAt){G.sushiAt=null;const tb=G.objects.find(o=>o.type==='mesa_jantar');const t=nearestFree(tb?tb.x+1:3,tb?tb.y+1:3,tb&&tb.l);if(t){G.objects.push({id:G.nextId++,type:'sushi',x:t[0],y:t[1],rot:0,slices:8,l:tb&&tb.l||0});rebuildOcc();if(!G.demo){toast('O sushi chegou! 🍣','good');SFX.cash();}}}
       if(G.pizzaAt&&G.min>=G.pizzaAt){G.pizzaAt=null;const tb=G.objects.find(o=>o.type==='mesa_jantar');const t=nearestFree(tb?tb.x:3,tb?tb.y+1:3,tb&&tb.l);if(t){G.objects.push({id:G.nextId++,type:'pizza',x:t[0],y:t[1],rot:0,slices:6,l:tb&&tb.l||0});rebuildOcc();if(!G.demo){toast('A pizza chegou!','good');SFX.cash();}}}if(G.pet)updatePet(G.pet,dtG,mv);try{updateBabies(dtG);if(!G.demo)familyTick();extraTick(dtG,dtR);}catch(e){reportErr(e);}updateStaff(dtR);updateWeather(dtR*Math.min(rate,10)/2.5);
@@ -3953,7 +3959,6 @@ function satisfyNeed(s,k){
 document.addEventListener('click',e=>{const r=e.target.closest&&e.target.closest('#tab-nec .need');if(!r)return;const i=r.querySelector('i[id^="nb-"]');if(!i)return;satisfyNeed(sel(),i.id.slice(3));});
 setInterval(()=>{if(!G||G.demo)return;document.querySelectorAll('#tab-nec .need').forEach(r=>{const i=r.querySelector('i[id^="nb-"]');if(!i)return;const v=parseFloat(i.style.width)||100;r.classList.toggle('crit',v<20);});},400);
 /* ---- moodlets como cartões ---- */
-function addMoodlet(s,n,v,dur,em){const e=s.moodlets.find(m=>m.n===n);if(e){e.until=G.min+dur;e.d=dur;return;}s.moodlets.push({n,v,until:G.min+dur,d:dur,e:em||moodEmo(n,v)});}
 function fmtLeft(m){m=Math.max(0,Math.round(m));return m>=1440?Math.round(m/1440)+'d':m>=60?Math.round(m/60)+'h':m+'min';}
 function moodletHTML(s){return s.moodlets.map(x=>{const E=(typeof EMO!=='undefined'&&EMO[x.e])||{i:x.v<0?'😕':'🙂',c:x.v<0?'#ec5f5c':'#43be86',n:''};const left=x.until-G.min,pct=x.d?clamp(left/x.d*100,0,100):100;
   return `<span class="ml2${x.v<0?' neg':''}" style="--ec:${E.c}" title="${esc(x.n)} · ${E.n} · termina em ${fmtLeft(left)}"><b>${E.i}</b><span class="mlt">${esc(x.n)}<small>${x.v>0?'+':''}${x.v} · ${fmtLeft(left)}</small></span><i style="width:${pct}%"></i></span>`;}).join('');}
@@ -3979,6 +3984,178 @@ function openPie(sx,sy,title,items){
     for(const q of bs){q.b.style.left=q.x+'px';q.b.style.top=q.y+'px';}}
   SFX.click();
 }
+/* ================= v29: reações, desvio, recorte de paredes, empurrar parede, fofoca ================= */
+/* ---------- 1. reações expressivas ---------- */
+const REACT={
+  cheer:{m:95,open:1,fx:'🎉',dur:2.2},laugh:{m:90,open:1,fx:'😂',dur:2.2},angry:{m:-60,ang:1,fx:'💢',dur:2.4},
+  sad:{m:-85,fx:'💧',dur:2.6},shock:{m:-30,open:1,fx:'❗',dur:1.6},facepalm:{m:-40,fx:'😩',dur:2},
+  yawn:{m:0,open:1,fx:'💤',dur:2.2},hungry:{m:-45,fx:'🌀',dur:2},potty:{m:-45,fx:'😬',dur:2.2},stink:{m:-45,fx:'💨',dur:2},hi:{m:70,fx:'👋',dur:1.6}};
+function react(s,a,o){if(!s||s.away||!REACT[a]||G.demo&&!o)return false;const c=s.cur;if(c&&c.act&&c.stage==='act'&&(c.act.sleep||['banho','banheira','vaso','nadar','boiar'].includes(c.act.id)))return false;
+  if(s.react&&s.react.t>.4&&!(o&&o.force))return false;const R=REACT[a];s.react={a,t:(o&&o.dur)||R.dur,d:(o&&o.dur)||R.dur,stop:!(o&&o.move)};s._reactAt=TT;
+  const k=simScale(s);puff('txt',s.x,s.y,2.75*k,{txt:R.fx,size:16,vx:0,vy:0,vz:.5,life:1.4});
+  if(a==='sad')for(let i=0;i<3;i++)setTimeout(()=>puff('drop',s.x+rand(-.08,.08),s.y,2.1*k,{vz:rand(.1,.4),g:3,vx:rand(-.3,.3),vy:rand(-.2,.2),life:.9}),i*450);
+  if(a==='cheer')for(let i=0;i<10;i++)puff('confetti',s.x,s.y,2.4*k,{vz:rand(.8,1.6),g:2.4,vx:rand(-.6,.6),vy:rand(-.6,.6),col:pick(['#ee5d7c','#f0bd45','#159c93','#3d7fd1']),life:1.3});
+  return true;}
+function reactArm(s,side,T){const r=s.react;if(!r)return null;const e=r.d-r.t;
+  switch(r.a){
+    case 'cheer':return side>0?-2.7+Math.sin(T*9)*.35:2.7+Math.sin(T*9+1)*.35;
+    case 'laugh':return side>0?-.98+Math.sin(T*16)*.1:-.9+Math.sin(T*16+1)*.1;
+    case 'angry':return side>0?-.45+Math.sin(T*18)*.3:.45-Math.sin(T*18)*.3;
+    case 'sad':return side>0?-2.03:-1.75;
+    case 'shock':{const k=Math.min(1,e*6);return side>0?-2.4*k:2.4*k;}
+    case 'facepalm':return side>0?-2.15:.08;
+    case 'yawn':return side>0?-2.9:2.9;
+    case 'hungry':return side>0?-.98:-.9;
+    case 'potty':return side>0?-.25+Math.sin(T*20)*.1:.25-Math.sin(T*20)*.1;
+    case 'stink':return side>0?-2.03+Math.sin(T*14)*.12:.1;
+    case 'hi':return side>0?-2.6+Math.sin(T*12)*.35:.1;}
+  return null;}
+const FIDGETS=['stretch','wave','phone','scratch','cross','look'];
+function extraArm(s,side,T){const r=reactArm(s,side,T);if(r!=null)return r;
+  if(s.pose==='walk'||s.pose==='run')return null;
+  switch(s.anim){case 'phone':return side>0?-1.3+Math.sin(T*1.3)*.05:-.15;case 'scratch':return side>0?-2.55+Math.sin(T*14)*.12:.08;case 'cross':return side>0?-1.0:-1.05;case 'look':return side*.08;}
+  return null;}
+function startFidget(s){const k=pick(['stretch','wave','phone','phone','scratch','cross','look','look']);s.anim=k;s.fidgetDur=k==='phone'?4.5:k==='cross'||k==='look'?2.6:1.6;
+  if(k==='phone')s.prop='celular';if(k==='look'){const dirs=[[1,0],[0,1],[-1,0],[0,-1]].filter(d=>d[0]!==(s.face||[1,0])[0]||d[1]!==(s.face||[1,0])[1]);s.face=pick(dirs);}}
+function reactJump(s){const r=s.react;if(!r||!(s.pose==='stand'||s.pose==='walk'))return 0;const T=TT,e=r.d-r.t;
+  switch(r.a){case 'cheer':return Math.abs(Math.sin(T*9))*5;case 'shock':return e<.3?Math.sin(e/.3*Math.PI)*4:0;case 'laugh':return Math.abs(Math.sin(T*16))*1.2;case 'potty':return Math.abs(Math.sin(T*12))*1.5;case 'angry':return Math.abs(Math.sin(T*9))*1.4;}return 0;}
+function reactEb(s,side){const r=s.react;if(!r)return 0;switch(r.a){case 'sad':return side>0?2.13:1.7;case 'facepalm':return side>0?2.2:0;case 'hungry':case 'laugh':return -2.26;case 'stink':return side>0?2.13:0;}return 0;}
+function reactMood(s){const r=s.react;return r&&REACT[r.a]?REACT[r.a].m:null;}
+function reactAngry(s){return s.react&&REACT[s.react.a]&&REACT[s.react.a].ang?1:0;}
+function reactMouth(c,s,hx,hy){const r=s.react;if(!r||!REACT[r.a]||!REACT[r.a].open)return false;const big=r.a==='yawn'||r.a==='shock'?1.25:1;
+  c.fillStyle='#5a2430';c.beginPath();c.ellipse(hx+4.9,hy+6.9,1.9*big,(r.a==='laugh'?1.4+Math.abs(Math.sin(TT*16))*.5:1.5)*big,0,0,7);c.fill();
+  c.fillStyle='#e86a7a';c.beginPath();c.ellipse(hx+4.9,hy+7.6*1,1.1*big,.55*big,0,0,7);c.fill();return true;}
+const NEED_REACT={energia:'yawn',fome:'hungry',bexiga:'potty',higiene:'stink'};
+const NO_REACT_ML=['Molhado(a) de chuva','Barulhinho de chuva','Aspiração em progresso','Cafeína'];
+function addMoodlet(s,n,v,dur,em){const e=s.moodlets.find(m=>m.n===n);if(e){e.until=G.min+dur;e.d=dur;return;}const emo=em||moodEmo(n,v);s.moodlets.push({n,v,until:G.min+dur,d:dur,e:emo});
+  try{if(!G.demo&&!NO_REACT_ML.includes(n)&&!(s._reactAt>TT-6)){
+    if(/susto/i.test(n))react(s,'shock');else if(v>=12)react(s,'cheer');else if(v<=-6){react(s,emo==='irritado'?'angry':emo==='constrangido'||emo==='tenso'?'facepalm':emo==='desconfortavel'?'facepalm':'sad');}}}catch(_){}}
+function reactTriggers(s){if(G.demo||s.away)return;s._crit=s._crit||{};
+  for(const k in NEED_REACT){const v=s.needs[k];if(v<14&&!s._crit[k]){s._crit[k]=1;const c=s.cur;if(!(c&&c.act&&c.act.rates&&c.act.rates[k]>0)&&!(s._reactAt>TT-5))react(s,NEED_REACT[k]);}else if(v>30)s._crit[k]=0;}
+  const sw=s.socWith;if(sw&&!sw._r){sw._r=1;const id=sw.act.id;const f=simById(sw.from);
+    if(id==='piada'||id==='cocegas')setTimeout(()=>react(s,'laugh',{move:true}),700);
+    else if(id==='elogiar')setTimeout(()=>react(s,'hi',{move:true}),500);
+    else if(id==='discutir'){react(s,'angry',{move:true,dur:2.6});if(f)react(f,'angry',{move:true,dur:2.6,force:true});}}
+  const c=s.cur;if(c&&c.kind==='soc'&&c.stage==='act'&&!c._g){c._g=1;if(c.act.id==='fofocar')doGossip(s,c.target);}}
+/* ---------- 2. desviar uns dos outros / esperar a vez ---------- */
+function avoidMv(s,mv,dtR){const c=s.cur,walking=c&&c.stage==='walk'&&c.path&&c.path.length&&!s.onStair;let tx=0,ty=0,m=mv;
+  if(walking){const pt=c.path[0];let dx=pt[0]+.5-s.x,dy=pt[1]+.5-s.y;const L=Math.hypot(dx,dy);if(L>1e-4){dx/=L;dy/=L;
+    for(const o of G.sims){if(o===s||o.away||!!o.outside!==!!s.outside||(o.l||0)!==(s.l||0)||o.seat)continue;
+      const ox=o.x+(o.avo?o.avo[0]:0)-s.x,oy=o.y+(o.avo?o.avo[1]:0)-s.y,d=Math.hypot(ox,oy);if(d>2.2||d<1e-4)continue;
+      const ahead=(ox*dx+oy*dy)/d;if(ahead<-.35&&d>.9)continue;const lat=-dy*ox+dx*oy;
+      const oc=o.cur,oWalk=oc&&oc.stage==='walk'&&oc.path&&oc.path.length;let odx=0,ody=0;
+      if(oWalk){const q=oc.path[0];odx=q[0]+.5-o.x;ody=q[1]+.5-o.y;const l2=Math.hypot(odx,ody)||1;odx/=l2;ody/=l2;}
+      const headOn=oWalk&&(odx*dx+ody*dy)<-.4,same=oWalk&&(odx*dx+ody*dy)>.6;
+      const side=headOn?1:(lat>0?-1:1),k=d<.9?1:clamp((2.2-d)/1.3,0,1)*clamp((ahead+.45)*1.3,0,1);
+      tx+=-dy*side*.32*k;ty+=dx*side*.32*k;
+      if(same&&d<.8&&ahead>.5)m=Math.min(m,mv*.55);
+      if(headOn&&d<.62&&s.id>o.id){s._wait=Math.max(s._wait||0,.35);}
+      if(!oWalk&&d<.5&&ahead>.5)m=Math.min(m,mv*.6);}}}
+  if(s._wait>0){s._wait-=dtR;m=0;if(!s._waitShown){s._waitShown=1;}}else s._waitShown=0;
+  const a=s.avo||(s.avo=[0,0]),f=Math.min(1,dtR*(walking?12:4));a[0]+=(tx-a[0])*f;a[1]+=(ty-a[1])*f;if(Math.abs(a[0])<1e-3&&Math.abs(a[1])<1e-3){a[0]=0;a[1]=0;}
+  return m;}
+function simMv(s,mv,dtR){frameHook();if(s.react){s.react.t-=dtR;if(s.react.t<=0)s.react=null;}
+  try{reactTriggers(s);}catch(e){}
+  let m=mv;if(s.react&&s.react.stop&&s.cur&&s.cur.stage==='walk')m=0;
+  try{m=avoidMv(s,m,dtR);}catch(e){}return m;}
+function simPost(s){if((s.react&&s.react.stop||s._wait>0)&&s.pose==='walk'&&s.cur&&s.cur.stage==='walk')s.pose='stand';}
+/* ---------- 3. paredes recortadas (cutaway estilo The Sims) ---------- */
+const HOV={x:0,y:0,t:-1e9};addEventListener('pointermove',e=>{if(e.pointerType==='mouse'){HOV.x=e.clientX;HOV.y=e.clientY;HOV.t=performance.now();}},{passive:true});
+let _cutF=null,_cutFT=-1;
+function cutFocus(){if(_cutFT===TT&&_cutF)return _cutF;_cutFT=TT;const now=performance.now();let f=null;
+  if(typeof mode!=='undefined'&&mode==='live'&&now-HOV.t<2500)f=s2g(HOV.x,HOV.y,LZ());
+  if(!f){const s=G&&!G.demo&&sel();if(s&&!s.outside&&!s.away&&(s.l||0)===viewL)f=[s.x,s.y];}
+  if(!f)f=s2g(W/2,H/2,LZ());_cutF=f;return f;}
+const CUT=new Map();
+function cutH(a,b,l,type,free,h0){if(type==='front'&&!free)return h0;
+  const mx=(a[0]+b[0]+1)/2,my=(a[1]+b[1]+1)/2,f=cutFocus(),v=VR?toV(mx,my):[mx,my],fv=VR?toV(f[0],f[1]):f;
+  const d=Math.hypot(mx-f[0],my-f[1]),front=(v[0]+v[1])>=(fv[0]+fv[1])-.4;
+  const tgt=front?.3+(HALL-.3)*clamp((d-2.4)/1.8,0,1):HALL;
+  const key=l+'|'+mx+'|'+my,now=performance.now();let e=CUT.get(key);if(!e){e={h:tgt,t:now};CUT.set(key,e);}
+  const dt=Math.min(.1,(now-e.t)/1000);e.t=now;e.h+=(tgt-e.h)*Math.min(1,dt*9);return e.h;}
+function nextWM(){const m=G.wallMode||0;return m===0?3:m===3?1:m===1?2:0;}
+const WM_TOAST=['Paredes baixas: dá para ver dentro dos cômodos.','Paredes altas: dá para ver janelas e quadros.','Casa fechada com telhado.','Paredes recortadas: perto do sim (ou do mouse) as paredes baixam, longe ficam altas. Igual ao The Sims!'];
+/* ---------- 4. empurrar parede (cômodo cresce ou diminui) ---------- */
+function pushEdgeAt(pt){if(!pt)return null;const WM=WL(viewL),fx=pt[0],fy=pt[1],rx=Math.round(fx),ry=Math.round(fy),c=[];
+  if(Math.abs(fx-rx)<.14){const k='W,'+rx+','+Math.floor(fy);const w=WM.get(k);if(w&&!w.fence)c.push([Math.abs(fx-rx),k]);}
+  if(Math.abs(fy-ry)<.14){const k='N,'+Math.floor(fx)+','+ry;const w=WM.get(k);if(w&&!w.fence)c.push([Math.abs(fy-ry),k]);}
+  c.sort((p,q)=>p[0]-q[0]);return c.length?c[0][1]:null;}
+function pushRun(k){const l=viewL,WM=WL(l),p=k.split(','),o=p[0];const X=o==='W'?+p[1]:+p[2],t=o==='W'?+p[2]:+p[1];
+  const key=(XX,tt)=>o==='W'?`W,${XX},${tt}`:`N,${tt},${XX}`,tile=(u,tt)=>o==='W'?[u,tt]:[tt,u],endKey=(u,tt)=>o==='W'?`N,${u},${tt}`:`W,${tt},${u}`;
+  const ind=(u,tt)=>{const q=tile(u,tt);return inLot(q[0],q[1])&&isIndoor(q[0],q[1],l);};const cls=tt=>(ind(X,tt)?1:0)+(ind(X-1,tt)?2:0);
+  const isW=tt=>{const w=WM.get(key(X,tt));return!!w&&!w.fence;},junc=tt=>{const a=WM.get(endKey(X,tt)),b=WM.get(endKey(X-1,tt));return(!!a&&!a.fence)||(!!b&&!b.fence);};
+  const c0=cls(t);let t0=t,t1=t;while(isW(t0-1)&&cls(t0-1)===c0&&!junc(t0))t0--;while(isW(t1+1)&&cls(t1+1)===c0&&!junc(t1+1))t1++;
+  return{o,X,t0,t1,c0,key,tile,endKey,ind};}
+function planPush(a,b){const l=viewL,F=FL(l),C=WC(l),WM=WL(l),plan={floors:[],addW:[],delW:[],delF:[],mv:[],cost:0,err:'',info:'',run:null,d:0};
+  const k=pushEdgeAt(a);if(!k){plan.err='Toque em cima de uma parede da casa.';return plan;}
+  const R=pushRun(k);plan.run=R;const {o,X,t0,t1,c0,key,tile,endKey,ind}=R;
+  if(!c0){plan.err='Essa parede não faz parte de um cômodo.';return plan;}
+  const perp=o==='W'?(b||a)[0]:(b||a)[1];let d=clamp(Math.round(perp-X),-8,8);plan.d=d;
+  if(!d){plan.info=`Parede com ${t1-t0+1} m. Arraste para dentro ou para fora.`;return plan;}
+  const X2=X+d,lo=Math.min(X,X2),hi=Math.max(X,X2)-1,T=[];for(let tt=t0;tt<=t1;tt++)T.push(tt);
+  const has=kk=>{const w=WM.get(kk);return!!w&&!w.fence;},fenceAt=kk=>{const w=WM.get(kk);return!!w&&!!w.fence;};
+  const inner=()=>{for(let u=lo+1;u<=hi;u++)for(const tt of T)if(u!==X&&has(key(u,tt)))return true;for(let u=lo;u<=hi;u++)for(let tt=t0;tt<t1;tt++)if(has(endKey(u,tt+1)))return true;return false;};
+  for(const tt of T){plan.delW.push(key(X,tt));const nk=key(X2,tt);if(has(nk)){plan.err='Já tem uma parede ali.';return plan;}if(!edgeInLotRaw(nk)){plan.err='Sai do terreno.';return plan;}if(edgeBlocked(nk)){plan.err='Tem um móvel no caminho da parede.';return plan;}if(fenceAt(nk))plan.delW.push(nk);plan.addW.push(nk);plan.mv.push([key(X,tt),nk]);}
+  if(c0===3){for(let u=lo;u<=hi;u++)for(const tt of T)if(!ind(u,tt)){plan.err='A parede sairia da casa.';return plan;}
+    if(inner()){plan.err='Tem outra parede no caminho.';return plan;}
+    for(const tt of T)if(!ind(X2,tt)||!ind(X2-1,tt)){plan.err='Um dos cômodos ficaria pequeno demais.';return plan;}
+    plan.info=`Move a parede entre os cômodos ${Math.abs(d)} m.`;return plan;}
+  const inDir=c0===1?1:-1,out=d*inDir<0;
+  for(let u=lo;u<=hi;u++)for(const tt of T){const q=tile(u,tt);if(!inLot(q[0],q[1])){plan.err='Sai do terreno.';return plan;}}
+  if(inner()){plan.err='Tem outra parede no caminho.';return plan;}
+  if(out){for(let u=lo;u<=hi;u++)for(const tt of T){const q=tile(u,tt);if(ind(u,tt)){plan.err='Esbarra em outro cômodo.';return plan;}
+      if(l>0&&!isIndoor(q[0],q[1],l-1)){plan.err='No andar de cima precisa ter casa embaixo.';return plan;}
+      const src=tile(inDir>0?X:X-1,tt),si=TI(src[0],src[1]);plan.floors.push([q[0],q[1],F[si]||roomFloor(),C[si]||'#f2f1ee']);}
+    for(let u=lo;u<=hi;u++){for(const tt of T){const kk=key(u,tt);if(u>lo&&u!==X&&fenceAt(kk))plan.delW.push(kk);}for(let tt=t0;tt<t1;tt++){const kk=endKey(u,tt+1);if(fenceAt(kk))plan.delW.push(kk);}
+      for(const [tt,nb] of [[t0,t0-1],[t1+1,t1+1]]){const ek=endKey(u,tt);if(!ind(u,nb)){if(!has(ek)){if(fenceAt(ek))plan.delW.push(ek);if(edgeInLotRaw(ek)&&!edgeBlocked(ek))plan.addW.push(ek);}}}}
+    plan.cost=plan.floors.length*COST.floor+(plan.addW.length-plan.mv.length)*COST.wall;
+    plan.info=`Aumenta ${plan.floors.length} m² · ${fmt(plan.cost)}`;return plan;}
+  for(let u=lo;u<=hi;u++)for(const tt of T){const q=tile(u,tt);if(!ind(u,tt)){plan.err='A parede sairia da casa.';return plan;}
+    if(occAt(q[0],q[1],l)){plan.err='Tem móvel nessa parte. Tire antes de diminuir o cômodo.';return plan;}
+    if(l<NL-1&&FL(l+1)[TI(q[0],q[1])]){plan.err='Tem andar de cima em cima dessa parte.';return plan;}
+    if(G.sims.some(s=>!s.away&&!s.outside&&(s.l||0)===l&&Math.floor(s.x)===q[0]&&Math.floor(s.y)===q[1])){plan.err='Tem alguém em pé nessa parte.';return plan;}
+    plan.delF.push(q);}
+  for(const tt of T)if(!ind(inDir>0?X2:X2-1,tt)){plan.err='O cômodo ficaria pequeno demais.';return plan;}
+  for(let u=lo;u<=hi;u++)for(const [tt,nb] of [[t0,t0-1],[t1+1,t1+1]]){const ek=endKey(u,tt);if(ind(u,nb)){if(!has(ek)&&edgeInLotRaw(ek))plan.addW.push(ek);}else if(has(ek))plan.delW.push(ek);}
+  plan.cost=Math.max(0,plan.addW.length-plan.mv.length)*COST.wall;plan.info=`Diminui ${plan.delF.length} m²${plan.cost?' · '+fmt(plan.cost):''}`;return plan;}
+function applyPush(plan){const l=viewL,F=FL(l),C=WC(l),WM=WL(l);
+  if(plan.err){toast(plan.err,'bad');SFX.bad();return false;}if(!plan.d){toast('Arraste a parede para dentro ou para fora.');return false;}
+  if(plan.cost>0&&!spend(plan.cost))return false;
+  const vals=new Map(plan.mv.map(([a,b])=>[b,Object.assign({},WM.get(a)||{})]));
+  for(const [x,y,f,col] of plan.floors){const i=TI(x,y);F[i]=f;C[i]=col;}for(const [x,y] of plan.delF)F[TI(x,y)]=null;
+  for(const k of plan.delW)WM.delete(k);for(const k of plan.addW)WM.set(k,vals.get(k)||{});
+  SFX.build();if(!l)dirtyLayer();afterBuild();
+  toast(plan.floors.length?`Cômodo aumentou ${plan.floors.length} m²!`:plan.delF.length?`Cômodo diminuiu ${plan.delF.length} m².`:'Parede movida!','good');return true;}
+function drawPushPreview(ctx){const a=bAnchor||hoverPt;if(!a)return;const ew=(ek,col,sc,h)=>{const p=ek.split(','),x=+p[1],y=+p[2];if(p[0]==='W')poly(ctx,[[x,y,0],[x,y+1,0],[x,y+1,h],[x,y,h]],col,sc);else poly(ctx,[[x,y,0],[x+1,y,0],[x+1,y,h],[x,y,h]],col,sc);};
+  const tl=(x,y,col,sc)=>poly(ctx,[[x,y,.03],[x+1,y,.03],[x+1,y+1,.03],[x,y+1,.03]],col,sc);
+  if(!bAnchor){const k=pushEdgeAt(a);if(!k)return;const R=pushRun(k);for(let tt=R.t0;tt<=R.t1;tt++)ew(R.key(R.X,tt),'rgba(21,156,147,.4)','#159c93',HALL*.9);return;}
+  const plan=planPush(bAnchor,bEnd||bAnchor);if(!plan.run)return;const R=plan.run;
+  for(let tt=R.t0;tt<=R.t1;tt++)ew(R.key(R.X,tt),'rgba(21,156,147,.25)','#159c93',HALL*.9);
+  if(plan.err||!plan.d)return;
+  for(const [x,y] of plan.floors)tl(x,y,'rgba(21,156,147,.28)','#159c93');for(const [x,y] of plan.delF)tl(x,y,'rgba(236,95,92,.28)','#ec5f5c');
+  for(const k of plan.addW)ew(k,'rgba(21,156,147,.45)','#159c93',.9);for(const k of plan.delW)ew(k,'rgba(236,95,92,.35)','#ec5f5c',.9);}
+/* ---------- 5. fofoca e relacionamentos que mudam ---------- */
+EMO.irritado={n:'Irritado(a)',i:'😠',c:'#e2533b'};
+SOC.fofocar={id:'fofocar',label:'Fofocar',icon:'🤫',dur:20,soc:24,rel:2.2,fun:16,min:15,anim:'talk'};
+SOC.discutir={id:'discutir',label:'Discutir',icon:'😤',dur:12,soc:6,rel:-6,fun:-8,min:-100,anim:'talk',noAuto:1};
+ACT_EMO.fofocar=['brincalhao','Fofoca fresquinha',8,180];ACT_EMO.discutir=['irritado','Discussão chata',-10,240];
+function addRel(a,b,v){const k=rkey(idOf(a),idOf(b));G.rels[k]=clamp((G.rels[k]||0)+v,-100,100);(G.relT||(G.relT={}))[k]=G.min;}
+function doGossip(s,t){if(!t)return;const known=Object.keys(G.rels).map(k=>k.split('-').map(Number)).filter(([a,b])=>a===s.id||b===s.id).map(([a,b])=>a===s.id?b:a).filter(id=>id!==t.id&&id!==s.id).map(personById).filter(Boolean);
+  const pool=known.length?known:(G.townies||[]).filter(x=>x.id!==t.id);if(!pool.length){s._gossipAbout=null;return;}const p=pick(pool),good=rel(s,p)>=25;const k=rkey(t.id,p.id);G.rels[k]=clamp((G.rels[k]||0)+(good?2:-3),-100,100);s._gossipAbout=p.id;
+  const hh=household();if(!G.demo&&(hh.includes(s)||hh.includes(t)))toast(`🤫 ${s.name} está ${good?'contando coisas boas':'fofocando'} sobre ${p.name} com ${t.name}.`);}
+function relTrend(s,p){const k=rkey(s.id,p.id),last=(G.relT||{})[k];if(last==null)return'';const d=Math.floor((G.min-last)/1440),v=G.rels[k]||0,couple=isPartner(s,p);
+  return' · '+(d<=0?'falaram hoje':d===1?'falaram ontem':`${d} dias sem se falar`)+(d>=2&&v>0&&!(couple&&v<=40)?' ↘':'');}
+function decayDay(){G.relT=G.relT||{};let shown=0;const hh=household().map(s=>s.id);
+  for(const k in G.rels){const v=G.rels[k],last=G.relT[k];if(last==null){G.relT[k]=G.min;continue;}const days=(G.min-last)/1440;if(days<2)continue;
+    const [a,b]=k.split('-').map(Number),couple=G.partners.some(p=>(p[0]===a&&p[1]===b)||(p[0]===b&&p[1]===a));let nv=v;
+    if(couple){if(days<3||v<=40)continue;nv=Math.max(40,v-1);}else if(v>0)nv=Math.max(0,v-(v>45?2:1.5));else if(v<0)nv=Math.min(0,v+1.5);
+    if(nv===v)continue;const was=relLabel(v),now=relLabel(nv);G.rels[k]=nv;
+    if(was!==now&&v>0&&!G.demo&&shown<2&&(hh.includes(a)||hh.includes(b))){const A=personById(a),B=personById(b);if(A&&B){shown++;toast(`💔 ${A.name} e ${B.name} estão se afastando… agora: ${now}. Que tal ligar ou chamar para conversar?`);}}}}
+let _fhT=-1;
+function frameHook(){if(_fhT===TT||!G||G.demo)return;_fhT=TT;const day=Math.floor(G.min/1440);
+  if(G._decayDay==null)G._decayDay=day;while(G._decayDay<day&&day-G._decayDay<=10){G._decayDay++;try{decayDay();}catch(e){}}if(G._decayDay<day)G._decayDay=day;
+  if(!G.seen29&&!G.demo){G.seen29=1;setTimeout(()=>toast('Novidades: sims mais expressivos, desviam uns dos outros, paredes recortadas (botão ✂️ no topo), empurrar parede no Reformar e fofoca!','good'),2500);}}
+function bGround(sx,sy){return buildTool&&buildTool.kind==='push'&&bAnchor?s2g(sx,sy,LZ()):pickGround(sx,sy).g;}
 /* ================= jogo na nuvem (Supabase) ================= */
 const CLOUD={url:'https://efsajtariawxlhwfgpzg.supabase.co',key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmc2FqdGFyaWF3eGxod2ZncHpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA2MDM2MjIsImV4cCI6MjEwNjE3OTYyMn0.0zy7jyLLTW6C1paFkJn70uzBLZ0KostufSGkGINZCQ8'};
 const CLOUD_KEY='morada.cloud';
@@ -4039,7 +4216,7 @@ function showSyncBanner(r){let b=$('#syncBanner');if(!b){b=document.createElemen
   b.textContent='☁️ Mudou no outro aparelho · tocar para carregar';b.hidden=false;b.onclick=()=>{b.hidden=true;startFromSave(r,'☁️ Jogo atualizado da nuvem!');};}
 setInterval(()=>{if(!document.hidden)cloudCheck();},20000);
 /* ---- aviso de versão nova do jogo ---- */
-const APPV='v28';
+const APPV='v29';
 async function checkAppVersion(){try{const t=await fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'');const m=t.match(/const APPV='([^']+)'/);
   if(m&&m[1]!==APPV){let b=$('#verBanner');if(!b){b=document.createElement('button');b.id='verBanner';b.className='glass';document.body.appendChild(b);}
     b.textContent=`✨ Versão nova (${m[1]}) · tocar para atualizar`;b.hidden=false;b.onclick=()=>{try{if(G&&!G.demo)save();}catch(_){}const go=()=>location.replace(location.pathname+'?v='+m[1]+'-'+Date.now());if(cloudCode&&G&&!G.demo)cloudPush(true).finally(go);else go();};}}catch(_){}}

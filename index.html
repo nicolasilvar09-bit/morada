@@ -3516,7 +3516,7 @@ function drawPetModal(){if($('#petm').hidden)return;pmCtx.setTransform(1,0,0,1,0
 
 /* ================= save / load ================= */
 const SAVE_KEY='morada.save.v1';
-function serialize(){return JSON.stringify({v:3,fw2:1,savedAt:Date.now(),couples:G.couples||{},preg:G.preg||null,dow0:G.dow0||0,rels:G.rels,partners:G.partners,townies:G.townies,pendingVisits:G.pendingVisits,welcomed:G.welcomed,nextSimId:G.nextSimId,pizzaAt:G.pizzaAt,sushiAt:G.sushiAt,luck:1,relT:G.relT||{},seen29:G.seen29||0,seen30:G.seen30||0,seaSeen:G.seaSeen||{},ach:G.ach||null,achC:G.achC||{},cheated:G.cheated||0,tripState:G.tripState||null,trips:G.trips||0,forceHol:G.forceHol||null,forceSeason:G.forceSeason||null,money:G.money,min:G.min,speed:G.speed||1,sel:G.sel,nextId:G.nextId,freeWill:G.freeWill,wallsHigh:G.wallsHigh,sound:G.sound,music:G.music,
+function serialize(){return JSON.stringify({v:3,fw2:1,savedAt:Date.now(),couples:G.couples||{},preg:G.preg||null,dow0:G.dow0||0,rels:G.rels,partners:G.partners,townies:G.townies,pendingVisits:G.pendingVisits,welcomed:G.welcomed,nextSimId:G.nextSimId,pizzaAt:G.pizzaAt,sushiAt:G.sushiAt,luck:1,relT:G.relT||{},seen29:G.seen29||0,seen30:G.seen30||0,seaSeen:G.seaSeen||{},ach:G.ach||null,achC:G.achC||{},cheated:G.cheated||0,tripState:G.tripState||null,trips:G.trips||0,tutDone:G.tutDone||0,forceHol:G.forceHol||null,forceSeason:G.forceSeason||null,money:G.money,min:G.min,speed:G.speed||1,sel:G.sel,nextId:G.nextId,freeWill:G.freeWill,wallsHigh:G.wallsHigh,sound:G.sound,music:G.music,
   walls:[...G.walls],floor:G.floor,wcol:G.wcol,lot2:1,trash:G.trash||0,bill:G.bill||null,maid:!!G.maid,autopay:!!G.autopay,powerOff:!!G.powerOff,pantry:G.pantry||{},techAt:G.techAt||0,party:G.party||null,books:G.books||[],aging:G.aging||'off',extCol:G.extCol,extPat:G.extPat,wallMode:G.wallMode||0,roofColor:G.roofColor,roofStyle:G.roofStyle,viewL,up:(G.up||[]).map(u=>({walls:[...u.walls],floor:u.floor,wcol:u.wcol})),mail:G.mail,weather:G.weather,lastDay:G.lastDay,celebrated:G.celebrated,
   objects:G.objects.map(o=>({id:o.id,type:o.type,x:o.x,y:o.y,l:o.l||0,rot:o.rot,color:o.color,food:o.food||0,slices:o.slices||0,dishes:o.dishes||0,broken:o.broken||0,plant:o.plant||undefined,baby:o.baby?Object.assign({},o.baby,{held:false,cry:false}):undefined})),
   pet:G.pet?{breed:G.pet.breed||null,kind:G.pet.kind,name:G.pet.name,color:G.pet.color,pattern:G.pet.pattern,needs:G.pet.needs,x:G.pet.bed&&G.pet.app?G.pet.app[0]+.5:G.pet.x,y:G.pet.bed&&G.pet.app?G.pet.app[1]+.5:G.pet.y}:null,
@@ -4928,7 +4928,7 @@ function showSyncBanner(r){let b=$('#syncBanner');if(!b){b=document.createElemen
   b.textContent='☁️ Mudou no outro aparelho · tocar para carregar';b.hidden=false;b.onclick=()=>{b.hidden=true;startFromSave(r,'☁️ Jogo atualizado da nuvem!');};}
 setInterval(()=>{if(!document.hidden)cloudCheck();},20000);
 /* ---- aviso de versão nova do jogo ---- */
-const APPV='v37';
+const APPV='v38';
 async function checkAppVersion(){try{const t=await fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'');const m=t.match(/const APPV='([^']+)'/);
   if(m&&m[1]!==APPV){let b=$('#verBanner');if(!b){b=document.createElement('button');b.id='verBanner';b.className='glass';document.body.appendChild(b);}
     b.textContent=`✨ Versão nova (${m[1]}) · tocar para atualizar`;b.hidden=false;b.onclick=()=>{try{if(G&&!G.demo)save();}catch(_){}const go=()=>location.replace(location.pathname+'?v='+m[1]+'-'+Date.now());if(cloudCode&&G&&!G.demo)cloudPush(true).finally(go);else go();};}}catch(_){}}
@@ -4937,7 +4937,7 @@ if(location.protocol.startsWith('http')){setTimeout(checkAppVersion,4000);setInt
 /* ================= v37: conta (login) — Supabase Auth ================= */
 /* Sem cadastro: conta anônima (o jogo já salva na nuvem). Com e-mail: código de 6 dígitos, sem senha.
    Cada conta só lê e grava o próprio jogo (RLS na tabela heartville_saves). Dá para excluir a conta no app. */
-const HV_PUBLIC=false; /* true na versão das lojas: cria a conta anônima automaticamente */
+const HV_PUBLIC=true; /* true na versão das lojas: cria a conta anônima automaticamente */
 const AUTH={url:CLOUD.url,key:CLOUD.key,S:null,busy:false,sig:'',last:0,err:false,known:0};
 const AKEY='heartville.auth';
 try{AUTH.S=JSON.parse(localStorage.getItem(AKEY)||'null');}catch(_){AUTH.S=null;}
@@ -5025,5 +5025,53 @@ setTimeout(async()=>{if(!AUTH.S)return;try{const r=await acctGet();if(!r)return;
       if(r&&r.data&&(!loc||(r.saved_at||0)>(loc.savedAt||0)+5000)){AUTH.known=r.saved_at;startFromSave(r.data,'☁️ Jogo da sua conta carregado!');}
       else if(loc){AUTH.known=Date.now();if(G&&!G.demo)acctPut(true);}}catch(_){}},2200);}
   catch(e){setTimeout(()=>toast('Não deu para entrar pelo link. Tente de novo em Menu → Conta.','bad'),1500);}})();
+/* ================= v38: tutorial guiado (primeiro jogo) ================= */
+const TUT_STEPS=[
+  {t:'Bem-vindo(a) a Heartville! 💕 Vou te mostrar o básico em 2 minutinhos.',next:'Vamos lá'},
+  {t:'Esses são os seus moradores. Toque no rostinho para escolher quem você controla.',hl:'#portraits',next:'Entendi'},
+  {t:'Aqui ficam as necessidades: fome, energia, higiene… Quando a barra ficar laranja ou vermelha, cuide logo!',hl:'#tab-nec',next:'Próximo'},
+  {t:'Toque na geladeira (a que está piscando) e escolha uma ação para matar a fome.',obj:'geladeira',done:s=>tutActOn(s,'geladeira')},
+  {t:'Isso! Agora toque no outro morador e escolha algo como conversar ou abraçar.',sim:1,done:s=>!!(s&&((s.cur&&s.cur.kind==='soc')||s.queue.some(q=>q.kind==='soc')))},
+  {t:'Cada morador tem desejos. Abra a aba Desejos e toque em um deles para realizar.',hl:'[data-t="des"]',done:()=>curTab==='des',next:'Pular'},
+  {t:'Para decorar a casa, toque em Comprar.',hl:'#mBuy',done:()=>mode==='buy'},
+  {t:'Escolha um móvel e toque no chão para colocar. Arraste um móvel para mudar de lugar. Quando terminar, volte em Viver.',hl:'#mLive',done:()=>mode==='live'},
+  {t:'Aqui você controla o tempo: pausar, normal, rápido e muito rápido.',hl:'#speeds',next:'Próximo'},
+  {t:'📷 tira fotos que vão para o álbum 📖. No menu ☰ tem conquistas, calendário, viagens e sua conta.',hl:'#rot',next:'Próximo'},
+  {t:'Pronto! Agora é com você. Cuide bem dessa casa e divirta-se! 💕',next:'Começar a jogar',end:1}];
+const TUT={on:false,i:0,el:null,hl:null};
+function tutActOn(s,type){if(!s)return false;const c=s.cur;if(c&&c.o&&c.o.type===type)return true;return s.queue.some(q=>{const o=q.objId!=null&&G.objects.find(x=>x.id===q.objId);return o&&o.type===type;});}
+(function tutUI(){const st=document.createElement('style');st.textContent=`
+#tut{position:fixed;z-index:35;left:50%;transform:translateX(-50%);width:min(360px,calc(100vw - 24px));background:#fff;border-radius:18px;box-shadow:0 14px 40px rgba(20,30,60,.28);padding:14px 16px 12px;display:flex;flex-direction:column;gap:10px;border:2px solid rgba(238,93,124,.35)}
+#tut p{margin:0;font:700 15px/1.4 var(--display);color:var(--ink)}#tut .tut-row{display:flex;gap:8px;align-items:center}#tut .tut-n{font-size:11px;color:var(--ink2);margin-right:auto}
+#tut button{border:0;border-radius:12px;padding:9px 14px;font:800 13px/1 var(--display);cursor:pointer}#tut .tut-go{background:var(--teal);color:#fff}#tut .tut-skip{background:transparent;color:var(--ink2)}
+.tut-hl{outline:3px solid #ee5d7c!important;outline-offset:3px;border-radius:12px;animation:tutP 1.1s ease-in-out infinite}
+
+.wish[data-wi] > span:nth-child(2){text-align:left}
+@keyframes tutP{0%,100%{outline-color:rgba(238,93,124,1)}50%{outline-color:rgba(238,93,124,.25)}}`;document.head.appendChild(st);
+  document.body.insertAdjacentHTML('beforeend','<div id="tut" hidden><p id="tutT"></p><div class="tut-row"><span class="tut-n" id="tutN"></span><button class="tut-skip" id="tutSkip">Pular tutorial</button><button class="tut-go" id="tutGo" hidden></button></div></div>');
+  $('#tutSkip').onclick=()=>tutEnd(true);$('#tutGo').onclick=()=>tutNext();
+  const mn=$('#mnLetters');if(mn)mn.insertAdjacentHTML('beforebegin','<button class="btn" id="mnTut">Tutorial <span>▶</span></button>');const b=$('#mnTut');if(b)b.onclick=()=>{$('#menu').hidden=true;resumeFrom();tutStart();};})();
+function tutStart(){if(!G||G.demo)return;TUT.on=true;TUT.i=0;tutShow();}
+function tutShow(){const S=TUT_STEPS[TUT.i];if(!S){tutEnd();return;}if(TUT.hl){TUT.hl.classList.remove('tut-hl');TUT.hl=null;}
+  if(S.hl){const e=document.querySelector(S.hl);if(e&&e.offsetParent!==null){e.classList.add('tut-hl');TUT.hl=e;}}
+  if(S.hl==='[data-t="des"]'||S.hl==='#tab-nec'){if(typeof panelOpen!=='undefined'&&!panelOpen){const t=$('#spToggle');t&&t.click();}}
+  if(S.obj){const o=G.objects.find(o=>o.type===S.obj&&(o.l||0)===0);if(o){const c=objCenter(o);lookAt(c[0],c[1]);}}
+  $('#tutT').textContent=S.t;$('#tutN').textContent=`${TUT.i+1} de ${TUT_STEPS.length}`;const g=$('#tutGo');g.hidden=!S.next;g.textContent=S.next||'';$('#tutSkip').hidden=!!S.end;
+  const el=$('#tut');el.hidden=false;tutPlace();}
+function tutPlace(){const el=$('#tut');if(el.hidden)return;const r=TUT.hl&&TUT.hl.getBoundingClientRect(),h=el.offsetHeight||110;let top;
+  if(r&&r.height){top=r.top>innerHeight/2?Math.max(8,r.top-h-14):Math.min(innerHeight-h-8,r.bottom+14);}else top=innerWidth<640?Math.round(innerHeight*.14):110;
+  el.style.top=top+'px';}
+function tutNext(){TUT.i++;SFX.click();if(TUT.i>=TUT_STEPS.length){tutEnd();return;}tutShow();}
+function tutEnd(skipped){TUT.on=false;$('#tut').hidden=true;if(TUT.hl){TUT.hl.classList.remove('tut-hl');TUT.hl=null;}if(G){G.tutDone=1;save();}if(!skipped){SFX.wish();toast('Dica: o tutorial fica no Menu ☰ se quiser ver de novo.','good');}}
+setInterval(()=>{if(!TUT.on||!G)return;const S=TUT_STEPS[TUT.i];if(S&&S.done&&S.done(sel())){SFX.pop();tutNext();return;}tutPlace();},400);
+addEventListener('resize',()=>tutPlace());
+/* destaque no mundo: objeto ou morador piscando */
+{const _deo=drawExtraOverlay;drawExtraOverlay=function(c){_deo(c);if(!TUT.on||!G)return;const S=TUT_STEPS[TUT.i];if(!S)return;let p=null,z=0;
+  if(S.obj){const o=G.objects.find(o=>o.type===S.obj&&(o.l||0)===0);if(o){const cc=objCenter(o);p=[cc[0],cc[1]];z=DEF[o.type].h||1.5;}}
+  if(S.sim){const s=sel(),t=household().find(x=>x!==s&&!x.away&&!x.outside);if(t){p=[t.x,t.y];z=2.6;}}
+  if(!p)return;const b=P(p[0],p[1],0),k=1+Math.sin(TT*5)*.12;c.save();c.strokeStyle='#ee5d7c';c.lineWidth=3;c.globalAlpha=.9;c.beginPath();c.ellipse(b[0],b[1],26*k,11*k,0,0,7);c.stroke();
+  const a=P(p[0],p[1],z+.5+Math.abs(Math.sin(TT*4))*.25);c.fillStyle='#ee5d7c';c.beginPath();c.moveTo(a[0],a[1]+10);c.lineTo(a[0]-8,a[1]-2);c.lineTo(a[0]+8,a[1]-2);c.closePath();c.fill();c.restore();};}
+/* começa sozinho no primeiro jogo novo */
+{const g=$('#casGo'),_go=g.onclick;g.onclick=function(e){const isNew=casMode==='new';const r=_go.call(this,e);if(isNew&&G&&!G.demo){G.seen29=G.seen30=1;if(!G.ach){G.ach={};G.achC={};for(const a of ACH){try{if(a.t&&a.t())G.ach[a.k]=Date.now();}catch(_){}}}document.querySelectorAll('.toast').forEach(t=>{if(/Novidade/.test(t.textContent))t.remove();});}if(isNew)setTimeout(()=>{if(G&&!G.demo&&!G.tutDone&&!TUT.on){if($('#letter').hidden)tutStart();else{const w=setInterval(()=>{if($('#letter').hidden){clearInterval(w);tutStart();}},500);}}},2600);return r;};}
 </script>
 </body></html>

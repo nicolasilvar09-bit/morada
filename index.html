@@ -3520,7 +3520,7 @@ function serialize(){return JSON.stringify({v:3,fw2:1,savedAt:Date.now(),couples
   walls:[...G.walls],floor:G.floor,wcol:G.wcol,lot2:1,trash:G.trash||0,bill:G.bill||null,maid:!!G.maid,autopay:!!G.autopay,powerOff:!!G.powerOff,pantry:G.pantry||{},techAt:G.techAt||0,party:G.party||null,books:G.books||[],aging:G.aging||'off',extCol:G.extCol,extPat:G.extPat,wallMode:G.wallMode||0,roofColor:G.roofColor,roofStyle:G.roofStyle,viewL,up:(G.up||[]).map(u=>({walls:[...u.walls],floor:u.floor,wcol:u.wcol})),mail:G.mail,weather:G.weather,lastDay:G.lastDay,celebrated:G.celebrated,
   objects:G.objects.map(o=>({id:o.id,type:o.type,x:o.x,y:o.y,l:o.l||0,rot:o.rot,color:o.color,food:o.food||0,slices:o.slices||0,dishes:o.dishes||0,broken:o.broken||0,plant:o.plant||undefined,baby:o.baby?Object.assign({},o.baby,{held:false,cry:false}):undefined})),
   pet:G.pet?{breed:G.pet.breed||null,kind:G.pet.kind,name:G.pet.name,color:G.pet.color,pattern:G.pet.pattern,needs:G.pet.needs,x:G.pet.bed&&G.pet.app?G.pet.app[0]+.5:G.pet.x,y:G.pet.bed&&G.pet.app?G.pet.app[1]+.5:G.pet.y}:null,
-  sims:G.sims.filter(s=>!s.visitor).map(s=>({auto:!!s.auto,workPending:s.workPending,classPending:s.classPending,away:s.away,workedDay:s.workedDay,classDay:s.classDay,degrees:s.degrees,study:s.study,id:s.id,name:s.name,skin:s.skin,hair:s.hair,hairColor:s.hairColor,outfit:s.outfit,pat:s.pat,top:s.top,bottom:s.bottom,trait:s.trait,traits2:s.traits2||[],asp:s.asp,aspStep:s.aspStep||0,sp:s.sp||0,perks:s.perks||[],stats:s.stats||{},aspDone:s.aspDone||[],parents:s.parents,acc:s.acc||[],age:s.age||'adulto',born:s.born||0,l:s.outside?0:(s.l||0),tx:s.outside?17:s.seat?s.seat.app[0]:s.tx,ty:s.outside?2:s.seat?s.seat.app[1]:s.ty,needs:s.needs,wishes:s.wishes,moodlets:s.moodlets,skills:s.skills,job:s.job}))});}
+  sims:G.sims.filter(s=>!s.visitor).map(s=>({auto:!!s.auto,workPending:s.workPending,classPending:s.classPending,away:s.away,workedDay:s.workedDay,classDay:s.classDay,degrees:s.degrees,study:s.study,id:s.id,name:s.name,skin:s.skin,hair:s.hair,hairColor:s.hairColor,outfit:s.outfit,pat:s.pat,top:s.top,bottom:s.bottom,trait:s.trait,traits2:s.traits2||[],asp:s.asp,aspStep:s.aspStep||0,sp:s.sp||0,perks:s.perks||[],stats:s.stats||{},aspDone:s.aspDone||[],parents:s.parents,acc:s.acc||[],age:s.age||'adulto',born:s.born||0,l:s.outside?0:(s.l||0),tx:s.outside?17:s.seat?s.seat.app[0]:s.tx,ty:s.outside?2:s.seat?s.seat.app[1]:s.ty,needs:s.needs,wishes:s.wishes,moodlets:s.moodlets,skills:s.skills,job:s.job,looks:s.looks||null}))});}
 function save(loud){if(!G||G.demo)return;try{localStorage.setItem(SAVE_KEY,serialize());if(loud)toast('Jogo salvo.','good');}catch(_){if(loud)toast('Não foi possível salvar neste navegador.','bad');}}
 function load(){try{const raw=localStorage.getItem(SAVE_KEY);if(!raw)return null;const d=JSON.parse(raw);if(!d||!(d.v>=1&&d.v<=3))return null;return d;}catch(_){return null;}}
 function fromSave(d){
@@ -3533,7 +3533,7 @@ function fromSave(d){
   g.pendingVisits=g.pendingVisits||[];if(!d.fw2)g.freeWill=false;
   if(!d.lot2){const of=g.floor||[],oc=g.wcol||[];g.floor=new Array(NT).fill(null);g.wcol=new Array(NT).fill('#f2f1ee');for(let i=0;i<of.length;i++){const x=i%18,y=(i/18)|0;if(inLot(x,y)){g.floor[TI(x,y)]=of[i]||null;if(oc[i])g.wcol[TI(x,y)]=oc[i];}}g.lot2=1;}
   g.up=(d.up||[]).map(u=>({walls:new Map(u.walls),floor:u.floor,wcol:u.wcol}));ensureUp(g);g.couples=d.couples||{};g.preg=d.preg||null;
-  g.sims=d.sims.map(s=>{const m=mkSim(s,s.id,s.tx,s.ty);m.l=s.l||0;m.auto=!!s.auto;m.aspStep=s.aspStep||0;m.sp=s.sp||0;m.perks=s.perks||[];m.stats=s.stats||{};m.aspDone=s.aspDone||[];m.parents=s.parents;m.away=s.away||null;m.workedDay=s.workedDay;m.workPending=s.workPending;m.classPending=s.classPending;m.classDay=s.classDay;m.degrees=s.degrees||[];m.study=s.study||null;m.needs=Object.assign(m.needs,s.needs);m.wishes=s.wishes||[];m.moodlets=s.moodlets||[];if(s.skills)m.skills=Object.assign(m.skills,s.skills);m.job=s.job||null;return m;});
+  g.sims=d.sims.map(s=>{const m=mkSim(s,s.id,s.tx,s.ty);m.l=s.l||0;m.auto=!!s.auto;m.aspStep=s.aspStep||0;m.sp=s.sp||0;m.perks=s.perks||[];m.stats=s.stats||{};m.aspDone=s.aspDone||[];m.parents=s.parents;m.away=s.away||null;m.workedDay=s.workedDay;m.workPending=s.workPending;m.classPending=s.classPending;m.classDay=s.classDay;m.degrees=s.degrees||[];m.study=s.study||null;m.needs=Object.assign(m.needs,s.needs);m.wishes=s.wishes||[];m.moodlets=s.moodlets||[];if(s.skills)m.skills=Object.assign(m.skills,s.skills);m.job=s.job||null;m.looks=s.looks||null;return m;});
   if(d.pet){const p=d.pet;g.pet={breed:p.breed||null,kind:p.kind,name:p.name,color:p.color,pattern:p.pattern,x:p.x,y:p.y,z:0,face:[1,0],state:'idle',t:2,path:[],ph:0,needs:Object.assign({fome:80,carinho:70,energia:80},p.needs),hold:null,holdPending:null,bed:null};}else g.pet=null;
   return g;}
 
@@ -4336,6 +4336,149 @@ function houseDetail(c,h){if(h.tower||VR||FREE())return;const x0=h.x,y0=h.y,x1=x
   gbox(c,x0+mid+.18,y1,0,x0+mid+.82,y1+.32,.09,'#cfc8bd');gbox(c,x0+mid+.15,y1+.3,0,x0+mid+.85,y1+.55,.05,'#bdb6aa');
   gbox(c,x0+mid+.86,y1,1.25,x0+mid+.94,y1+.06,1.38,night?'#ffe08a':'#e6dccb');
   for(const [u,s] of [[.4,.32],[h.w-.5,.3],[1.4,.24]]){if(u>mid-.2&&u<mid+1.2)continue;const p=P(x0+u,y1+.45,.18);c.fillStyle='rgba(20,40,20,.18)';c.beginPath();c.ellipse(p[0]+2,p[1]+4,s*36,s*14,0,0,7);c.fill();c.fillStyle='#2f7a3c';c.beginPath();c.arc(p[0],p[1]-4,s*30,0,7);c.fill();c.fillStyle='#46a356';c.beginPath();c.arc(p[0]-4,p[1]-9,s*22,0,7);c.fill();c.fillStyle='rgba(255,255,255,.14)';c.beginPath();c.arc(p[0]-8,p[1]-13,s*10,0,7);c.fill();}}
+/* ================= v32: álbum do casal, desejos com ação, roupas por ocasião ================= */
+/* ---------- álbum: armazenamento (IndexedDB, com reserva em memória) ---------- */
+const ALB={db:null,mem:[],last:null,busy:false,urls:[],q:[]};
+function albDB(){return new Promise((res,rej)=>{if(ALB.db)return res(ALB.db);try{const r=indexedDB.open('heartville',1);r.onupgradeneeded=()=>{r.result.createObjectStore('album',{keyPath:'id'});};r.onsuccess=()=>{ALB.db=r.result;res(ALB.db);};r.onerror=()=>rej(r.error);}catch(e){rej(e);}});}
+async function albPut(e){try{const db=await albDB();await new Promise((res,rej)=>{const tx=db.transaction('album','readwrite');tx.objectStore('album').put(e);tx.oncomplete=res;tx.onerror=()=>rej(tx.error);});}catch(_){ALB.mem.push(e);}}
+async function albAll(){let a=[];try{const db=await albDB();a=await new Promise((res,rej)=>{const r=db.transaction('album').objectStore('album').getAll();r.onsuccess=()=>res(r.result||[]);r.onerror=()=>rej(r.error);});}catch(_){a=ALB.mem.slice();}return a.sort((x,y)=>y.t-x.t);}
+async function albDel(id){try{const db=await albDB();await new Promise((res,rej)=>{const tx=db.transaction('album','readwrite');tx.objectStore('album').delete(id);tx.oncomplete=res;tx.onerror=()=>rej(tx.error);});}catch(_){ALB.mem=ALB.mem.filter(e=>e.id!==id);}}
+async function albTrim(){const a=await albAll();if(a.length<=150)return;const old=a.filter(e=>e.auto).slice(150-a.length);for(const e of old)await albDel(e.id);}
+/* ---------- captura ---------- */
+function canvasBlob(c,q){return new Promise(res=>{try{c.toBlob(b=>res(b),'image/jpeg',q||.84);}catch(_){res(null);}});}
+async function snapTo(focus,cap,auto){
+  if(!G)return;render();let sx=0,sy=0,sw=cv.width,sh=cv.height;
+  if(focus){const sc=simScale(focus),p=P(focus.x,focus.y,(focus.z||0)+(focus.l||0)*HALL),cx=(p[0]*cam.z+cam.x)*DPR,cy=((p[1]-46*sc)*cam.z+cam.y)*DPR;
+    sw=clamp(430*cam.z*DPR,300*DPR,Math.min(cv.width,cv.height*4/3));sh=sw*.75;sx=clamp(cx-sw/2,0,cv.width-sw);sy=clamp(cy-sh/2,0,cv.height-sh);}
+  const ow=Math.min(1200,Math.round(sw)),oh=Math.round(ow*sh/sw),o=document.createElement('canvas');o.width=ow;o.height=oh;const c=o.getContext('2d');
+  c.drawImage(cv,sx,sy,sw,sh,0,0,ow,oh);
+  const b=await canvasBlob(o,.84);if(!b)return;
+  await albPut({id:Date.now()+'-'+Math.floor(Math.random()*1e4),t:Date.now(),day:(typeof dayN==='function'?dayN():0),cap:cap||'',auto:!!auto,img:b});albTrim();
+  albBadge(1);}
+function albBadge(n){const b=$('#rotA');if(!b)return;if(n){b.classList.add('nova');}else b.classList.remove('nova');}
+/* foto manual: vai para o álbum (de lá dá para compartilhar) */
+function takePhoto(){if(!G)return;closePie();
+  const fl=document.createElement('div');fl.style.cssText='position:fixed;inset:0;background:#fff;z-index:9999;opacity:.9;transition:opacity .5s;pointer-events:none';document.body.appendChild(fl);setTimeout(()=>{fl.style.opacity=0;setTimeout(()=>fl.remove(),600);},40);
+  try{tone(1400,.08,'square',.03);}catch(_){}
+  snapTo(null,'',false).then(()=>toast('📸 Foto guardada no álbum do casal 📖','good')).catch(()=>toast('Não deu para salvar a foto neste navegador.','bad'));}
+/* momentos automáticos: todo grande acontecimento (confete) vira foto no álbum */
+function capClean(m){m=String(m||'').split(/(?<=[!?])\s+|(?<=[^.]\.)\s+/)[0].replace(/\s*\+\s*R?\$?\s*\d[\s\S]*$/,'').trim();if(/^Bem-vind/.test(m))m='🏡 '+m+' O primeiro dia na casa nova.';if(/^A festa/.test(m))m='🎉 '+m;return m.slice(0,140);}
+function momentSoon(cap){if(!G||G.demo)return;const L=capClean(cap||(ALB.last&&Date.now()-ALB.last.t<2500?ALB.last.m:'✨ Um momento especial'));
+  if(ALB.q.some(x=>x===L))return;ALB.q.push(L);if(!ALB.busy)momentNext();}
+function momentNext(){const L=ALB.q.shift();if(L==null){ALB.busy=false;return;}ALB.busy=true;
+  let f=null,bi=1e9;for(const s of G.sims){const i=L.indexOf(s.name);if(i>=0&&i<bi&&!s.away){bi=i;f=s;}}if(!f){const s=sel();f=s&&!s.away?s:null;}
+  let wait=900;if(f&&(f.outside||(f.l||0)<=DLV())){const q=P(f.x,f.y,(f.l||0)*HALL),sx=q[0]*cam.z+cam.x,sy=q[1]*cam.z+cam.y;if((sx<60||sx>W-60||sy<120||sy>H-120)&&mode==='live'){lookAt(f.x,f.y);wait=1300;}}else f=null;
+  setTimeout(()=>{snapTo(f,L,true).then(()=>{if(G&&!G.demo)toast('📖 Esse momento foi guardado no álbum do casal.');}).catch(()=>{}).finally(()=>setTimeout(momentNext,1500));},wait);}
+{const _t0=toast;toast=function(m,k){if((k==='love'||k==='good')&&typeof m==='string'&&!/álbum/.test(m)){ALB.last={m,t:Date.now()};if(/estão namorando!/.test(m))momentSoon(m);}return _t0(m,k);};}
+{const _c0=confetti;confetti=function(){_c0();momentSoon();};}
+{const _ce0=celebrate;celebrate=function(sd){ALB.last={m:'💌 '+((sd&&sd.titulo)||'Dia especial'),t:Date.now()};return _ce0(sd);};}
+/* ---------- álbum: tela ---------- */
+(function albUI(){
+  const st=document.createElement('style');st.textContent=`
+#rotA{position:relative}#rotA.nova::after{content:'';position:absolute;top:5px;right:5px;width:8px;height:8px;border-radius:50%;background:var(--pink);box-shadow:0 0 0 2px #fff}
+.alb-card{width:min(720px,100%)!important;max-height:min(86vh,860px);overflow:hidden}
+.alb-h{display:flex;align-items:center;justify-content:space-between;gap:8px}.alb-h h2{margin:0;font-size:clamp(20px,5.4vw,26px);display:flex;align-items:center;gap:8px}
+.alb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:14px;overflow:auto;padding:8px 4px 12px;min-height:120px}
+.alb-p{background:#fff;padding:8px 8px 10px;border-radius:6px;box-shadow:0 6px 18px rgba(34,48,74,.16);transform:rotate(var(--r));cursor:pointer;border:0;text-align:left;font:inherit;color:var(--ink);transition:transform .15s}
+.alb-p:hover,.alb-p:focus-visible{transform:rotate(0) scale(1.03)}
+.alb-p img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:3px;background:#e9edf1}
+.alb-p b{display:block;font:700 12px/1.25 var(--display);margin-top:6px;max-height:2.5em;overflow:hidden}.alb-p small{display:block;color:var(--ink2);font-size:11px;margin-top:2px}
+.alb-empty{grid-column:1/-1;text-align:center;color:var(--ink2);padding:26px 8px;font-size:14px;line-height:1.5}
+.alb-view{width:min(760px,100%);display:flex;flex-direction:column;gap:10px;background:#fff;padding:12px 12px 14px;border-radius:10px;box-shadow:0 18px 50px rgba(0,0,0,.3)}
+.alb-view img{width:100%;max-height:62vh;object-fit:contain;border-radius:4px;background:#e9edf1}
+.alb-view p{margin:0;font:700 15px/1.35 var(--display);color:var(--ink)}.alb-view small{color:var(--ink2);font-size:12px}
+.alb-btns{display:flex;gap:8px;flex-wrap:wrap}.alb-btns .btn{flex:1;justify-content:center;min-width:110px}
+.wish[data-wi]{cursor:pointer;border:0;width:100%;text-align:left;font:inherit;color:inherit;transition:background .15s}
+.wish[data-wi]:hover{background:rgba(201,138,8,.12)}.wish .wi{font-size:17px}.wish small{display:block;font-size:11px;color:var(--ink2)}
+`;document.head.appendChild(st);
+  document.body.insertAdjacentHTML('beforeend',`<div id="album" class="screen" hidden><div class="mcard glass alb-card"><div class="alb-h"><h2>📖 Álbum do casal</h2><button class="btn pri" id="albX">Fechar</button></div><div id="albGrid" class="alb-grid"></div></div></div>
+<div id="albView" class="screen" hidden><div class="alb-view"><img id="albImg" alt=""><div><p id="albCap"></p><small id="albWhen"></small></div><div class="alb-btns"><button class="btn" id="albShare">Compartilhar</button><button class="btn warn" id="albDel">Apagar</button><button class="btn pri" id="albBack">Voltar</button></div></div></div>`);
+  const rot=$('#rot');if(rot)rot.insertAdjacentHTML('beforeend','<button id="rotA" title="Álbum do casal" aria-label="Álbum do casal">📖</button>');
+  const mn=$('#mnLetters');if(mn)mn.insertAdjacentHTML('beforebegin','<button class="btn" id="mnAlbum">Álbum do casal <span>📖</span></button>');
+  let cur=null,list=[],delArm=false;
+  const when=e=>{let d='';try{d=new Date(e.t).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'});}catch(_){}return (e.day?`Dia ${e.day} no jogo · `:'')+d;};
+  async function open(){pauseFor();closePie();albBadge(0);$('#menu').hidden=true;$('#album').hidden=false;for(const u of ALB.urls)URL.revokeObjectURL(u);ALB.urls=[];list=await albAll();
+    const g=$('#albGrid');if(!list.length){g.innerHTML='<div class="alb-empty">Ainda não tem fotos aqui.<br>Tire fotos com o 📷 e os grandes momentos do casal (namoro, noivado, casamento, aniversários, conquistas) entram aqui sozinhos.</div>';return;}
+    g.innerHTML=list.map((e,i)=>{const u=URL.createObjectURL(e.img);ALB.urls.push(u);return`<button class="alb-p" data-i="${i}" style="--r:${((i*37)%7-3)*.6}deg"><img src="${u}" alt="" loading="lazy"><b>${esc(e.cap||'📸 Foto')}</b><small>${esc(when(e))}</small></button>`;}).join('');}
+  function view(i){cur=list[i];if(!cur)return;delArm=false;$('#albDel').textContent='Apagar';$('#albImg').src=ALB.urls[i];$('#albCap').textContent=cur.cap||'📸 Foto';$('#albWhen').textContent=when(cur);$('#albView').hidden=false;}
+  $('#albGrid').onclick=e=>{const b=e.target.closest('.alb-p');if(b)view(+b.dataset.i);};
+  $('#albX').onclick=()=>{$('#album').hidden=true;resumeFrom();};
+  $('#albBack').onclick=()=>{$('#albView').hidden=true;};
+  $('#albDel').onclick=async()=>{if(!cur)return;if(!delArm){delArm=true;$('#albDel').textContent='Toque de novo para apagar';return;}await albDel(cur.id);$('#albView').hidden=true;open();};
+  $('#albShare').onclick=async()=>{if(!cur)return;const name='heartville-'+new Date(cur.t).toISOString().slice(0,16).replace(/[:T]/g,'-')+'.jpg',f=new File([cur.img],name,{type:'image/jpeg'});
+    if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],title:'Heartville',text:cur.cap||''});return;}catch(_){return;}}
+    const a=document.createElement('a');a.href=URL.createObjectURL(cur.img);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},2000);};
+  const go=()=>open();if($('#rotA'))$('#rotA').onclick=go;if($('#mnAlbum'))$('#mnAlbum').onclick=go;
+  window.openAlbum=open;
+})();
+/* ---------- desejos: ícone, balão de pensamento e "tocar para fazer" ---------- */
+function wishIcon(w){const [k,id]=w.k.split(':');
+  if(k==='soc'&&SOC[id])return SOC[id].icon||'💬';
+  if(k==='act'){for(const t in DEF){const a=(DEF[t].actions||[]).find(a=>a.id===id);if(a)return a.icon;}return id==='comer_sushi'?'🍣':id==='comer_doce'?'🧁':'★';}
+  if(k==='pet')return'🐶';if(k==='venue'){const v=VENUES[id];return(v&&v.icon)||'🏙️';}
+  return{buy:'🛋️',skill:'📈',adotar:'🐾',junto:'🛏️',formar:'🎓',matricula:'🎓',visita:'🏠',rua:'🚶',promo:'💼',job:'💼',encontro:'💕',noivado:'💍',casar:'💒',bebe:'👶'}[w.k]||'★';}
+const WISH_HINT={skill:'Treine qualquer habilidade: ler, cozinhar, tocar, malhar…',junto:'Mande os dois dormirem na cama de casal.',formar:'Continue indo às aulas até se formar.',matricula:'Toque no computador para entrar na faculdade.',
+  visita:'Ligue para um amigo pelo telefone e convide para vir.',rua:'Toque em qualquer lugar da rua para sair passear.',promo:'Vá trabalhar de bom humor e treine a habilidade da carreira.',job:'Procure as vagas no computador ou no jornal.',
+  encontro:'Na conversa, escolha "Chamar para um encontro".',noivado:'Com o anel: na conversa, escolha "Pedir em casamento".',casar:'Compre o Arco de casamento (Quintal) e casem lá.',bebe:'Na conversa, escolha "Ter um bebê".',adotar:'Adote um bichinho pelo telefone ou computador.'};
+function doWish(s,w){if(!s||!w||G.demo)return;if(s.outside||s.away){toast(`${s.name} está fora de casa agora.`);return;}
+  const [k,id]=w.k.split(':'),T=wishText(w,s);
+  if(k==='act'){const b=bfs(s.tx,s.ty,s.l);const find=id=>{let best=null,bd=1e9;
+    for(const o of G.objects){const d=DEF[o.type];if(!d.actions)continue;const a=d.actions.find(a=>a.id===id);if(!a||actBlock(s,o,a))continue;const sp=resolveSpot(s,o,a,b);if(!sp)continue;if(sp.path.length<bd){bd=sp.path.length;best={o,a};}}return best;};
+    let best=find(id);const alt={comer_doce:'brigadeiro',comer_sushi:'sushi',comer_pizza:'pizza'}[id];
+    if(!best&&alt&&(best=find(alt))){queueAct(s,best.o,best.a,false);SFX.pop();toast(`★ Primeiro: ${best.a.label.toLowerCase()} para realizar o desejo "${T}"`);return;}
+    if(best){queueAct(s,best.o,best.a,false);SFX.pop();toast(`★ ${s.name} vai realizar o desejo: ${T}`);}
+    else{let why=null;for(const o of G.objects){const a=(DEF[o.type].actions||[]).find(a=>a.id===id);if(a){why=actBlock(s,o,a)||'o lugar está ocupado ou sem caminho';break;}}
+      SFX.bad();toast(why?`Agora não dá: ${why}.`:'Falta o móvel certo para isso. Procure no modo Comprar.');}return;}
+  if(k==='soc'){const o=other(s);if(!o||o.away){toast('Não tem ninguém por perto agora.');return;}if(o.outside!==s.outside){toast(`${o.name} não está por perto.`);return;}queueSoc(s,o,id,false);SFX.pop();toast(`★ ${s.name} vai realizar o desejo: ${T}`);return;}
+  if(k==='pet'){if(!G.pet){toast('Vocês ainda não têm um bichinho.');return;}queuePet(s,id,false);SFX.pop();toast(`★ ${s.name} vai realizar o desejo: ${T}`);return;}
+  if(k==='venue'){const v=VENUES[id];if(v&&v.h)lookAt(v.h.x+v.h.w/2,v.h.y+v.h.d/2);toast(`Toque em ${v?v.name:'o lugar'} no mapa para levar ${s.name} até lá.`);return;}
+  if(w.k==='buy'){setMode('buy');toast('Escolha algo novo para a casa!');return;}
+  toast('💡 '+(WISH_HINT[w.k]||T));}
+function desTabHTML(s){const A_=ASPS[s.asp]||ASPS.amor,stp=s.aspStep||0;
+  return`<div class="asp"><div class="asp-h"><span class="asp-i">${A_.i}</span><div><b>${A_.n}</b><small>Aspiração · ${s.sp||0} pontos de satisfação</small></div></div><div class="asp-steps">${A_.steps.map((x,i)=>`<span class="${i<stp?'ok':i===stp?'cur':''}">${i<stp?'✓':i+1} ${esc(x[0])}</span>`).join('')}</div>
+   <div class="asp-btns"><button data-asp="loja">🎁 Recompensas</button><button data-asp="trocar">🔄 Trocar aspiração</button></div></div>
+   <div class="wishes">${s.wishes.map((w,i)=>`<button class="wish" data-wi="${i}"><span class="wi">${wishIcon(w)}</span><span>${esc(wishText(w,s))}<small>Toque para realizar</small></span><em>+${fmt(w.r)}</em></button>`).join('')}</div>
+   ${(s.perks||[]).length?`<p class="hint">Recompensas: ${(s.perks||[]).map(k=>PERKS[k].i+' '+PERKS[k].n).join(' · ')}</p>`:''}`;}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('.wish[data-wi]');if(!b||!G)return;const s=sel();doWish(s,s&&s.wishes[+b.dataset.wi]);});
+/* ---------- roupas por ocasião ---------- */
+const LOOK_CATS=[['dia','Dia a dia','👕'],['dormir','Dormir','🌙'],['praia','Praia e piscina','🏖️'],['academia','Academia','🏋️'],['festa','Festa','🎉']];
+function femLook(s){return['vestido','saia','cropped','vestido_longo','saia_longa'].includes(s.outfit)||['longo','franja','tranca','rabo','coque','marias','coque_alto','bob','chanel','ondulado'].includes(s.hair);}
+function defLook(s,cat){const f=femLook(s);
+  if(cat==='dormir')return{outfit:'pijama',top:f?'#e9b7c4':'#9ec3e6',bottom:f?'#e9b7c4':'#9ec3e6',pat:f?'coracoes':'estrelas'};
+  if(cat==='praia')return{outfit:'praia',top:f?'#ee5d7c':s.top,bottom:f?'#ee5d7c':'#3d7fd1',pat:f?'poa':''};
+  if(cat==='academia')return{outfit:'esporte',top:f?'#8e6bbf':'#3a3a46',bottom:'#22252e',pat:''};
+  if(cat==='festa')return f?{outfit:'vestido_longo',top:'#8b2f3a',bottom:'#8b2f3a',pat:''}:{outfit:'blazer',top:'#2c3e5a',bottom:'#22252e',pat:''};
+  return null;}
+const LOOK_ACT={praia:['nadar','tomar_sol','boia','pular_piscina'],academia:['correr','malhar','pedalar','esteira']};
+function lookCat(s){if(s.wed||s.visitor)return'dia';const c=s.cur,a=c&&c.kind!=='soc'&&c.act;
+  if(a&&a.sleep)return'dormir';
+  if(s.pose==='swim'||(a&&LOOK_ACT.praia.includes(a.id))||s.vin==='praia')return'praia';
+  if((a&&(LOOK_ACT.academia.includes(a.id)||a.skill==='fitness'))||s.vin==='academia')return'academia';
+  if(G.party&&!s.outside)return'festa';
+  return'dia';}
+function curLook(s){const k=lookCat(s);if(k==='dia')return null;return(s.looks&&s.looks[k])||defLook(s,k);}
+{const _ds0=drawSim;drawSim=function(c,s,X,Y,opt){if(G&&G.sims&&!s.wed&&G.sims.includes(s)){const lk=curLook(s);
+    if(lk){opt=Object.assign({},opt||{});if(opt.mood==null)opt.mood=s.react&&reactMood(s)!=null?reactMood(s):moodOf(s);return _ds0(c,Object.assign({},s,lk),X,Y,opt);}}
+  return _ds0(c,s,X,Y,opt);};}
+/* troca de roupa com brilho (o giro do vestir) */
+{const _deo=drawExtraOverlay;drawExtraOverlay=function(c){_deo(c);if(!G)return;
+  for(const s of G.sims){if(s.away)continue;const k=lookCat(s);if(s._lc&&s._lc!==k){for(let i=0;i<6;i++)puff('txt',s.x+rand(-.3,.3),s.y+rand(-.3,.3),.4+rand(0,1.6),{txt:'✦',col:pick(['#f0bd45','#ffffff','#ee8aa4']),size:rand(7,11),vz:rand(.2,.7),vx:0,vy:0});}s._lc=k;}
+  if(G.demo)return;
+  for(const s of G.sims){if(s.away||s.visitor||!s.wishes||!s.wishes.length||s.cur||s.queue.length||s.socWith)continue;if(!s.outside&&(s.l||0)>DLV())continue;if(s.vin&&VENUES[s.vin]&&VENUES[s.vin].indoor&&!venueOpen(VENUES[s.vin]))continue;
+    if(NEEDS.some(N=>s.needs[N.k]<22)||moodOf(s)<-45)continue;const ph=(TT+s.id*5.3)%15;if(ph>3.4)continue;
+    const w=s.wishes[Math.floor((TT+s.id*5.3)/15)%s.wishes.length],o=simOffset(s),sc=simScale(s),p=P(s.x+o[0],s.y+o[1],s.z+(s.l||0)*HALL),top=p[1]-(s.pose==='sit'?52:84)*sc,isSel=sel()===s;
+    const x=isSel?p[0]+24*sc:p[0],y=isSel?top+16*sc:top;c.save();c.globalAlpha=Math.min(1,ph*3,(3.4-ph)*3);drawBubble(c,x,y,wishIcon(w),true);
+    c.fillStyle='#f0bd45';c.strokeStyle='#fff';c.lineWidth=1.4;c.beginPath();c.arc(x+13,y-28,5.5,0,7);c.fill();c.stroke();c.fillStyle='#fff';c.font='800 8px Nunito,system-ui,sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText('★',x+13,y-27.6);c.restore();}};}
+/* guarda-roupa: escolher a ocasião antes de editar */
+let LOOK_EDIT=null;
+{const _oc0=openCreator;openCreator=function(m,idx){if(m!=='edit'||!G||G.demo)return _oc0(m,idx);const s=G.sims[idx];if(!s)return _oc0(m,idx);
+  const items=LOOK_CATS.map(([k,n,i])=>({icon:i,label:n,hint:k==='dia'?'cabelo, rosto e roupa do dia':'trocam sozinhos na hora certa',fn:()=>{LOOK_EDIT=k==='dia'?null:{s,k};_oc0('edit',idx);
+    if(LOOK_EDIT){const sp=casSpecs[idx],lk=(s.looks&&s.looks[k])||defLook(s,k);Object.assign(sp,{outfit:lk.outfit,top:lk.top,bottom:lk.bottom,pat:lk.pat||''});$('#casTitle').textContent=`${i} ${n} · ${s.name}`;try{fillCreator();}catch(_){}}}}));
+  openPie(W/2,H/2,`Roupas de ${s.name}`,items);};}
+{const g=$('#casGo'),_go=g.onclick;g.onclick=function(e){if(LOOK_EDIT&&casMode==='edit'){const {s,k}=LOOK_EDIT,sp=casSpecs[casIdx];LOOK_EDIT=null;s.looks=s.looks||{};s.looks[k]={outfit:sp.outfit,top:sp.top,bottom:sp.bottom,pat:sp.pat||''};
+    Object.assign(s,{name:sp.name||s.name,skin:sp.skin,hair:sp.hair,hairColor:sp.hairColor,acc:(sp.acc||[]).slice()});$('#cas').hidden=true;buildPortraits();hudSig='';resumeFrom();addMoodlet(s,'Visual novo',10,180);save();toast(`${s.name} guardou a roupa nova no guarda-roupa ✨`,'good');return;}
+  return _go.call(this,e);};}
+{const b=$('#casBack'),_bk=b.onclick;b.onclick=function(e){LOOK_EDIT=null;return _bk.call(this,e);};}
 /* ================= jogo na nuvem (Supabase) ================= */
 const CLOUD={url:'https://efsajtariawxlhwfgpzg.supabase.co',key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmc2FqdGFyaWF3eGxod2ZncHpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA2MDM2MjIsImV4cCI6MjEwNjE3OTYyMn0.0zy7jyLLTW6C1paFkJn70uzBLZ0KostufSGkGINZCQ8'};
 const CLOUD_KEY='morada.cloud';
@@ -4396,7 +4539,7 @@ function showSyncBanner(r){let b=$('#syncBanner');if(!b){b=document.createElemen
   b.textContent='☁️ Mudou no outro aparelho · tocar para carregar';b.hidden=false;b.onclick=()=>{b.hidden=true;startFromSave(r,'☁️ Jogo atualizado da nuvem!');};}
 setInterval(()=>{if(!document.hidden)cloudCheck();},20000);
 /* ---- aviso de versão nova do jogo ---- */
-const APPV='v31';
+const APPV='v32';
 async function checkAppVersion(){try{const t=await fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'');const m=t.match(/const APPV='([^']+)'/);
   if(m&&m[1]!==APPV){let b=$('#verBanner');if(!b){b=document.createElement('button');b.id='verBanner';b.className='glass';document.body.appendChild(b);}
     b.textContent=`✨ Versão nova (${m[1]}) · tocar para atualizar`;b.hidden=false;b.onclick=()=>{try{if(G&&!G.demo)save();}catch(_){}const go=()=>location.replace(location.pathname+'?v='+m[1]+'-'+Date.now());if(cloudCode&&G&&!G.demo)cloudPush(true).finally(go);else go();};}}catch(_){}}

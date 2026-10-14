@@ -3338,7 +3338,7 @@ function updHUD(){
   const sk=Object.keys(SKILLS).map(k=>Math.floor(s.skills[k])).join();
   const sig=JSON.stringify([G.sel,s.queue.map(q=>q.label+(q.auto?1:0)),s.cur&&s.cur.stage,curTab,s.wishes.map(w=>w.k),s.moodlets.map(x=>x.n+Math.floor((x.until-G.min)/20)),Object.entries(G.rels).filter(([k])=>k.split('-').includes(String(s.id))).map(([k,v])=>k+Math.round(v)).join(),G.sims.length,panelOpen,sk,s.job&&[s.job.id,s.job.level,Math.round(s.job.perf/5)],household().map(h=>(h.workPending?1:0)+(h.classPending?2:0)+(h.auto?4:0)).join(),s.study&&Math.round(s.study.credits),s.degrees.join(),!!G.pet,s.asp,s.aspStep,s.sp,(s.perks||[]).length,s.age]);
   if(sig!==hudSig){hudSig=sig;
-    $('#queue').innerHTML=household().filter(h=>!h.away&&(h.workPending||h.classPending)).map(h=>`<button class="qi cur" data-trip="${h.id}"><span class="ic">${h.workPending?'🚗':'🎓'}</span><span class="lb">Mandar ${esc(h.name)} ${h.workPending?'trabalhar':'para a aula'}</span></button>`).join('')+household().filter(h=>h.away).map(h=>`<span class="qi"><span class="ic">💼</span><span class="lb">${esc(h.name)} no trabalho até 17h</span></span>`).join('')+s.queue.map((q,i)=>`<button class="qi${i===0&&s.cur?' cur':''}${q.auto?' auto':''}" data-i="${i}" title="Cancelar"><span class="ic">${q.icon}</span><span class="lb">${esc(q.label)}</span><span class="x">✕</span></button>`).join('');
+    $('#queue').innerHTML=household().filter(h=>!h.away&&(h.workPending||h.classPending)).map(h=>`<button class="qi cur" data-trip="${h.id}"><span class="ic">${h.workPending?'🚗':'🎓'}</span><span class="lb">Mandar ${esc(h.name)} ${h.workPending?'trabalhar':'para a aula'}</span></button>`).join('')+household().filter(h=>h.away).map(h=>h.away.trip==='viagem'?`<span class="qi"><span class="ic">✈️</span><span class="lb">${esc(h.name)} viajando</span></span>`:`<span class="qi"><span class="ic">${h.away.trip==='aula'?'🎓':'💼'}</span><span class="lb">${esc(h.name)} ${h.away.trip==='aula'?'na aula até 22h':'no trabalho até 17h'}</span></span>`).join('')+s.queue.map((q,i)=>`<button class="qi${i===0&&s.cur?' cur':''}${q.auto?' auto':''}" data-i="${i}" title="Cancelar"><span class="ic">${q.icon}</span><span class="lb">${esc(q.label)}</span><span class="x">✕</span></button>`).join('');
     document.querySelectorAll('#queue button[data-trip]').forEach(b=>b.onclick=()=>{const h=G.sims.find(x=>x.id===+b.dataset.trip);if(h){sendTrip(h,h.workPending?'work':'aula');SFX.pop();}});
     document.querySelectorAll('#queue button.qi[data-i]').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;const q=s.queue[i];if(q&&q.kind==='commute'&&s.job){s.job.perf=Math.max(0,s.job.perf-15);toast(`${s.name} faltou ao trabalho hoje. Desempenho caiu.`,'bad');}if(q&&q.kind==='leave')return;if(i===0&&s.cur){if(s.cur.kind==='self')return;cancelCur(s);}else s.queue.splice(i,1);hudSig='';SFX.click();});
     $('#moodlets').innerHTML=moodletHTML(s);
@@ -3516,7 +3516,7 @@ function drawPetModal(){if($('#petm').hidden)return;pmCtx.setTransform(1,0,0,1,0
 
 /* ================= save / load ================= */
 const SAVE_KEY='morada.save.v1';
-function serialize(){return JSON.stringify({v:3,fw2:1,savedAt:Date.now(),couples:G.couples||{},preg:G.preg||null,dow0:G.dow0||0,rels:G.rels,partners:G.partners,townies:G.townies,pendingVisits:G.pendingVisits,welcomed:G.welcomed,nextSimId:G.nextSimId,pizzaAt:G.pizzaAt,sushiAt:G.sushiAt,luck:1,relT:G.relT||{},seen29:G.seen29||0,seen30:G.seen30||0,seaSeen:G.seaSeen||{},ach:G.ach||null,achC:G.achC||{},cheated:G.cheated||0,forceHol:G.forceHol||null,forceSeason:G.forceSeason||null,money:G.money,min:G.min,speed:G.speed||1,sel:G.sel,nextId:G.nextId,freeWill:G.freeWill,wallsHigh:G.wallsHigh,sound:G.sound,music:G.music,
+function serialize(){return JSON.stringify({v:3,fw2:1,savedAt:Date.now(),couples:G.couples||{},preg:G.preg||null,dow0:G.dow0||0,rels:G.rels,partners:G.partners,townies:G.townies,pendingVisits:G.pendingVisits,welcomed:G.welcomed,nextSimId:G.nextSimId,pizzaAt:G.pizzaAt,sushiAt:G.sushiAt,luck:1,relT:G.relT||{},seen29:G.seen29||0,seen30:G.seen30||0,seaSeen:G.seaSeen||{},ach:G.ach||null,achC:G.achC||{},cheated:G.cheated||0,tripState:G.tripState||null,trips:G.trips||0,forceHol:G.forceHol||null,forceSeason:G.forceSeason||null,money:G.money,min:G.min,speed:G.speed||1,sel:G.sel,nextId:G.nextId,freeWill:G.freeWill,wallsHigh:G.wallsHigh,sound:G.sound,music:G.music,
   walls:[...G.walls],floor:G.floor,wcol:G.wcol,lot2:1,trash:G.trash||0,bill:G.bill||null,maid:!!G.maid,autopay:!!G.autopay,powerOff:!!G.powerOff,pantry:G.pantry||{},techAt:G.techAt||0,party:G.party||null,books:G.books||[],aging:G.aging||'off',extCol:G.extCol,extPat:G.extPat,wallMode:G.wallMode||0,roofColor:G.roofColor,roofStyle:G.roofStyle,viewL,up:(G.up||[]).map(u=>({walls:[...u.walls],floor:u.floor,wcol:u.wcol})),mail:G.mail,weather:G.weather,lastDay:G.lastDay,celebrated:G.celebrated,
   objects:G.objects.map(o=>({id:o.id,type:o.type,x:o.x,y:o.y,l:o.l||0,rot:o.rot,color:o.color,food:o.food||0,slices:o.slices||0,dishes:o.dishes||0,broken:o.broken||0,plant:o.plant||undefined,baby:o.baby?Object.assign({},o.baby,{held:false,cry:false}):undefined})),
   pet:G.pet?{breed:G.pet.breed||null,kind:G.pet.kind,name:G.pet.name,color:G.pet.color,pattern:G.pet.pattern,needs:G.pet.needs,x:G.pet.bed&&G.pet.app?G.pet.app[0]+.5:G.pet.x,y:G.pet.bed&&G.pet.app?G.pet.app[1]+.5:G.pet.y}:null,
@@ -4706,6 +4706,131 @@ setInterval(()=>{if(!G||G.demo||!document.hidden||!notifyOn())return;const h=hou
     if(notifyOn()){lsSet('hv_notif','0');upd();toast('Lembretes desligados.');return;}
     let p=Notification.permission;if(p!=='granted')try{p=await Notification.requestPermission();}catch(_){}
     if(p==='granted'){lsSet('hv_notif','1');upd();toast('🔔 Lembretes ligados! Quando alguém da casa precisar de você, o celular avisa.','good');}else toast('Sem permissão para avisos. Dá para liberar nos ajustes do celular.','bad');};})();
+/* ================= v35: viagem de férias + carro próprio ================= */
+/* ---------- álbum: guardar a imagem de qualquer canvas ---------- */
+async function albAddCanvas(src,cap){const ow=Math.min(1200,src.width),oh=Math.round(ow*src.height/src.width),o=document.createElement('canvas');o.width=ow;o.height=oh;o.getContext('2d').drawImage(src,0,0,ow,oh);
+  const b=await canvasBlob(o,.86);if(!b)return;await albPut({id:Date.now()+'-'+Math.floor(Math.random()*1e4),t:Date.now(),cap,auto:false,img:b,day:(typeof dayN==='function'?dayN():0)});albTrim();albBadge(1);try{achCount('foto');}catch(_){}}
+/* ---------- destinos ---------- */
+const TRIPS={
+  ilha:{n:'Ilha do Sol',i:'🏝️',price:2500,d:'Praia paradisíaca de água verde, coqueiros e pôr do sol no mar.',souv:'lemb_ilha',
+    acts:[['mergulho','🤿','Mergulhar no mar',{diversao:40,higiene:-10},'cheer','Mergulho no mar azul'],['barco','⛵','Passeio de barco',{diversao:35,social:20},'wave','Passeio de barco'],
+      ['coco','🥥','Água de coco na areia',{fome:25,diversao:15},'eat','Coco gelado na praia'],['sol','🌅','Ver o pôr do sol juntos',{social:30,diversao:20},'hug','Pôr do sol a dois',1]]},
+  serra:{n:'Chalé na Serra',i:'🏔️',price:1800,d:'Friozinho, lareira, trilha na mata e céu estrelado.',souv:'lemb_serra',
+    acts:[['trilha','🥾','Trilha até a cachoeira',{diversao:35,energia:-15},'wave','Trilha na serra'],['fondue','🫕','Fondue na lareira',{fome:40,social:20},'eat','Fondue quentinho',1],
+      ['choco','☕','Chocolate quente enrolados na manta',{diversao:20,social:25},'hug','Chocolate quente'],['ceu','🌌','Olhar o céu estrelado',{diversao:30,social:20},'talk','Céu da serra',1]]},
+  cidade:{n:'Cidade Luz',i:'🌆',price:3000,d:'Cidade grande: museus, compras, roda-gigante e jantar à luz de velas.',souv:'lemb_cidade',
+    acts:[['museu','🖼️','Visitar o museu',{diversao:30},'talk','Museu de arte'],['compras','🛍️','Fazer compras · R$ 300',{diversao:40},'cheer','Comprinhas',0,300],
+      ['jantar','🍝','Jantar à luz de velas',{fome:45,social:30},'eat','Jantar romântico',1],['roda','🎡','Andar na roda-gigante',{diversao:35,social:20},'kiss','Roda-gigante a dois',1]]}};
+let TRIP=null;
+setInterval(()=>{if(!G||G.demo)return;if(TRIP)G.tripState=TRIP;else if(G.tripState&&G.sims.some(s=>s.away&&s.away.trip==='viagem')){TRIP=G.tripState;showTrip();}else G.tripState=null;},800);
+function tripPeople(){return household().filter(s=>!s.away&&!s.outside);}
+function openTrips(){if(!G||G.demo)return;if(TRIP){showTrip();return;}const ppl=tripPeople();
+  if(ppl.length<1){toast('Todo mundo precisa estar em casa para viajar.','bad');return;}pauseFor();$('#menu').hidden=true;
+  $('#crTitle').textContent='✈️ Viagem de férias';$('#crHint').textContent=`3 dias de viagem para ${ppl.map(s=>s.name).join(' e ')}${G.pet?` (a vizinha cuida do ${G.pet.name})`:''}. Na volta, vocês trazem uma lembrancinha para a casa.`;
+  $('#crList').innerHTML=Object.entries(TRIPS).map(([k,t])=>`<button class="cri" data-k="${k}"${G.money<t.price?' disabled':''}><span class="ic">${t.i}</span><span><b>${t.n} · ${fmt(t.price)}</b><small>${t.d}${G.money<t.price?' · dinheiro insuficiente':''}</small></span></button>`).join('');
+  $('#crList').onclick=e=>{const b=e.target.closest('.cri');if(!b||b.disabled)return;$('#career').hidden=true;startTrip(b.dataset.k);};$('#crClose').textContent='Agora não';$('#career').hidden=false;}
+function startTrip(k){const T=TRIPS[k],ppl=tripPeople();if(!T||!ppl.length)return;if(G.money<T.price){toast('Dinheiro insuficiente.','bad');return;}G.money-=T.price;
+  for(const s of ppl){try{release(s);}catch(_){}s.cur=null;s.queue=[];s.seat=null;s.pose='stand';s.prop=null;s.anim=null;s.away={trip:'viagem',until:1e12,start:G.min};}
+  TRIP={k,day:1,ids:ppl.map(s=>s.id),done:{},anim:null,animT:0,photos:0};const h=hourF();if(h<8||h>=19)G.min+=((8-h+24)%24)*60;
+  hudSig='';buildPortraits();save();showTrip();SFX.wish();}
+/* ---------- tela da viagem ---------- */
+(function tripUI(){const st=document.createElement('style');st.textContent=`
+.trip-card{width:min(760px,100%);background:#fff;border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.3);overflow:hidden;display:flex;flex-direction:column;max-height:calc(100dvh - 24px)}
+.trip-card canvas{width:100%;aspect-ratio:16/9;display:block;background:#8fd3ff}
+.trip-b{padding:12px 14px 14px;display:flex;flex-direction:column;gap:10px;overflow:auto}
+.trip-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px}.trip-h b{font:800 19px/1.1 var(--display);color:var(--ink)}.trip-h small{color:var(--ink2);font-size:12px}
+.trip-acts{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
+.trip-acts button{border:0;border-radius:12px;padding:9px 10px;background:rgba(21,156,147,.1);color:var(--ink);font:700 13px/1.2 var(--display);text-align:left;display:flex;gap:8px;align-items:center;cursor:pointer}
+.trip-acts button:disabled{opacity:.45;cursor:default}.trip-acts button span{font-size:20px}
+.trip-acts button.ft{background:rgba(238,93,124,.12)}.trip-foot{display:flex;gap:8px}.trip-foot .btn{flex:1;justify-content:center}
+`;document.head.appendChild(st);
+  document.body.insertAdjacentHTML('beforeend',`<div id="trip" class="screen" hidden><div class="trip-card"><canvas id="tripCv" width="960" height="540"></canvas><div class="trip-b"><div class="trip-h"><b id="tripT"></b><small id="tripS"></small></div><div class="trip-acts" id="tripA"></div><div class="trip-foot"><button class="btn" id="tripSleep">🌙 Dormir</button><button class="btn warn" id="tripBack">🏠 Voltar para casa</button></div></div></div></div>`);
+  $('#tripA').onclick=e=>{const b=e.target.closest('button');if(!b||b.disabled)return;tripAct(b.dataset.a);};
+  $('#tripSleep').onclick=()=>tripSleep();$('#tripBack').onclick=()=>endTrip(false);
+  const mn=$('#mnLetters');if(mn)mn.insertAdjacentHTML('beforebegin','<button class="btn" id="mnTrip">Viajar de férias <span>✈️</span></button>');const b=$('#mnTrip');if(b)b.onclick=()=>openTrips();})();
+function tripSims(){return TRIP?TRIP.ids.map(simById).filter(Boolean):[];}
+function showTrip(){if(!TRIP)return;pauseFor();const T=TRIPS[TRIP.k],h=hourF();$('#trip').hidden=false;
+  $('#tripT').textContent=`${T.i} ${T.n}`;$('#tripS').textContent=`Dia ${TRIP.day} de 3 · ${String(Math.floor(h)).padStart(2,'0')}:${String(Math.floor((h%1)*60)).padStart(2,'0')}`;
+  const late=h>=21||h<6;
+  $('#tripA').innerHTML=T.acts.map(a=>`<button data-a="${a[0]}"${late&&!a[6]?' disabled':''}><span>${a[1]}</span>${a[2]}</button>`).join('')+`<button class="ft" data-a="foto"><span>📸</span>Tirar uma foto</button>`;
+  $('#tripSleep').textContent=TRIP.day>=3?'🌙 Dormir e voltar amanhã':'🌙 Dormir (próximo dia)';tripLoop();}
+function tripAct(id){const T=TRIPS[TRIP.k],ppl=tripSims();
+  if(id==='foto'){albAddCanvas($('#tripCv'),`📸 ${ppl.map(s=>s.name).join(' e ')} em ${T.n} · dia ${TRIP.day}`).then(()=>toast('📸 Foto da viagem guardada no álbum!','good'));TRIP.photos++;SFX.click();return;}
+  const a=T.acts.find(x=>x[0]===id);if(!a)return;if(a[7]&&G.money<a[7]){toast('Dinheiro insuficiente.','bad');return;}if(a[7])G.money-=a[7];
+  for(const s of ppl){for(const [k,v] of Object.entries(a[3]))s.needs[k]=clamp((s.needs[k]||0)+v,5,100);s.needs.fome=clamp(s.needs.fome-8,5,100);s.needs.bexiga=100;addMoodlet(s,a[5],10,1440,'feliz');}
+  if(a[6]&&ppl.length>1)try{addRel(ppl[0],ppl[1],5);}catch(_){}
+  TRIP.done[id]=(TRIP.done[id]||0)+1;TRIP.anim=a[4];TRIP.animT=performance.now();G.min+=180;SFX.pop();toast(`${a[1]} ${a[2]}!`,'good');showTrip();}
+function tripSleep(){if(TRIP.day>=3){endTrip(true);return;}const h=hourF();G.min+=((8-h+24)%24||24)*60;TRIP.day++;for(const s of tripSims()){s.needs.energia=100;s.needs.higiene=90;s.needs.fome=clamp(s.needs.fome+30,5,100);}TRIP.anim=null;SFX.click();showTrip();}
+function endTrip(full){if(!TRIP)return;const T=TRIPS[TRIP.k],ppl=tripSims(),g=gateTile();
+  for(const s of ppl){s.away=null;s.x=g[0]+.5;s.y=g[1]+.5;s.tx=g[0];s.ty=g[1];s.l=0;s.face=[-1,0];s.needs.energia=Math.max(s.needs.energia,70);addMoodlet(s,'Voltei de viagem!',15,2880,'feliz');}
+  if(!G.objects.some(o=>o.type===T.souv)){const t=nearestFree(9,5,0)||nearestFree(12,6,0);if(t){G.objects.push({id:G.nextId++,type:T.souv,x:t[0],y:t[1],rot:0});rebuildOcc();}}
+  $('#trip').hidden=true;const n=T.n;TRIP=null;G.tripState=null;G.trips=(G.trips||0)+1;hudSig='';buildPortraits();resumeFrom();
+  toast(`🧳 ${ppl.map(s=>s.name).join(' e ')} voltaram de ${n}! Trouxeram uma lembrancinha para a casa.`,'love');try{achCount('viagem');}catch(_){}save();}
+{const _au=awayUpdate;awayUpdate=function(s,dt){if(s.away&&s.away.trip==='viagem')return;return _au(s,dt);};}
+/* cenário desenhado */
+let tripRAF=0;
+function tripLoop(){cancelAnimationFrame(tripRAF);if(!TRIP||$('#trip').hidden)return;try{drawTripScene();}catch(e){console.warn(e);}tripRAF=requestAnimationFrame(tripLoop);}
+function drawTripScene(){const cv=$('#tripCv'),c=cv.getContext('2d'),Wd=cv.width,Hd=cv.height,h=hourF(),day=h>=7&&h<18,dusk=h>=18&&h<20,k=TRIP.k,T_=TT;
+  c.setTransform(1,0,0,1,0,0);const sky=c.createLinearGradient(0,0,0,Hd*.7);
+  if(day){sky.addColorStop(0,k==='serra'?'#7fb7e8':'#5fc1f2');sky.addColorStop(1,'#d9f2ff');}else if(dusk){sky.addColorStop(0,'#4b4f9a');sky.addColorStop(.6,'#f08a6a');sky.addColorStop(1,'#ffd08a');}else{sky.addColorStop(0,'#0f1638');sky.addColorStop(1,'#2d3470');}
+  c.fillStyle=sky;c.fillRect(0,0,Wd,Hd);
+  if(!day&&!dusk){for(let i=0;i<70;i++){const x=hash(i,7)*Wd,y=hash(i,9)*Hd*.55,a=.5+.5*Math.sin(T_*2+i);c.fillStyle=`rgba(255,255,255,${.4+a*.5})`;c.fillRect(x,y,2,2);}c.fillStyle='#f4f1dc';circ(c,Wd*.82,Hd*.16,26);}
+  else{c.fillStyle=dusk?'#ffb15c':'#fff3b0';circ(c,Wd*.8,dusk?Hd*.5:Hd*.17,dusk?40:34);}
+  const dark=day?0:dusk?.15:.45;
+  if(k==='ilha'){c.fillStyle=day?'#1fb5b0':dusk?'#3b6f9a':'#123a5a';c.fillRect(0,Hd*.5,Wd,Hd*.22);c.strokeStyle='rgba(255,255,255,.5)';c.lineWidth=2;
+      for(let r=0;r<5;r++){c.beginPath();for(let x=0;x<=Wd;x+=12)c.lineTo(x,Hd*(.53+r*.04)+Math.sin(x*.03+T_*1.5+r)*3);c.stroke();}
+      c.fillStyle='#2f7a3f';c.beginPath();c.ellipse(Wd*.12,Hd*.5,110,26,0,Math.PI,0);c.fill();
+      const sb=c.createLinearGradient(0,Hd*.68,0,Hd);sb.addColorStop(0,'#f6e3b4');sb.addColorStop(1,'#e8c98a');c.fillStyle=sb;c.beginPath();c.moveTo(0,Hd*.72);c.quadraticCurveTo(Wd*.5,Hd*.66,Wd,Hd*.72);c.lineTo(Wd,Hd);c.lineTo(0,Hd);c.fill();
+      const boatX=(Wd*.3+T_*12)%(Wd+120)-60;c.fillStyle='#fff';c.beginPath();c.moveTo(boatX,Hd*.56);c.lineTo(boatX+46,Hd*.56);c.lineTo(boatX+38,Hd*.58);c.lineTo(boatX+6,Hd*.58);c.fill();c.beginPath();c.moveTo(boatX+22,Hd*.555);c.lineTo(boatX+22,Hd*.47);c.lineTo(boatX+40,Hd*.55);c.fill();
+      for(const [x,s] of [[Wd*.08,1.1],[Wd*.9,1],[Wd*.68,.8]])palm(c,x,Hd*.8,s,T_);
+      c.fillStyle='#ee5d7c';c.beginPath();c.moveTo(Wd*.2,Hd*.74);c.quadraticCurveTo(Wd*.26,Hd*.62,Wd*.32,Hd*.74);c.fill();c.fillStyle='#8b5e3c';c.fillRect(Wd*.258,Hd*.7,3,Hd*.16);}
+  else if(k==='serra'){for(const [y,col,amp,f] of [[.5,'#7d93b8',60,.006],[.58,'#5d7a9e',50,.009],[.66,'#3f6b5a',40,.012]]){c.fillStyle=day?col:shade(col,.55);c.beginPath();c.moveTo(0,Hd);for(let x=0;x<=Wd;x+=10)c.lineTo(x,Hd*y-Math.abs(Math.sin(x*f+y*9))*amp);c.lineTo(Wd,Hd);c.fill();}
+      c.fillStyle=day?'#5f9a4a':'#2f4f2c';c.fillRect(0,Hd*.78,Wd,Hd*.22);
+      for(let i=0;i<9;i++){const x=hash(i,3)*Wd,s=.7+hash(i,4)*.6;if(x>Wd*.36&&x<Wd*.66)continue;pine(c,x,Hd*.8,s,day);}
+      const cx=Wd*.7,cy=Hd*.8;c.fillStyle='#8b5e3c';c.fillRect(cx-70,cy-70,140,70);c.fillStyle='#5a3a22';c.beginPath();c.moveTo(cx-86,cy-66);c.lineTo(cx,cy-128);c.lineTo(cx+86,cy-66);c.fill();
+      c.fillStyle=day?'#cfe8f2':'#ffcf7a';c.fillRect(cx-50,cy-52,28,24);c.fillRect(cx+22,cy-52,28,24);c.fillStyle='#3a2616';c.fillRect(cx-12,cy-40,24,40);c.fillStyle='#7a5a3a';c.fillRect(cx+40,cy-128,16,40);
+      for(let i=0;i<4;i++){const ph=(T_*.3+i*.25)%1;c.fillStyle=`rgba(230,230,230,${.5*(1-ph)})`;circ(c,cx+48+Math.sin(ph*6)*8,cy-132-ph*60,8+ph*10);}}
+  else{c.fillStyle=day?'#9fb0c8':'#1c2340';for(let i=0;i<16;i++){const x=i*Wd/16,w=Wd/16-6,hh=Hd*(.18+hash(i,5)*.3);c.fillRect(x,Hd*.72-hh,w,hh);if(!day)for(let r=0;r<hh/14;r++)for(let q=0;q<3;q++)if(hash(i*31+r,q)>.45){c.fillStyle='#ffd98a';c.fillRect(x+4+q*(w/3),Hd*.72-hh+6+r*14,4,6);c.fillStyle='#1c2340';}}
+      const tx=Wd*.26,ty=Hd*.72;c.strokeStyle=day?'#5d6984':'#f0bd45';c.lineWidth=3;c.beginPath();c.moveTo(tx-34,ty);c.lineTo(tx,ty-Hd*.5);c.lineTo(tx+34,ty);c.moveTo(tx-22,ty-Hd*.17);c.lineTo(tx+22,ty-Hd*.17);c.moveTo(tx-12,ty-Hd*.32);c.lineTo(tx+12,ty-Hd*.32);c.stroke();
+      const rx=Wd*.84,ry=Hd*.42,R=70;c.strokeStyle=day?'#c9ced6':'#ff8ad8';c.lineWidth=3;c.beginPath();c.arc(rx,ry,R,0,7);c.stroke();for(let i=0;i<10;i++){const a=i/10*Math.PI*2+T_*.2;c.beginPath();c.moveTo(rx,ry);c.lineTo(rx+Math.cos(a)*R,ry+Math.sin(a)*R);c.stroke();c.fillStyle=['#ee5d7c','#f0bd45','#5ad1ff'][i%3];c.fillRect(rx+Math.cos(a)*R-6,ry+Math.sin(a)*R,12,10);}
+      c.strokeStyle=day?'#c9ced6':'#ff8ad8';c.beginPath();c.moveTo(rx,ry);c.lineTo(rx-30,Hd*.72);c.moveTo(rx,ry);c.lineTo(rx+30,Hd*.72);c.stroke();
+      c.fillStyle=day?'#c9c2b6':'#3a3a46';c.fillRect(0,Hd*.72,Wd,Hd*.28);c.fillStyle=day?'#b5ad9f':'#2c2c36';for(let x=0;x<Wd;x+=40)c.fillRect(x,Hd*.72,20,Hd*.28);
+      const lx=Wd*.6;c.fillStyle='#22252e';c.fillRect(lx,Hd*.5,4,Hd*.3);c.fillStyle=day?'#e6dccb':'#ffe08a';circ(c,lx+2,Hd*.5,7);}
+  if(dark){c.fillStyle=`rgba(15,20,50,${dark})`;c.fillRect(0,0,Wd,Hd);}
+  const ppl=tripSims(),n=ppl.length,an=TRIP.anim&&performance.now()-TRIP.animT<6000?TRIP.anim:null;
+  ppl.forEach((s,i)=>{const x=Wd*(.47+(i-(n-1)/2)*.09),y=Hd*.93,f=n>1?(i===0?[1,0]:i===1?[0,1]:[0,1]):[0,1];
+    let anim=an;if(an==='hug'||an==='kiss')anim=i<2?an:'wave';else if(an==='eat'){anim='eat';}
+    const lk=k==='ilha'?((s.looks&&s.looks.praia)||defLook(s,'praia')):k==='serra'?{outfit:'sueter',top:'#8b2f3a',bottom:'#2c3e5a',pat:''}:null;drawSim(c,Object.assign({},s,lk||{},{pose:'stand',face:f,anim,react:null,prop:an==='eat'?'prato':null,selRing:false,cur:null,vin:'praia'}),x,y,{scale:Hd/170*(s.age==='crianca'?.8:1),mood:90,noShadow:false});});}
+function palm(c,x,y,s,T){c.strokeStyle='#8b5e3c';c.lineWidth=9*s;c.lineCap='round';c.beginPath();c.moveTo(x,y);c.quadraticCurveTo(x+18*s,y-80*s,x+8*s,y-150*s);c.stroke();const tx=x+8*s,ty=y-150*s;
+  for(let i=0;i<7;i++){const a=-Math.PI+i/6*Math.PI+Math.sin(T+i)*.05;c.strokeStyle=i%2?'#2f8a4a':'#3fa35a';c.lineWidth=7*s;c.beginPath();c.moveTo(tx,ty);c.quadraticCurveTo(tx+Math.cos(a)*45*s,ty+Math.sin(a)*30*s-15*s,tx+Math.cos(a)*75*s,ty+Math.sin(a)*30*s+18*s);c.stroke();}
+  c.fillStyle='#6b4a33';circ(c,tx-4*s,ty+6*s,5*s);circ(c,tx+5*s,ty+7*s,5*s);}
+function pine(c,x,y,s,day){c.fillStyle='#5a3a22';c.fillRect(x-4*s,y-18*s,8*s,18*s);const g=day?['#1f6b3e','#2a7d49','#358f55']:['#163d2a','#1d4a32','#245739'];
+  for(let i=0;i<3;i++){c.fillStyle=g[i];c.beginPath();c.moveTo(x,y-(70+i*22)*s);c.lineTo(x+(34-i*8)*s,y-(18+i*24)*s);c.lineTo(x-(34-i*8)*s,y-(18+i*24)*s);c.fill();}}
+/* lembrancinhas */
+DEF.lemb_ilha={n:'Lembrança da Ilha do Sol',cat:null,price:0,w:1,d:1,h:.9,decor:3,afterAll:true,draw(B){B(.25,.25,0,.75,.75,.55,'#c9a27a');B(.28,.28,.55,.72,.72,.6,'#cfe8f2');},
+  after(c,o,fq,L){blobs(c,L(.5,.5,.68),[[-6,0,4,'#f6d7c3'],[3,-2,4.5,'#f7b6cf'],[8,2,3.5,'#fff3e0'],[-1,4,3,'#e8c98a']]);}};
+DEF.lemb_serra={n:'Mini chalé da Serra',cat:null,price:0,w:1,d:1,h:.9,decor:3,draw(B){B(.25,.25,0,.75,.75,.5,'#8b5e3c');B(.3,.3,.5,.7,.7,.62,'#8b5e3c');B(.33,.33,.62,.67,.67,.78,'#5a3a22');B(.4,.74,.6,.48,.76,.7,'#ffcf7a');}};
+DEF.lemb_cidade={n:'Miniatura da Cidade Luz',cat:null,price:0,w:1,d:1,h:1.1,decor:3,draw(B){B(.25,.25,0,.75,.75,.5,'#2c3e5a');B(.42,.42,.5,.58,.58,.62,'#c9a27a');B(.45,.45,.62,.55,.55,.85,'#c9a27a');B(.48,.48,.85,.52,.52,1.05,'#f0bd45');}};
+{const tel=DEF.telefone;if(tel&&tel.actions&&!tel.actions.some(a=>a.id==='viagem'))tel.actions.push(A('viagem','Planejar uma viagem','✈️','front',3,{},{anim:'talk',noAuto:true,fnDone:()=>setTimeout(openTrips,200)}));}
+ACH.splice(ACH.length-1,0,{k:'viagem',i:'🧳',n:'Pé na estrada',d:'Fazer uma viagem de férias',c:'viagem',q:1,big:1,m:'Ainda vou te levar pra conhecer o mundo. Esse é só o primeiro destino.'},{k:'carro',i:'🚗',n:'Carro novo',d:'Comprar um carro',t:()=>G.objects.some(o=>DEF[o.type].car),m:'Bora? Eu dirijo e você escolhe a música.'});
+/* ================= carro próprio ================= */
+function mkCar(kind,n,price,d){return{n,cat:'quintal',price,w:1,d:2,h:1.2,decor:1,car:kind,colorable:true,defColor:d,afterAll:true,
+  draw(B){B(.02,.02,0,.98,1.98,.01,'rgba(40,40,48,.12)');},
+  after(c,o){if(o.out)return;const fw=fp(o),cx=o.x+fw[0]/2,cy=o.y+fw[1]/2,ax=fw[1]>fw[0]?'y':'x',f=frontVec(o.rot),dir=ax==='y'?(f[1]>=0?1:-1):(f[0]>=0?1:-1);carModel(c,cx,cy,ax,dir,o.color||d,{kind});},
+  actions:[A('dirigir','Dar uma volta de carro','🚗','front',40,{diversao:30},{anim:'use',noAuto:true,fnDone:(s,o)=>{addMoodlet(s,'Passeio de carro',8,240,'feliz');}})]};}
+DEF.carro_hatch=mkCar('hatch','Carro compacto',9000,'#ec5f5c');DEF.carro_sedan=mkCar('sedan','Sedã',14000,'#3d7fd1');DEF.carro_suv=mkCar('suv','SUV',22000,'#2c3e5a');
+const myCar=()=>G.objects.find(o=>DEF[o.type].car);
+function carLeave(s,msg){const o=myCar();if(!o)return;s.byCar=1;o.out=1;spawnCar({x:22,y:3,dir:-1,col:o.color||DEF[o.type].defColor,model:DEF[o.type].car});for(let i=0;i<6;i++)puff('smoke',s.x,s.y,.3,{vz:.4});if(!G.demo&&msg)toast(msg);}
+function carBack(s){s.byCar=0;const o=myCar();if(o&&!G.sims.some(x=>x.byCar))o.out=0;}
+/* com carro: vai e volta na hora, em vez de esperar o ônibus ou andar até longe */
+{const _wt=workTick;workTick=function(s){const c=s.cur,o=G&&!s.visitor&&myCar();
+  if(o&&c){if(c.kind==='out_venue'&&c.stage==='owalk'&&!c.bus&&s.outside&&!s.vin&&c.route){const far=Math.hypot(c.spot.x-s.x,c.spot.y-s.y)>14||(c.act&&c.act.id==='trabalhar');
+      if(far&&(o.out!==1||s.byCar)){const to=c.act&&c.act.id==='trabalhar'?[63.2,-21.5]:(c.route[Math.max(0,c.route.length-6)]||[c.spot.x,c.spot.y]);c.bus=1;carLeave(s,`🚗 ${s.name} foi de carro${c.act&&c.act.id==='trabalhar'?' para o trabalho':' até '+(c.v&&c.v.name||'lá')}.`);
+        s.x=to[0];s.y=to[1];c.route=routeTo([s.x,s.y],[c.spot.x,c.spot.y]);if(c.act&&c.act.id==='trabalhar')s.needs.energia=clamp(s.needs.energia+5,0,100);return;}}
+    if(c.kind==='enter'&&!c.bus&&s.outside&&!s.vin&&s.byCar&&Math.hypot(s.x-18.5,s.y-2.5)>10){c.bus=1;s.x=18.5;s.y=-1.5;c.route=routeTo([s.x,s.y],GATE_OUT).concat([GATE_IN]);carBack(s);if(!G.demo)toast(`🚗 ${s.name} voltou de carro.`);return;}
+    if(c.kind==='enter'&&s.byCar&&!s.outside)carBack(s);}
+  return _wt(s);};}
+setInterval(()=>{if(!G)return;const o=myCar();if(o&&o.out&&!G.sims.some(s=>s.byCar&&s.outside))for(const s of G.sims){s.byCar=0;}if(o&&o.out&&!G.sims.some(s=>s.byCar))o.out=0;},3000);
 /* ================= jogo na nuvem (Supabase) ================= */
 const CLOUD={url:'https://efsajtariawxlhwfgpzg.supabase.co',key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmc2FqdGFyaWF3eGxod2ZncHpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA2MDM2MjIsImV4cCI6MjEwNjE3OTYyMn0.0zy7jyLLTW6C1paFkJn70uzBLZ0KostufSGkGINZCQ8'};
 const CLOUD_KEY='morada.cloud';
@@ -4766,7 +4891,7 @@ function showSyncBanner(r){let b=$('#syncBanner');if(!b){b=document.createElemen
   b.textContent='☁️ Mudou no outro aparelho · tocar para carregar';b.hidden=false;b.onclick=()=>{b.hidden=true;startFromSave(r,'☁️ Jogo atualizado da nuvem!');};}
 setInterval(()=>{if(!document.hidden)cloudCheck();},20000);
 /* ---- aviso de versão nova do jogo ---- */
-const APPV='v34';
+const APPV='v35';
 async function checkAppVersion(){try{const t=await fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'');const m=t.match(/const APPV='([^']+)'/);
   if(m&&m[1]!==APPV){let b=$('#verBanner');if(!b){b=document.createElement('button');b.id='verBanner';b.className='glass';document.body.appendChild(b);}
     b.textContent=`✨ Versão nova (${m[1]}) · tocar para atualizar`;b.hidden=false;b.onclick=()=>{try{if(G&&!G.demo)save();}catch(_){}const go=()=>location.replace(location.pathname+'?v='+m[1]+'-'+Date.now());if(cloudCode&&G&&!G.demo)cloudPush(true).finally(go);else go();};}}catch(_){}}

@@ -3516,7 +3516,7 @@ function drawPetModal(){if($('#petm').hidden)return;pmCtx.setTransform(1,0,0,1,0
 
 /* ================= save / load ================= */
 const SAVE_KEY='morada.save.v1';
-function serialize(){return JSON.stringify({v:3,fw2:1,savedAt:Date.now(),couples:G.couples||{},preg:G.preg||null,dow0:G.dow0||0,rels:G.rels,partners:G.partners,townies:G.townies,pendingVisits:G.pendingVisits,welcomed:G.welcomed,nextSimId:G.nextSimId,pizzaAt:G.pizzaAt,sushiAt:G.sushiAt,luck:1,relT:G.relT||{},seen29:G.seen29||0,seen30:G.seen30||0,seaSeen:G.seaSeen||{},forceHol:G.forceHol||null,forceSeason:G.forceSeason||null,money:G.money,min:G.min,speed:G.speed||1,sel:G.sel,nextId:G.nextId,freeWill:G.freeWill,wallsHigh:G.wallsHigh,sound:G.sound,music:G.music,
+function serialize(){return JSON.stringify({v:3,fw2:1,savedAt:Date.now(),couples:G.couples||{},preg:G.preg||null,dow0:G.dow0||0,rels:G.rels,partners:G.partners,townies:G.townies,pendingVisits:G.pendingVisits,welcomed:G.welcomed,nextSimId:G.nextSimId,pizzaAt:G.pizzaAt,sushiAt:G.sushiAt,luck:1,relT:G.relT||{},seen29:G.seen29||0,seen30:G.seen30||0,seaSeen:G.seaSeen||{},ach:G.ach||null,achC:G.achC||{},cheated:G.cheated||0,forceHol:G.forceHol||null,forceSeason:G.forceSeason||null,money:G.money,min:G.min,speed:G.speed||1,sel:G.sel,nextId:G.nextId,freeWill:G.freeWill,wallsHigh:G.wallsHigh,sound:G.sound,music:G.music,
   walls:[...G.walls],floor:G.floor,wcol:G.wcol,lot2:1,trash:G.trash||0,bill:G.bill||null,maid:!!G.maid,autopay:!!G.autopay,powerOff:!!G.powerOff,pantry:G.pantry||{},techAt:G.techAt||0,party:G.party||null,books:G.books||[],aging:G.aging||'off',extCol:G.extCol,extPat:G.extPat,wallMode:G.wallMode||0,roofColor:G.roofColor,roofStyle:G.roofStyle,viewL,up:(G.up||[]).map(u=>({walls:[...u.walls],floor:u.floor,wcol:u.wcol})),mail:G.mail,weather:G.weather,lastDay:G.lastDay,celebrated:G.celebrated,
   objects:G.objects.map(o=>({id:o.id,type:o.type,x:o.x,y:o.y,l:o.l||0,rot:o.rot,color:o.color,food:o.food||0,slices:o.slices||0,dishes:o.dishes||0,broken:o.broken||0,plant:o.plant||undefined,baby:o.baby?Object.assign({},o.baby,{held:false,cry:false}):undefined})),
   pet:G.pet?{breed:G.pet.breed||null,kind:G.pet.kind,name:G.pet.name,color:G.pet.color,pattern:G.pet.pattern,needs:G.pet.needs,x:G.pet.bed&&G.pet.app?G.pet.app[0]+.5:G.pet.x,y:G.pet.bed&&G.pet.app?G.pet.app[1]+.5:G.pet.y}:null,
@@ -4600,6 +4600,112 @@ Object.assign(CHEATS,{natal:['Modo Natal ligado 🎄',()=>{G.forceHol='natal';}]
 setInterval(()=>{try{seasonTick();}catch(e){console.warn(e);}},1500);
 /* ================= app de verdade: funciona offline e abre em tela cheia ================= */
 if('serviceWorker' in navigator&&location.protocol==='https:'){addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});}
+/* ================= v34: conquistas do casal + lembretes carinhosos ================= */
+/* c: contador de eventos (checkWish) · q: quantidade · t: teste de estado · big: abre uma cartinha */
+const ACH=[
+ {k:'conversa',i:'💬',n:'Primeiro papo',d:'Conversar pela primeira vez',c:'soc:conversar',q:1,m:'Toda história começa com um "oi". A nossa é a melhor que eu já vivi.'},
+ {k:'piadas',i:'😂',n:'Rindo à toa',d:'Contar 10 piadas',c:'soc:piada',q:10,m:'Sua risada é o meu som preferido no mundo.'},
+ {k:'abracos',i:'🤗',n:'Abraço apertado',d:'Abraçar 10 vezes',c:'soc:abracar',q:10,m:'Se eu pudesse, morava dentro de um abraço seu.'},
+ {k:'beijo',i:'💋',n:'Primeiro beijo',d:'Dar o primeiro beijo',c:'soc:beijar',q:1,big:1,m:'Lembra do nosso primeiro beijo? Eu lembro de cada segundo.'},
+ {k:'beijos100',i:'😘',n:'Cem beijos',d:'Beijar 100 vezes',c:'soc:beijar',q:100,m:'Cem beijos e eu ainda quero o próximo.'},
+ {k:'danca',i:'💃',n:'Pra lá e pra cá',d:'Dançar juntos 5 vezes',c:'soc:dancar',q:5,m:'Dançar com você é a minha coreografia favorita, mesmo errando os passos.'},
+ {k:'serenata',i:'🎶',n:'Serenata',d:'Fazer uma serenata',c:'soc:serenata',q:1,m:'Se eu cantasse bem de verdade, cantava pra você todo dia.'},
+ {k:'cafune',i:'🥰',n:'Cafuné',d:'Fazer cafuné 5 vezes',c:'soc:cafune',q:5,m:'Seu cafuné cura qualquer dia ruim.'},
+ {k:'elogios',i:'🌷',n:'Chuva de elogios',d:'Fazer 15 elogios',c:'soc:elogiar',q:15,m:'Nenhum elogio dá conta de você, mas eu continuo tentando.'},
+ {k:'massagem',i:'💆',n:'Mãos de fada',d:'Fazer 5 massagens',c:'soc:massagem',q:5,m:'Cuidar de você é um dos meus jeitos preferidos de dizer "eu te amo".'},
+ {k:'encontro',i:'🕯️',n:'Encontro romântico',d:'Ter um encontro fora de casa',c:'encontro',q:1,m:'Qualquer lugar vira o melhor lugar do mundo quando você está comigo.'},
+ {k:'namoro',i:'💕',n:'Namorando!',d:'Começar a namorar',t:()=>household().some(s=>{const p=wedPartner(s);return p&&!!coupleSt(s,p);}),big:1,m:'Pedir você em namoro foi a decisão mais certa da minha vida.'},
+ {k:'apaixonados',i:'❤️',n:'Apaixonados',d:'Chegar a "Apaixonados" na relação',t:()=>household().some(s=>{const p=wedPartner(s);return p&&rel(s,p)>=85;}),m:'Dizem que a paixão passa. A minha só aumenta.'},
+ {k:'noivado',i:'💍',n:'Disse sim!',d:'Ficar noivos',c:'noivado',q:1,t:()=>household().some(s=>{const p=wedPartner(s);return p&&['noivos','casados'].includes(coupleSt(s,p));}),big:1,m:'Um dia vai ser de verdade. E você vai dizer sim de novo.'},
+ {k:'casamento',i:'💒',n:'Felizes para sempre',d:'Casar',c:'casar',q:1,t:()=>household().some(s=>{const p=wedPartner(s);return p&&coupleSt(s,p)==='casados';}),big:1,m:'Eu amo você, meu amor, até que o Senhor venha.'},
+ {k:'bebe',i:'👶',n:'Família crescendo',d:'Ter um bebê',c:'bebe',q:1,t:()=>G.sims.some(s=>s.parents)||G.objects.some(o=>o.baby),big:1,m:'Ver a gente construindo uma família, nem que seja no jogo, enche meu coração.'},
+ {k:'luck',i:'🐶',n:'Melhor amigo',d:'Brincar com o pet 10 vezes',c:'pet:brincar',q:10,m:'O Luck sabe: nessa casa tem amor de sobra pra todo mundo.'},
+ {k:'chef',i:'🍳',n:'Chef de cozinha',d:'Cozinhar 10 refeições',c:'act:cozinhar',q:10,m:'O tempero mais gostoso é comer junto com você.'},
+ {k:'sushi',i:'🍣',n:'Noite do sushi',d:'Comer sushi',c:'act:comer_sushi',q:1,m:'Sushi com você é o meu programa favorito.'},
+ {k:'brigadeiro',i:'🍫',n:'Docinho',d:'Fazer brigadeiro',c:'act:brigadeiro',q:1,m:'Nada é mais doce que você. Nem brigadeiro.'},
+ {k:'estrelas',i:'✨',n:'Olhando as estrelas',d:'Ver as estrelas',c:'act:estrelas',q:1,m:'Tem bilhões de estrelas lá em cima e eu só tenho olhos pra você.'},
+ {k:'praia',i:'🏖️',n:'Dia de praia',d:'Ir à praia',c:'venue:praia',q:1,m:'Mar, sol e você. Não precisa de mais nada.'},
+ {k:'casa',i:'🏡',n:'Lar, doce lar',d:'Ter 40 itens na casa',t:()=>G.objects.length>=40,m:'Nossa casa ainda vai ser assim: cheia de coisas nossas.'},
+ {k:'rico',i:'💰',n:'Pé-de-meia',d:'Juntar R$ 50.000',t:()=>G.money>=50000&&!G.cheated,m:'Juntos a gente constrói tudo, um tijolinho de cada vez.'},
+ {k:'mestre',i:'📈',n:'Mestre',d:'Chegar ao nível 10 em uma habilidade',t:()=>household().some(s=>Object.values(s.skills||{}).some(v=>v>=10)),m:'Tenho orgulho de tudo que você aprende e conquista.'},
+ {k:'carreira',i:'💼',n:'Subindo na carreira',d:'Chegar ao nível 5 no trabalho',t:()=>household().some(s=>s.job&&s.job.level>=5),m:'Você vai longe, e eu vou estar do lado aplaudindo.'},
+ {k:'formatura',i:'🎓',n:'Diploma na mão',d:'Se formar na faculdade',c:'formar',q:1,t:()=>household().some(s=>(s.degrees||[]).length>0),m:'Eu sempre soube que você conseguia.'},
+ {k:'aspiracao',i:'🏆',n:'Sonho realizado',d:'Realizar uma aspiração',t:()=>household().some(s=>(s.aspDone||[]).length>0),big:1,m:'Realizar sonhos é muito mais gostoso quando é junto.'},
+ {k:'festa',i:'🎉',n:'Festa de arromba',d:'Fazer uma festa nota 3 estrelas',c:'festa3',q:1,m:'Com você até segunda-feira vira festa.'},
+ {k:'fotos',i:'📸',n:'Fotógrafa',d:'Guardar 10 fotos no álbum',c:'foto',q:10,m:'Cada foto é um pedacinho da nossa história. Quero um álbum infinito.'},
+ {k:'natal',i:'🎄',n:'Feliz Natal',d:'Dar um presente de Natal',c:'natal',q:1,m:'Meu presente de Natal favorito é você.'},
+ {k:'anonovo',i:'🎆',n:'Feliz Ano Novo',d:'Passar a virada juntos',c:'virada',q:1,m:'Que venham mais mil anos novos do seu lado.'},
+ {k:'dia9',i:'💌',n:'9 de janeiro',d:'Comemorar o nosso dia',c:'dia9',q:1,big:1,m:'Nosso dia. Pra sempre o meu dia preferido do ano.'},
+ {k:'mes',i:'📅',n:'Um mês em Heartville',d:'Jogar 30 dias no jogo',t:()=>typeof dayN==='function'&&dayN()>=30,m:'Um mês de Heartville. Uma vida inteira pela frente.'},
+ {k:'tudo',i:'💖',n:'Amor completo',d:'Ganhar 30 conquistas',t:()=>Object.keys(G.ach||{}).length>=30,big:1,m:'Você completou quase tudo aqui. Lá fora, a gente ainda tem a vida inteira pra completar juntos.'}];
+const ACHS=new Set();
+function achCount(k){G.achC=G.achC||{};if(ACHS.has(k))return;ACHS.add(k);queueMicrotask(()=>ACHS.delete(k));G.achC[k]=(G.achC[k]||0)+1;achCheck();}
+function achCheck(){if(!G||G.demo||!$('#title').hidden)return;const first=!G.ach;G.ach=G.ach||{};G.achC=G.achC||{};let n=0;
+  for(const a of ACH){if(G.ach[a.k])continue;let ok=false;if(a.c&&(G.achC[a.c]||0)>=a.q)ok=true;if(!ok&&a.t)try{ok=!!a.t();}catch(_){}if(ok){if(first){G.ach[a.k]=Date.now();n++;}else achUnlock(a);}}
+  if(first){achDot(1);const b=$('#mnAch');if(b)b.querySelector('span').textContent=`${Object.keys(G.ach).length}/${ACH.length} 🏆`;setTimeout(()=>toast(`🏆 Novidade: Conquistas do casal! ${n?`Vocês já têm ${n}. `:''}Cada uma traz uma mensagem 💌 (Menu → Conquistas).`,'good'),5000);save();}}
+function achUnlock(a){G.ach[a.k]=Date.now();toast(`🏆 Conquista desbloqueada: ${a.i} ${a.n}`,'love');try{SFX.wish();}catch(_){}
+  const b=$('#mnAch');if(b)b.querySelector('span').textContent=`${Object.keys(G.ach).length}/${ACH.length} 🏆`;achDot(1);
+  if(a.big)setTimeout(()=>{if($('#letter').hidden&&$('#cas').hidden)openLetter({titulo:`${a.i} ${a.n}`,texto:a.m});},2200);save();}
+function achDot(on){const m=$('#mMenu');if(m)m.classList.toggle('ach-new',!!on);}
+{const _cw=checkWish;checkWish=function(s,k){try{if(!G.demo&&s&&!s.visitor)achCount(k);}catch(_){}return _cw(s,k);};}
+{const _t=toast;toast=function(m,k){if(typeof m==='string'&&G&&!G.demo){if(/A festa acabou: ⭐⭐⭐/.test(m))achCount('festa3');if(/^🎁 .* de Natal para/.test(m))achCount('natal');if(/^🎆 Feliz Ano Novo/.test(m))achCount('virada');}return _t(m,k);};}
+{const _ce=celebrate;celebrate=function(sd){if(sd&&/9 de janeiro/.test(sd.titulo||''))achCount('dia9');return _ce(sd);};}
+{const _st=snapTo;snapTo=function(f,cap,auto){return _st(f,cap,auto).then(r=>{try{achCount('foto');}catch(_){}return r;});};}
+{const _cc=CHEATS.cofrinho;if(_cc)CHEATS.cofrinho=[_cc[0],()=>{G.cheated=1;_cc[1]();}];}
+setInterval(()=>{try{achCheck();}catch(e){}},4000);
+/* ---------- tela de conquistas ---------- */
+(function achUI(){
+  const st=document.createElement('style');st.textContent=`
+.ach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;overflow:auto;padding:4px 2px 10px}
+.ach{border:0;font:inherit;text-align:left;color:var(--ink);background:#fff;border-radius:14px;padding:10px 12px;display:flex;gap:10px;align-items:flex-start;box-shadow:0 2px 8px rgba(34,48,74,.08);cursor:pointer}
+.ach .ai{font-size:24px;line-height:1;filter:none}.ach b{display:block;font:700 13px/1.2 var(--display)}.ach small{display:block;font-size:11px;color:var(--ink2);margin-top:3px;line-height:1.3}
+.ach.off{background:rgba(255,255,255,.55);cursor:default}.ach.off .ai{filter:grayscale(1);opacity:.45}.ach.off b{color:var(--ink2)}
+.ach-bar{height:8px;border-radius:6px;background:rgba(34,48,74,.08);overflow:hidden}.ach-bar i{display:block;height:100%;background:linear-gradient(90deg,#ee5d7c,#f0bd45)}
+#menu .mcard{max-height:calc(100dvh - 32px);overflow:auto}
+.ach-new{position:relative}.ach-new::after{content:'';position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:50%;background:var(--pink);box-shadow:0 0 0 2px #fff}
+`;document.head.appendChild(st);
+  document.body.insertAdjacentHTML('beforeend',`<div id="achs" class="screen" hidden><div class="mcard glass alb-card"><div class="alb-h"><h2>🏆 Conquistas do casal</h2><button class="btn pri" id="achX">Fechar</button></div><p class="hint" id="achHint" style="margin:0"></p><div class="ach-bar"><i id="achBar"></i></div><div id="achGrid" class="ach-grid"></div></div></div>`);
+  const mn=$('#mnLetters');if(mn)mn.insertAdjacentHTML('beforebegin','<button class="btn" id="mnAch">Conquistas <span>🏆</span></button>');
+  function open(){pauseFor();$('#menu').hidden=true;achDot(0);const got=G.ach||{},n=Object.keys(got).length;$('#achHint').textContent=`${n} de ${ACH.length} conquistas. Toque numa conquista desbloqueada para ler a mensagem 💌`;$('#achBar').style.width=(n/ACH.length*100)+'%';
+    const C=G.achC||{};$('#achGrid').innerHTML=ACH.map(a=>{const on=!!got[a.k];const prog=!on&&a.c&&a.q>1?` · ${Math.min(C[a.c]||0,a.q)}/${a.q}`:'';
+      return`<button class="ach${on?'':' off'}" data-k="${a.k}"><span class="ai">${a.i}</span><span><b>${esc(a.n)}</b><small>${on?'💌 '+new Date(got[a.k]).toLocaleDateString('pt-BR'):esc(a.d)+prog}</small></span></button>`;}).join('');$('#achs').hidden=false;}
+  $('#achGrid').onclick=e=>{const b=e.target.closest('.ach');if(!b||b.classList.contains('off'))return;const a=ACH.find(x=>x.k===b.dataset.k);$('#achs').hidden=true;openLetter({titulo:`${a.i} ${a.n}`,texto:a.m});};
+  $('#achX').onclick=()=>{$('#achs').hidden=true;resumeFrom();};
+  const b=$('#mnAch');if(b)b.onclick=open;window.openAch=open;
+  setTimeout(()=>{if(G&&b)b.querySelector('span').textContent=`${Object.keys(G.ach||{}).length}/${ACH.length} 🏆`;},1500);
+})();
+/* ================= lembretes carinhosos ================= */
+/* 1) quando ela volta depois de um tempo fora: cartinha "que saudade" com o que está acontecendo na casa
+   2) com o app aberto em segundo plano: avisos do celular (se ela permitir) quando alguém precisa de atenção */
+const LEMB={last:0,away:0};
+function lsGet(k){try{return localStorage.getItem(k);}catch(_){return null;}}function lsSet(k,v){try{localStorage.setItem(k,v);}catch(_){}}
+function saudadeText(hrs){const h=household(),a=h[0],b=h[1],L=[];
+  const t=hrs>=48?`${Math.floor(hrs/24)} dias`:hrs>=24?'um dia inteiro':`${Math.round(hrs)} horas`;
+  L.push(`Você ficou ${t} fora e a casa sentiu sua falta.`);
+  if(b)L.push(`${b.name} perguntou de você umas mil vezes.`);
+  if(G.pet)L.push(`O ${G.pet.name} ficou na porta esperando você voltar. 🐶`);
+  for(const s of h){const w=s.wishes&&s.wishes[0];if(w){L.push(`${s.name} está com vontade de: ${wishText(w,s).toLowerCase()}.`);break;}}
+  try{const nx=upcomingDates().find(x=>x.left<=10);if(nx)L.push(`${nx.i} ${nx.n} ${nx.left===0?'é hoje!':nx.left===1?'é amanhã!':'é daqui a '+nx.left+' dias.'}`);}catch(_){}
+  L.push('Que bom que você voltou. 💕');return L.join('\n\n');}
+function lembCheckBack(){if(!G||G.demo)return;const last=+lsGet('hv_last')||0,now=Date.now();lsSet('hv_last',now);if(!last)return;const hrs=(now-last)/36e5;
+  if(hrs>=6&&$('#letter').hidden)setTimeout(()=>{if(G&&!G.demo&&$('#letter').hidden&&$('#cas').hidden)openLetter({titulo:'Que saudade! 💕',texto:saudadeText(hrs)});},1800);}
+setInterval(()=>{if(G&&!G.demo&&!document.hidden)lsSet('hv_last',Date.now());},30000);
+document.addEventListener('visibilitychange',()=>{if(document.hidden){LEMB.away=Date.now();if(G&&!G.demo)lsSet('hv_last',Date.now());}else lembCheckBack();});
+{let started=false;setInterval(()=>{if(!started&&G&&!G.demo&&$('#title').hidden){started=true;lembCheckBack();}},1000);}
+/* avisos do celular (app aberto em segundo plano) */
+function notifyOn(){return lsGet('hv_notif')==='1'&&'Notification' in window&&Notification.permission==='granted';}
+async function notify(title,body){if(!notifyOn())return;if(Date.now()-LEMB.last<20*60e3)return;LEMB.last=Date.now();
+  try{const r=navigator.serviceWorker&&await navigator.serviceWorker.getRegistration();if(r)r.showNotification(title,{body,icon:'icone.png',badge:'favicon.png',tag:'heartville'});else new Notification(title,{body,icon:'icone.png'});}catch(_){}}
+setInterval(()=>{if(!G||G.demo||!document.hidden||!notifyOn())return;const h=household();
+  for(const s of h){const low=NEEDS.filter(N=>s.needs[N.k]<15)[0];if(low){notify(`${s.name} precisa de você 💕`,`${low.i} ${low.n} lá embaixo. Volta pra Heartville?`);return;}}
+  if(G.objects.some(o=>o.baby&&o.baby.cry)){notify('O bebê está chorando 👶','Corre lá que ele quer colo!');return;}
+  if(G.pet&&G.pet.want){notify(`O ${G.pet.name} está com saudade 🐶`,'Ele quer carinho e brincadeira.');return;}},60000);
+(function lembUI(){const mn=$('#mnLetters');if(!mn)return;mn.insertAdjacentHTML('beforebegin','<button class="btn" id="mnNotif">Lembretes no celular <span id="mnNotifV">desligados</span></button>');
+  const upd=()=>{$('#mnNotifV').textContent=notifyOn()?'ligados 🔔':'desligados';};upd();
+  $('#mnNotif').onclick=async()=>{if(!('Notification' in window)){toast('Este navegador não aceita avisos. No iPhone, adicione o Heartville à Tela de Início e abra por lá.','bad');return;}
+    if(notifyOn()){lsSet('hv_notif','0');upd();toast('Lembretes desligados.');return;}
+    let p=Notification.permission;if(p!=='granted')try{p=await Notification.requestPermission();}catch(_){}
+    if(p==='granted'){lsSet('hv_notif','1');upd();toast('🔔 Lembretes ligados! Quando alguém da casa precisar de você, o celular avisa.','good');}else toast('Sem permissão para avisos. Dá para liberar nos ajustes do celular.','bad');};})();
 /* ================= jogo na nuvem (Supabase) ================= */
 const CLOUD={url:'https://efsajtariawxlhwfgpzg.supabase.co',key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmc2FqdGFyaWF3eGxod2ZncHpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA2MDM2MjIsImV4cCI6MjEwNjE3OTYyMn0.0zy7jyLLTW6C1paFkJn70uzBLZ0KostufSGkGINZCQ8'};
 const CLOUD_KEY='morada.cloud';
@@ -4660,7 +4766,7 @@ function showSyncBanner(r){let b=$('#syncBanner');if(!b){b=document.createElemen
   b.textContent='☁️ Mudou no outro aparelho · tocar para carregar';b.hidden=false;b.onclick=()=>{b.hidden=true;startFromSave(r,'☁️ Jogo atualizado da nuvem!');};}
 setInterval(()=>{if(!document.hidden)cloudCheck();},20000);
 /* ---- aviso de versão nova do jogo ---- */
-const APPV='v33';
+const APPV='v34';
 async function checkAppVersion(){try{const t=await fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'');const m=t.match(/const APPV='([^']+)'/);
   if(m&&m[1]!==APPV){let b=$('#verBanner');if(!b){b=document.createElement('button');b.id='verBanner';b.className='glass';document.body.appendChild(b);}
     b.textContent=`✨ Versão nova (${m[1]}) · tocar para atualizar`;b.hidden=false;b.onclick=()=>{try{if(G&&!G.demo)save();}catch(_){}const go=()=>location.replace(location.pathname+'?v='+m[1]+'-'+Date.now());if(cloudCode&&G&&!G.demo)cloudPush(true).finally(go);else go();};}}catch(_){}}

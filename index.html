@@ -4928,11 +4928,102 @@ function showSyncBanner(r){let b=$('#syncBanner');if(!b){b=document.createElemen
   b.textContent='☁️ Mudou no outro aparelho · tocar para carregar';b.hidden=false;b.onclick=()=>{b.hidden=true;startFromSave(r,'☁️ Jogo atualizado da nuvem!');};}
 setInterval(()=>{if(!document.hidden)cloudCheck();},20000);
 /* ---- aviso de versão nova do jogo ---- */
-const APPV='v36';
+const APPV='v37';
 async function checkAppVersion(){try{const t=await fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'');const m=t.match(/const APPV='([^']+)'/);
   if(m&&m[1]!==APPV){let b=$('#verBanner');if(!b){b=document.createElement('button');b.id='verBanner';b.className='glass';document.body.appendChild(b);}
     b.textContent=`✨ Versão nova (${m[1]}) · tocar para atualizar`;b.hidden=false;b.onclick=()=>{try{if(G&&!G.demo)save();}catch(_){}const go=()=>location.replace(location.pathname+'?v='+m[1]+'-'+Date.now());if(cloudCode&&G&&!G.demo)cloudPush(true).finally(go);else go();};}}catch(_){}}
 if(location.protocol.startsWith('http')){setTimeout(checkAppVersion,4000);setInterval(checkAppVersion,180000);addEventListener('visibilitychange',()=>{if(!document.hidden)checkAppVersion();});}
 {const v=document.createElement('div');v.id='appVer';v.textContent='Heartville '+APPV;const m=$('#menu .mcard')||$('#menu');m&&m.appendChild(v);}
+/* ================= v37: conta (login) — Supabase Auth ================= */
+/* Sem cadastro: conta anônima (o jogo já salva na nuvem). Com e-mail: código de 6 dígitos, sem senha.
+   Cada conta só lê e grava o próprio jogo (RLS na tabela heartville_saves). Dá para excluir a conta no app. */
+const HV_PUBLIC=false; /* true na versão das lojas: cria a conta anônima automaticamente */
+const AUTH={url:CLOUD.url,key:CLOUD.key,S:null,busy:false,sig:'',last:0,err:false,known:0};
+const AKEY='heartville.auth';
+try{AUTH.S=JSON.parse(localStorage.getItem(AKEY)||'null');}catch(_){AUTH.S=null;}
+function authStore(s){AUTH.S=s;try{if(s)localStorage.setItem(AKEY,JSON.stringify(s));else localStorage.removeItem(AKEY);}catch(_){}updAcctMenu();}
+function sessFrom(r){if(!r||!r.access_token)return null;const u=r.user||{};return{access_token:r.access_token,refresh_token:r.refresh_token,expires_at:r.expires_at||Math.floor(Date.now()/1000)+(r.expires_in||3600),user:{id:u.id,email:u.email||'',anon:!!u.is_anonymous}};}
+async function authReq(path,body,opt){opt=opt||{};const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),12000);
+  try{const h={apikey:AUTH.key,'Content-Type':'application/json'};if(opt.token)h.Authorization='Bearer '+opt.token;
+    const r=await fetch(AUTH.url+path,{method:opt.method||'POST',headers:Object.assign(h,opt.headers||{}),body:body==null?undefined:JSON.stringify(body),signal:opt.keep?undefined:ctl.signal,keepalive:!!opt.keep});
+    const t=await r.text();let j=null;try{j=t?JSON.parse(t):null;}catch(_){j=t;}
+    if(!r.ok){const m=(j&&(j.msg||j.message||j.error_description||j.error))||('erro '+r.status);const e=new Error(m);e.status=r.status;throw e;}return j;}finally{clearTimeout(tm);}}
+async function authToken(){const s=AUTH.S;if(!s)return null;if(s.expires_at-60>Date.now()/1000)return s.access_token;
+  try{const r=await authReq('/auth/v1/token?grant_type=refresh_token',{refresh_token:s.refresh_token});const n=sessFrom(r);if(n){authStore(n);return n.access_token;}}
+  catch(e){if(e.status===400||e.status===401){authStore(null);}}return null;}
+async function authAnon(){const r=await authReq('/auth/v1/signup',{data:{}});const s=sessFrom(r);if(s)authStore(s);return s;}
+async function authSendCode(email){const back=location.origin+location.pathname;return authReq('/auth/v1/otp?redirect_to='+encodeURIComponent(back),{email,create_user:true});}
+async function authVerify(email,token){const r=await authReq('/auth/v1/verify',{type:'email',email,token});const s=sessFrom(r);if(s)authStore(s);return s;}
+async function authLogout(){const t=AUTH.S&&AUTH.S.access_token;authStore(null);AUTH.sig='';AUTH.known=0;if(t)try{await authReq('/auth/v1/logout',null,{token:t});}catch(_){}}
+/* jogo salvo na conta */
+async function acctGet(){const t=await authToken();if(!t)return null;const r=await authReq(`/rest/v1/heartville_saves?select=data,saved_at&user_id=eq.${AUTH.S.user.id}`,null,{method:'GET',token:t});return r&&r[0]?r[0]:null;}
+async function acctPut(force,keep){if(!AUTH.S||!G||G.demo||AUTH.busy)return false;const data=serialize(),body=data.replace(/"savedAt":\d+,/,'');if(!force&&body===AUTH.sig)return true;
+  AUTH.busy=true;try{const t=await authToken();if(!t)return false;
+    if(!keep&&!force){const r=await acctGet();if(r&&(r.saved_at||0)>AUTH.known+1000){AUTH.busy=false;acctIncoming(r);return false;}}
+    const pd=JSON.parse(data);await authReq('/rest/v1/heartville_saves',{user_id:AUTH.S.user.id,data:pd,saved_at:pd.savedAt||Date.now(),updated_at:new Date().toISOString()},{token:t,keep:keep&&data.length<60000,headers:{Prefer:'resolution=merge-duplicates,return=minimal'}});
+    AUTH.known=pd.savedAt||Date.now();AUTH.sig=body;AUTH.last=Date.now();AUTH.err=false;return true;}catch(e){AUTH.err=true;return false;}finally{AUTH.busy=false;updAcctMenu();}}
+function acctIncoming(r){AUTH.known=r.saved_at||Date.now();AUTH.sig='';const busy=mode!=='live'||ghost||!$('#cas').hidden;if(busy)return;startFromSave(r.data,'☁️ Jogo atualizado com o que estava salvo na sua conta.');}
+async function acctDelete(){const t=await authToken();if(!t)throw new Error('sem sessão');await authReq('/rest/v1/rpc/heartville_delete_me',{},{token:t});authStore(null);AUTH.sig='';AUTH.known=0;}
+setInterval(()=>{if(G&&!G.demo&&AUTH.S)acctPut(false);},45000);
+addEventListener('pagehide',()=>{if(G&&!G.demo&&AUTH.S)acctPut(true,true);});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&G&&!G.demo&&AUTH.S)acctPut(true,true);});
+/* versão pública: conta anônima automática na primeira vez que joga */
+setInterval(()=>{if(HV_PUBLIC&&!AUTH.S&&G&&!G.demo&&navigator.onLine&&!AUTH.creating){AUTH.creating=1;authAnon().then(()=>acctPut(true)).catch(()=>{}).finally(()=>{AUTH.creating=0;});}},10000);
+/* ---------- tela da conta ---------- */
+(function acctUI(){const st=document.createElement('style');st.textContent=`
+#acct .mcard{width:min(420px,100%)}#acct input{width:100%;box-sizing:border-box;padding:12px 14px;border-radius:12px;border:1.5px solid var(--line);font:600 16px/1.2 var(--display);color:var(--ink);background:#fff}
+#acct input:focus{outline:none;border-color:var(--teal)}#acct .acct-code{letter-spacing:8px;text-align:center;font-size:22px}
+#acct .acct-who{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:14px;background:rgba(21,156,147,.08)}#acct .acct-who b{display:block;font:800 15px/1.2 var(--display)}#acct .acct-who small{color:var(--ink2);font-size:12px}
+#acct .acct-msg{min-height:18px;font-size:13px;color:var(--ink2);margin:0}#acct .acct-msg.bad{color:#c0392b}#acct .acct-legal{font-size:11px;color:var(--ink2);margin:2px 0 0;line-height:1.4}
+`;document.head.appendChild(st);
+  document.body.insertAdjacentHTML('beforeend',`<div id="acct" class="screen" hidden><div class="mcard glass"><h2 id="acTitle">Sua conta</h2><div id="acBody" style="display:flex;flex-direction:column;gap:8px"></div><p class="acct-msg" id="acMsg"></p><button class="btn" id="acClose" style="justify-content:center">Fechar</button></div></div>`);
+  const mn=$('#mnCloud');if(mn)mn.insertAdjacentHTML('beforebegin','<button class="btn" id="mnAcct">Conta <span id="mnAcctV">entrar</span></button>');
+  $('#mnAcct').onclick=()=>openAcct();$('#acClose').onclick=()=>{$('#acct').hidden=true;resumeFrom();};updAcctMenu();})();
+function updAcctMenu(){const v=$('#mnAcctV');if(!v)return;const s=AUTH.S;v.textContent=!s?'entrar':s.user.anon?(AUTH.err?'⚠️ sem conexão':'☁️ sem e-mail'):(AUTH.err?'⚠️ sem conexão':'✓ '+(s.user.email.length>18?s.user.email.slice(0,16)+'…':s.user.email));}
+const acMsg=(t,bad)=>{const m=$('#acMsg');m.textContent=t||'';m.className='acct-msg'+(bad?' bad':'');};
+const acErr=e=>{const m=String(e&&e.message||e);return/rate|seconds|after/i.test(m)?'Muitas tentativas. Espere um pouco e tente de novo.':/token|expired|invalid/i.test(m)?'Código errado ou vencido. Confira o e-mail ou peça um novo.':/fetch|network|abort/i.test(m)?'Sem conexão com a internet.':'Não deu certo: '+m;};
+function openAcct(view){pauseFor();$('#menu').hidden=true;$('#acct').hidden=false;acMsg('');const B=$('#acBody'),s=AUTH.S;
+  if(view==='code'){$('#acTitle').textContent='Digite o código';B.innerHTML=`<p class="hint" style="margin:0">Mandamos um e-mail para <b>${esc(AUTH.email||'')}</b>. Abra o e-mail e toque no link para entrar: o jogo abre já conectado. Se o e-mail tiver um código de 6 números, pode digitar aqui. Olhe também no spam.</p><input id="acCode" class="acct-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"><button class="btn pri" id="acVerify" style="justify-content:center">Entrar</button><button class="btn" id="acResend" style="justify-content:center">Mandar outro e-mail</button>`;
+    setTimeout(()=>$('#acCode').focus(),50);$('#acCode').oninput=e=>{e.target.value=e.target.value.replace(/\D/g,'').slice(0,6);if(e.target.value.length===6)$('#acVerify').click();};
+    $('#acVerify').onclick=async()=>{const c=$('#acCode').value.trim();if(c.length!==6){acMsg('O código tem 6 números.',true);return;}acMsg('Entrando…');try{const was=AUTH.S;await authVerify(AUTH.email,c);await acctAfterLogin(was);}catch(e){acMsg(acErr(e),true);}};
+    $('#acResend').onclick=async()=>{acMsg('Enviando…');try{await authSendCode(AUTH.email);acMsg('E-mail enviado de novo!');}catch(e){acMsg(acErr(e),true);}};return;}
+  if(view==='choose'){const r=AUTH.remote;$('#acTitle').textContent='Qual jogo continuar?';B.innerHTML=`<p class="hint" style="margin:0">Sua conta já tem um jogo salvo (${esc(fmtWhen(r.saved_at))}). E este aparelho também tem um.</p><button class="btn pri" id="acUseRemote" style="justify-content:center">☁️ Continuar o jogo da conta</button><button class="btn" id="acUseLocal" style="justify-content:center">📱 Usar o deste aparelho (substitui o da conta)</button>`;
+    $('#acUseRemote').onclick=()=>{AUTH.known=r.saved_at;AUTH.sig='';$('#acct').hidden=true;startFromSave(r.data,'☁️ Jogo da conta carregado!');};
+    $('#acUseLocal').onclick=async()=>{acMsg('Salvando…');AUTH.known=Date.now();const ok=await acctPut(true);if(ok){acMsg('');openAcct();acMsg('Pronto! Este jogo agora está salvo na sua conta.');}else acMsg('Não deu para salvar agora. Tente de novo.',true);};return;}
+  if(view==='delete'){$('#acTitle').textContent='Excluir conta';B.innerHTML=`<p class="hint" style="margin:0">Isso apaga sua conta e o jogo salvo na nuvem, para sempre. O jogo deste aparelho continua aqui.</p><button class="btn warn" id="acDelYes" style="justify-content:center">Sim, excluir minha conta</button><button class="btn" id="acDelNo" style="justify-content:center">Cancelar</button>`;
+    $('#acDelNo').onclick=()=>openAcct();$('#acDelYes').onclick=async()=>{acMsg('Excluindo…');try{await acctDelete();openAcct();acMsg('Conta excluída.');}catch(e){acMsg(acErr(e),true);}};return;}
+  if(!s||s.user.anon){$('#acTitle').textContent=s?'Proteja seu jogo':'Entrar';
+    B.innerHTML=`${s?`<div class="acct-who"><span style="font-size:24px">☁️</span><span><b>Salvando na nuvem sem e-mail</b><small>Coloque seu e-mail para não perder o jogo se trocar de celular.</small></span></div>`:`<p class="hint" style="margin:0">Entre com seu e-mail para guardar o jogo na nuvem e continuar em qualquer celular ou computador. Sem senha: mandamos um link de acesso.</p>`}
+      <input id="acEmail" type="email" inputmode="email" autocomplete="email" placeholder="seu@email.com" value="${esc(AUTH.email||'')}"><button class="btn pri" id="acSend" style="justify-content:center">Receber link de acesso</button>
+      ${s?`<button class="btn warn" id="acDel" style="justify-content:center">Excluir conta</button>`:''}<p class="acct-legal">Usamos seu e-mail só para entrar no jogo e guardar seu progresso.</p>`;
+    $('#acSend').onclick=async()=>{const e=$('#acEmail').value.trim().toLowerCase();if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)){acMsg('Confira o e-mail.',true);return;}AUTH.email=e;acMsg('Enviando…');try{await authSendCode(e);openAcct('code');}catch(err){acMsg(acErr(err),true);}};
+    const d=$('#acDel');if(d)d.onclick=()=>openAcct('delete');return;}
+  $('#acTitle').textContent='Sua conta';
+  B.innerHTML=`<div class="acct-who"><span style="font-size:24px">✅</span><span><b>${esc(s.user.email)}</b><small>${AUTH.last?'Salvo na nuvem '+esc(fmtWhen(AUTH.last)):'O jogo é salvo na nuvem sozinho'}</small></span></div>
+    <button class="btn" id="acSync" style="justify-content:center">☁️ Salvar agora</button><button class="btn" id="acOut" style="justify-content:center">Sair da conta</button><button class="btn warn" id="acDel" style="justify-content:center">Excluir conta</button>`;
+  $('#acSync').onclick=async()=>{acMsg('Salvando…');const ok=await acctPut(true);acMsg(ok?'Salvo na nuvem ✓':'Sem conexão agora. Tento de novo sozinho.',!ok);};
+  $('#acOut').onclick=async()=>{await acctPut(true);await authLogout();openAcct();acMsg('Você saiu. O jogo continua salvo neste aparelho.');};
+  $('#acDel').onclick=()=>openAcct('delete');}
+async function acctAfterLogin(){acMsg('Carregando seu jogo…');let r=null;try{r=await acctGet();}catch(_){}
+  const hasLocal=!!(G&&!G.demo);
+  if(r&&r.data&&hasLocal){AUTH.remote=r;openAcct('choose');return;}
+  if(r&&r.data&&!hasLocal){AUTH.known=r.saved_at;$('#acct').hidden=true;startFromSave(r.data,'☁️ Bem-vindo(a) de volta!');return;}
+  if(hasLocal){AUTH.known=Date.now();await acctPut(true);}openAcct();acMsg('Pronto! Seu jogo agora está salvo na sua conta.');}
+/* na tela inicial: entrar para continuar de outro aparelho */
+{const t=$('#btnCloud');if(t)t.insertAdjacentHTML('afterend','<button class="btn" id="btnAcct" style="justify-content:center">Entrar com e-mail</button>');const b=$('#btnAcct');if(b)b.onclick=()=>openAcct();
+  setInterval(()=>{const b=$('#btnAcct');if(b)b.hidden=!!AUTH.S&&!AUTH.S.user.anon;},2000);}
+/* ao abrir: se a conta tiver um jogo mais novo (jogado em outro aparelho), oferece continuar */
+setTimeout(async()=>{if(!AUTH.S)return;try{const r=await acctGet();if(!r)return;AUTH.known=Math.max(AUTH.known,0);let loc=0;try{loc=(JSON.parse(localStorage.getItem(SAVE_KEY)||'{}').savedAt)||0;}catch(_){}
+  if(r.saved_at>loc+5000&&$('#title')&&!$('#title').hidden){AUTH.known=r.saved_at;startFromSave(r.data,'☁️ Continuando o jogo da sua conta.');}else AUTH.known=Math.max(r.saved_at||0,loc);}catch(_){}},1200);
+
+/* voltando pelo link do e-mail: entra na conta automaticamente */
+(async function authFromLink(){const h=location.hash||'';if(!/access_token=|error_description=/.test(h))return;const q=new URLSearchParams(h.slice(1));try{history.replaceState(null,'',location.pathname+location.search);}catch(_){}
+  if(q.get('error_description')){setTimeout(()=>toast('O link de acesso venceu ou já foi usado. Peça outro em Menu → Conta.','bad'),1500);return;}
+  const at=q.get('access_token'),rt=q.get('refresh_token');try{const u=await authReq('/auth/v1/user',null,{method:'GET',token:at});authStore(sessFrom({access_token:at,refresh_token:rt,expires_in:+q.get('expires_in')||3600,user:u}));
+    setTimeout(()=>toast('✅ Conectado como '+((u&&u.email)||'sua conta')+'. Seu jogo vai ser salvo na nuvem.','good'),1500);
+    setTimeout(async()=>{try{const r=await acctGet();let loc=null;try{loc=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');}catch(_){}
+      if(r&&r.data&&(!loc||(r.saved_at||0)>(loc.savedAt||0)+5000)){AUTH.known=r.saved_at;startFromSave(r.data,'☁️ Jogo da sua conta carregado!');}
+      else if(loc){AUTH.known=Date.now();if(G&&!G.demo)acctPut(true);}}catch(_){}},2200);}
+  catch(e){setTimeout(()=>toast('Não deu para entrar pelo link. Tente de novo em Menu → Conta.','bad'),1500);}})();
 </script>
 </body></html>

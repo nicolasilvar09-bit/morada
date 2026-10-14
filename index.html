@@ -2244,7 +2244,7 @@ function drawStreet(c){
       for(let x=WX0;x<WX1;x+=1.5){if(inX(x)||inX(x+.75))continue;poly(c,[[x,m-.05,.006],[x+.75,m-.05,.006],[x+.75,m+.05,.006],[x,m+.05,.006]],'#f0d36a',false);}}}
   for(const [ri,at] of ZEBRA){const R=ROADS[ri];for(let x=R.a+.3;x<R.b-.2;x+=.66)poly(c,[[x,at-.9,.007],[x+.36,at-.9,.007],[x+.36,at+.9,.007],[x,at+.9,.007]],'rgba(255,255,255,.85)',false);}
   for(const x of [18.5,23.5,43.5,48.5]){const R=ROADS[2];for(let y=R.a+.3;y<R.b-.2;y+=.66)poly(c,[[x-.9,y,.007],[x+.9,y,.007],[x+.9,y+.36,.007],[x-.9,y+.36,.007]],'rgba(255,255,255,.85)',false);}
-  for(const h of NB){if(h.park)continue;poly(c,[[h.x-1.2,h.y-1.2,.003],[h.x+h.w+1.2,h.y-1.2,.003],[h.x+h.w+1.2,h.y+h.d+1.6,.003],[h.x-1.2,h.y+h.d+1.6,.003]],'rgba(170,220,140,.55)',false);
+  for(const h of NB){if(h.park)continue;poly(c,[[h.x-1.2,h.y-1.2,.003],[h.x+h.w+1.2,h.y-1.2,.003],[h.x+h.w+1.2,h.y+h.d+1.6,.003],[h.x-1.2,h.y+h.d+1.6,.003]],(typeof nbYardCol==='function'?nbYardCol():'rgba(170,220,140,.55)'),false);
     if(h.cafe)poly(c,[[h.x,h.y+h.d,.004],[h.x+h.w,h.y+h.d,.004],[h.x+h.w,h.y+h.d+1.5,.004],[h.x,h.y+h.d+1.5,.004]],'#e8dccb',false);
     if(h.shop){const dx=h.x+Math.floor(h.w/2);poly(c,[[dx-.2,h.y+h.d,.004],[dx+1.2,h.y+h.d,.004],[dx+1.2,h.y+h.d+1.2,.004],[dx-.2,h.y+h.d+1.2,.004]],'#e8dccb',false);}}
   for(const L of WALK)if(L.path){poly(c,[[L.a+.5,L.c-.45,.004],[L.b-.5,L.c-.45,.004],[L.b-.5,L.c+.45,.004],[L.a+.5,L.c+.45,.004]],'#e3d9c6',false);c.strokeStyle='rgba(0,0,0,.06)';for(let x=Math.ceil(L.a+.5);x<L.b-.5;x++)line(c,[x,L.c-.45,.005],[x,L.c+.45,.005]);}
@@ -4831,6 +4831,43 @@ function carBack(s){s.byCar=0;const o=myCar();if(o&&!G.sims.some(x=>x.byCar))o.o
     if(c.kind==='enter'&&s.byCar&&!s.outside)carBack(s);}
   return _wt(s);};}
 setInterval(()=>{if(!G)return;const o=myCar();if(o&&o.out&&!G.sims.some(s=>s.byCar&&s.outside))for(const s of G.sims){s.byCar=0;}if(o&&o.out&&!G.sims.some(s=>s.byCar))o.out=0;},3000);
+/* ================= v36: neve no inverno ================= */
+SEASONS.inverno.grass=['#eef3f7','#e4ecf2','#f6f9fb'];
+const isSnow=()=>(SEA_CUR||seasonNow())==='inverno';
+/* neve caindo (por cima de tudo, mais forte quando o tempo fecha) */
+{const _ff=drawFireflies;drawFireflies=function(){_ff();if(!G||!isSnow())return;const r=G.weather.rain,n=Math.round(70+r*160),c=ctx;c.save();c.fillStyle='rgba(255,255,255,.92)';
+  for(let i=0;i<n;i++){const sp=.35+hash(i,11)*.5,ph=(TT*sp*.12+hash(i,12))%1,x=(hash(i,13)*W*1.2+Math.sin(TT*.8+i)*18+ph*40)%(W+20)-10,y=ph*(H+20)-10,rr=1+hash(i,14)*2.2;circ(c,x,y,rr);}c.restore();};}
+{const _dr=drawRain;drawRain=function(){if(isSnow())return;return _dr();};}
+/* neve em cima das árvores */
+{const _dt=drawTree;drawTree=function(c,x,y,s){_dt(c,x,y,s);if(!isSnow())return;const kind=TREEK(x,y);
+  if(kind===1){for(const [zt,zb,r] of [[1.7,1.25,21],[2.35,1.85,15],[2.9,2.4,9]]){const a=P(x,y,zt*s),b=P(x,y,zb*s),R=r*s;c.fillStyle='rgba(255,255,255,.95)';c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(a[0]+R*.55,a[1]+(b[1]-a[1])*.55);c.quadraticCurveTo(a[0],a[1]+(b[1]-a[1])*.7,a[0]-R*.55,a[1]+(b[1]-a[1])*.55);c.closePath();c.fill();}return;}
+  const q=P(x,y,1.9*s);c.fillStyle='#ffffff';for(const [dx,dy,r] of [[-8,-18,11],[6,-21,10],[0,-29,8],[-15,-6,8],[14,-8,8]]){c.beginPath();c.ellipse(q[0]+dx*s,q[1]+dy*s,r*s,r*s*.55,0,Math.PI,0);c.fill();}};}
+/* gramado dos vizinhos e telhados com neve */
+function nbYardCol(){return isSnow()?'rgba(250,252,255,.7)':'rgba(170,220,140,.55)';}
+{const _hd=houseDetail;houseDetail=function(c,h){_hd(c,h);if(!isSnow()||h.tower||VR||FREE())return;const x0=h.x,y0=h.y,x1=h.x+h.w,y1=h.y+h.d,Hh=2.3,ym=(y0+y1)/2,rg=Hh+1.35,ov=.22;
+  const lerp=(t)=>[ym+(y1+ov-ym)*t,rg+(Hh-.12-rg)*t];const a=lerp(0),b=lerp(.93);
+  poly(c,[[x0-ov,a[0],a[1]+.02],[x1+ov,a[0],a[1]+.02],[x1+ov,b[0],b[1]+.02],[x0-ov,b[0],b[1]+.02]],'rgba(250,252,255,.94)',false);
+  c.strokeStyle='rgba(200,215,235,.5)';c.lineWidth=1;for(let k=1;k<4;k++){const t=lerp(k/4.3);line(c,[x0-ov,t[0],t[1]+.025],[x1+ov,t[0],t[1]+.025]);}
+  for(let i=0;i<h.w*3;i++){const p=P(x0-.15+i/3,b[0],b[1]+.02);c.fillStyle='rgba(235,245,255,.95)';c.fillRect(p[0]-.7,p[1],1.4,2.5+((i*7)%5));}
+  if(!h.shop){gbox(c,x0+1,ym-.9,Hh+.6,x0+1.5,ym-.4,rg+.5,'#a0632f');gbox(c,x0+.98,ym-.92,rg+.5,x0+1.52,ym-.38,rg+.58,'#fbfdff');}};}
+/* roupa de frio quando sai de casa */
+{const _lc=lookCat;lookCat=function(s){const k=_lc(s);if(k==='dia'&&isSnow()&&s.outside&&s.vin!=='academia')return'frio';return k;};}
+{const _dl=defLook;defLook=function(s,cat){if(cat==='frio'){const f=femLook(s);return{outfit:'jaqueta',top:f?'#c0392b':'#2c3e5a',bottom:'#2c3e5a',pat:'',acc:Array.from(new Set([...(s.acc||[]).filter(a=>a!=='chapeu'&&a!=='bone'),'gorro','cachecol']))};}return _dl(s,cat);};}
+LOOK_CATS.splice(4,0,['frio','Frio (inverno)','🧣']);
+/* boneco de neve: de graça no inverno */
+DEF.boneco_neve={n:'Boneco de neve',price:0,w:1,d:1,h:1.4,decor:3,afterAll:true,get cat(){return isSnow()?'quintal':null;},
+  draw(B){B(.2,.2,0,.8,.8,.02,'rgba(255,255,255,.9)');},
+  after(c,o,fq,L,on,T){if(!isSnow()){const m=P(...L(.5,.5,.1));c.fillStyle='rgba(180,200,220,.6)';c.beginPath();c.ellipse(m[0],m[1],10,4,0,0,7);c.fill();return;}
+    const a=P(...L(.5,.5,.32)),b=P(...L(.5,.5,.82)),h=P(...L(.5,.5,1.18));c.fillStyle='#ffffff';c.strokeStyle='rgba(120,140,170,.35)';c.lineWidth=1;
+    for(const [p,r] of [[a,14],[b,10],[h,7.5]]){c.beginPath();c.arc(p[0],p[1],r,0,7);c.fill();c.stroke();}
+    c.fillStyle='#22252e';circ(c,h[0]-2.6,h[1]-1.5,1.1);circ(c,h[0]+2.4,h[1]-1.5,1.1);for(const d of [-3,0,3])circ(c,b[0],b[1]+d,1.1);
+    c.fillStyle='#f2a65a';c.beginPath();c.moveTo(h[0],h[1]+.5);c.lineTo(h[0]+8,h[1]+2);c.lineTo(h[0],h[1]+2.5);c.fill();
+    c.fillStyle='#c0392b';c.fillRect(h[0]-7,h[1]+5,14,3);c.fillRect(h[0]+3,h[1]+6,3,8);c.fillStyle='#22252e';c.fillRect(h[0]-6,h[1]-10,12,3);c.fillRect(h[0]-4,h[1]-17,8,8);
+    c.strokeStyle='#6b4a33';c.lineWidth=1.6;c.beginPath();c.moveTo(b[0]-9,b[1]);c.lineTo(b[0]-19,b[1]-8+Math.sin(T*2)*1.5);c.moveTo(b[0]+9,b[1]);c.lineTo(b[0]+19,b[1]-9);c.stroke();},
+  actions:[A('neve','Guerra de bola de neve','❄️','front',20,{diversao:45,social:15},{anim:'cheer',fnDone:s=>{addMoodlet(s,'Brincando na neve',10,360,'brincalhao');}})]};
+/* aviso quando o inverno chega (uma vez) */
+setInterval(()=>{if(!G||G.demo||!isSnow())return;G.seaSeen=G.seaSeen||{};const k='neve'+realD().getFullYear();if(G.seaSeen[k])return;G.seaSeen[k]=1;
+  toast('❄️ Nevou em Heartville! Tem um Boneco de neve de graça em Comprar → Quintal, e todo mundo sai de casaco e gorro.','love');save();},4000);
 /* ================= jogo na nuvem (Supabase) ================= */
 const CLOUD={url:'https://efsajtariawxlhwfgpzg.supabase.co',key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmc2FqdGFyaWF3eGxod2ZncHpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA2MDM2MjIsImV4cCI6MjEwNjE3OTYyMn0.0zy7jyLLTW6C1paFkJn70uzBLZ0KostufSGkGINZCQ8'};
 const CLOUD_KEY='morada.cloud';
@@ -4891,7 +4928,7 @@ function showSyncBanner(r){let b=$('#syncBanner');if(!b){b=document.createElemen
   b.textContent='☁️ Mudou no outro aparelho · tocar para carregar';b.hidden=false;b.onclick=()=>{b.hidden=true;startFromSave(r,'☁️ Jogo atualizado da nuvem!');};}
 setInterval(()=>{if(!document.hidden)cloudCheck();},20000);
 /* ---- aviso de versão nova do jogo ---- */
-const APPV='v35';
+const APPV='v36';
 async function checkAppVersion(){try{const t=await fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'');const m=t.match(/const APPV='([^']+)'/);
   if(m&&m[1]!==APPV){let b=$('#verBanner');if(!b){b=document.createElement('button');b.id='verBanner';b.className='glass';document.body.appendChild(b);}
     b.textContent=`✨ Versão nova (${m[1]}) · tocar para atualizar`;b.hidden=false;b.onclick=()=>{try{if(G&&!G.demo)save();}catch(_){}const go=()=>location.replace(location.pathname+'?v='+m[1]+'-'+Date.now());if(cloudCode&&G&&!G.demo)cloudPush(true).finally(go);else go();};}}catch(_){}}

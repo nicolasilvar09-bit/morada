@@ -1,0 +1,16 @@
+{
+  "name": "Heartville",
+  "short_name": "Heartville",
+  "description": "Uma casinha, duas pessoas e uma vida inteira pra cuidar.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#eef3f6",
+  "theme_color": "#159c93",
+  "lang": "pt-BR",
+  "icons": [
+    {"src": "apple-touch-icon.png", "sizes": "180x180", "type": "image/png"},
+    {"src": "icone.png", "sizes": "512x512", "type": "image/png", "purpose": "any"}
+  ]
+}

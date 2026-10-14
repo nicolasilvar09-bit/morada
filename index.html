@@ -1,4 +1,4 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Heartville"><meta name="theme-color" content="#159c93"><meta name="description" content="Uma casinha, duas pessoas e uma vida inteira pra cuidar."><link rel="icon" type="image/png" href="favicon.png?v=31"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=31"><meta property="og:type" content="website"><meta property="og:title" content="Heartville"><meta property="og:description" content="Uma casinha, duas pessoas e uma vida inteira pra cuidar."><meta property="og:image" content="https://nicolasilvar09-bit.github.io/morada/capa.jpg?v=31"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:url" content="https://nicolasilvar09-bit.github.io/morada/"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://nicolasilvar09-bit.github.io/morada/capa.jpg?v=31"><style>[hidden]{display:none!important}</style></head><body>
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Heartville"><meta name="theme-color" content="#159c93"><meta name="description" content="Uma casinha, duas pessoas e uma vida inteira pra cuidar."><link rel="icon" type="image/png" href="favicon.png?v=31"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=31"><link rel="manifest" href="manifest.json"><meta property="og:type" content="website"><meta property="og:title" content="Heartville"><meta property="og:description" content="Uma casinha, duas pessoas e uma vida inteira pra cuidar."><meta property="og:image" content="https://nicolasilvar09-bit.github.io/morada/capa.jpg?v=31"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:url" content="https://nicolasilvar09-bit.github.io/morada/"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://nicolasilvar09-bit.github.io/morada/capa.jpg?v=31"><style>[hidden]{display:none!important}</style></head><body>
 <title>Heartville</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -3516,7 +3516,7 @@ function drawPetModal(){if($('#petm').hidden)return;pmCtx.setTransform(1,0,0,1,0
 
 /* ================= save / load ================= */
 const SAVE_KEY='morada.save.v1';
-function serialize(){return JSON.stringify({v:3,fw2:1,savedAt:Date.now(),couples:G.couples||{},preg:G.preg||null,dow0:G.dow0||0,rels:G.rels,partners:G.partners,townies:G.townies,pendingVisits:G.pendingVisits,welcomed:G.welcomed,nextSimId:G.nextSimId,pizzaAt:G.pizzaAt,sushiAt:G.sushiAt,luck:1,relT:G.relT||{},seen29:G.seen29||0,seen30:G.seen30||0,money:G.money,min:G.min,speed:G.speed||1,sel:G.sel,nextId:G.nextId,freeWill:G.freeWill,wallsHigh:G.wallsHigh,sound:G.sound,music:G.music,
+function serialize(){return JSON.stringify({v:3,fw2:1,savedAt:Date.now(),couples:G.couples||{},preg:G.preg||null,dow0:G.dow0||0,rels:G.rels,partners:G.partners,townies:G.townies,pendingVisits:G.pendingVisits,welcomed:G.welcomed,nextSimId:G.nextSimId,pizzaAt:G.pizzaAt,sushiAt:G.sushiAt,luck:1,relT:G.relT||{},seen29:G.seen29||0,seen30:G.seen30||0,seaSeen:G.seaSeen||{},forceHol:G.forceHol||null,forceSeason:G.forceSeason||null,money:G.money,min:G.min,speed:G.speed||1,sel:G.sel,nextId:G.nextId,freeWill:G.freeWill,wallsHigh:G.wallsHigh,sound:G.sound,music:G.music,
   walls:[...G.walls],floor:G.floor,wcol:G.wcol,lot2:1,trash:G.trash||0,bill:G.bill||null,maid:!!G.maid,autopay:!!G.autopay,powerOff:!!G.powerOff,pantry:G.pantry||{},techAt:G.techAt||0,party:G.party||null,books:G.books||[],aging:G.aging||'off',extCol:G.extCol,extPat:G.extPat,wallMode:G.wallMode||0,roofColor:G.roofColor,roofStyle:G.roofStyle,viewL,up:(G.up||[]).map(u=>({walls:[...u.walls],floor:u.floor,wcol:u.wcol})),mail:G.mail,weather:G.weather,lastDay:G.lastDay,celebrated:G.celebrated,
   objects:G.objects.map(o=>({id:o.id,type:o.type,x:o.x,y:o.y,l:o.l||0,rot:o.rot,color:o.color,food:o.food||0,slices:o.slices||0,dishes:o.dishes||0,broken:o.broken||0,plant:o.plant||undefined,baby:o.baby?Object.assign({},o.baby,{held:false,cry:false}):undefined})),
   pet:G.pet?{breed:G.pet.breed||null,kind:G.pet.kind,name:G.pet.name,color:G.pet.color,pattern:G.pet.pattern,needs:G.pet.needs,x:G.pet.bed&&G.pet.app?G.pet.app[0]+.5:G.pet.x,y:G.pet.bed&&G.pet.app?G.pet.app[1]+.5:G.pet.y}:null,
@@ -4479,6 +4479,127 @@ let LOOK_EDIT=null;
     Object.assign(s,{name:sp.name||s.name,skin:sp.skin,hair:sp.hair,hairColor:sp.hairColor,acc:(sp.acc||[]).slice()});$('#cas').hidden=true;buildPortraits();hudSig='';resumeFrom();addMoodlet(s,'Visual novo',10,180);save();toast(`${s.name} guardou a roupa nova no guarda-roupa ✨`,'good');return;}
   return _go.call(this,e);};}
 {const b=$('#casBack'),_bk=b.onclick;b.onclick=function(e){LOOK_EDIT=null;return _bk.call(this,e);};}
+/* ================= v33: estações do ano e datas comemorativas (calendário real) ================= */
+function realD(){return G&&G.forceDate?new Date(G.forceDate):new Date();}
+function easterOf(y){const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451);return new Date(y,Math.floor((h+l-7*m+114)/31)-1,((h+l-7*m+114)%31)+1);}
+function holidayNow(){if(G&&G.forceHol)return G.forceHol==='nenhum'?null:G.forceHol;const d=realD(),m=d.getMonth()+1,day=d.getDate();
+  if((m===12&&day===31)||(m===1&&day===1))return'anonovo';
+  if(m===12||(m===1&&day<=6))return'natal';
+  if(m===6&&day>=10&&day<=13)return'namorados';
+  const e=easterOf(d.getFullYear()),diff=Math.round((new Date(d.getFullYear(),m-1,day)-e)/864e5);if(diff>=-3&&diff<=1)return'pascoa';
+  return null;}
+function seasonNow(){if(G&&G.forceSeason)return G.forceSeason;const d=realD(),k=(d.getMonth()+1)*100+d.getDate();
+  return k>=1221||k<320?'verao':k<621?'outono':k<923?'inverno':'primavera';}
+const SEASONS={verao:{n:'Verão',i:'☀️',grass:['#8fcf7a','#86c771','#9ad884']},outono:{n:'Outono',i:'🍂',grass:['#a3c672','#9abd69','#aed17c']},
+  inverno:{n:'Inverno',i:'🧣',grass:['#8cbd80','#84b578','#96c78a']},primavera:{n:'Primavera',i:'🌸',grass:['#93d77c','#8ad073','#a0df88']}};
+const HOLS={natal:{n:'Natal',i:'🎄'},anonovo:{n:'Ano Novo',i:'🎆'},namorados:{n:'Dia dos Namorados',i:'💘'},pascoa:{n:'Páscoa',i:'🐣'}};
+let SEA_CUR=null,HOL_CUR=undefined;
+function seasonTick(){if(!G)return;const s=seasonNow(),h=holidayNow();
+  if(s!==SEA_CUR||h!==HOL_CUR){const first=SEA_CUR===null;SEA_CUR=s;HOL_CUR=h;dirtyLayer();try{NBC.clear();}catch(_){}
+    if(!G.demo)setTimeout(()=>seasonAnnounce(first),first?2500:200);}
+  if(!G.demo)holidayEvents();}
+function seasonAnnounce(){if(!G||G.demo)return;G.seaSeen=G.seaSeen||{};const d=realD(),y=d.getFullYear(),S=SEASONS[SEA_CUR],kS=SEA_CUR+y;
+  const h=HOL_CUR,kH=h&&(h+(y+(h==="natal"&&d.getMonth()===0?-1:0)));
+  if(h&&G.seaSeen[kH]!==1){G.seaSeen[kH]=1;const msg={natal:'🎄 Chegou o Natal em Heartville! A Árvore de Natal está de graça em Comprar → Decoração. Troquem presentes!',
+      anonovo:'🎆 É Réveillon! À noite tem queima de fogos na praia, e na festa todo mundo vai de branco.',namorados:'💘 É semana dos Namorados! Corações no ar e um clima romântico na casa.',
+      pascoa:'🐣 Feliz Páscoa! A Cesta de Páscoa está de graça em Comprar → Decoração. Cheia de ovos de chocolate!'}[h];toast(msg,'love');save();return;}
+  if(G.seaSeen[kS]!==1){G.seaSeen[kS]=1;toast(`${S.i} ${S.n} chegou em Heartville! ${{verao:'Dias de sol e praia cheia.',outono:'As árvores ficam cor de laranja e as folhas caem.',inverno:'Dias mais frios e cinzentos, bom para ficar abraçadinho.',primavera:'As árvores florescem e tem pétalas no ar.'}[SEA_CUR]}`,'good');save();}}
+/* eventos de um dia por ano: ceia de Natal, virada, Dia dos Namorados */
+function holidayEvents(){const d=realD(),y=d.getFullYear(),m=d.getMonth()+1,day=d.getDate(),hr=hourF();G.seaSeen=G.seaSeen||{};const h=household();if(!h.length)return;
+  const once=(k,fn)=>{if(G.seaSeen[k])return;G.seaSeen[k]=1;fn();save();};
+  if(HOL_CUR==='natal'&&((m===12&&day===24&&hr>=19)||(m===12&&day===25)||(G.forceHol==='natal'&&hr>=19)))once('ceia'+y,()=>{for(const s of h)addMoodlet(s,'Ceia de Natal',18,1440,'feliz');toast(`🎄 Feliz Natal, ${h.map(s=>s.name).join(' e ')}! Hora da ceia em família.`,'love');SFX.wish();confetti();});
+  if(HOL_CUR==='anonovo'&&(hr>=23.5||hr<1))once('virada'+(m===1?y-1:y),()=>{for(const s of h)addMoodlet(s,'Feliz Ano Novo!',20,1440,'feliz');toast(`🎆 Feliz Ano Novo! ${h.map(s=>s.name).join(' e ')} começam mais um ano juntos.`,'love');SFX.wish();confetti();});
+  if(HOL_CUR==='namorados'&&((m===6&&day===12)||G.forceHol==='namorados'))once('namor'+y,()=>{for(const s of h)addMoodlet(s,'Dia dos Namorados',16,1440,'paquerador');toast(`💘 Feliz Dia dos Namorados! Hoje o amor está no ar em Heartville.`,'love');SFX.wish();confetti();});}
+/* ---------- grama e árvores de cada estação ---------- */
+function drawGround(c){const g=(SEASONS[SEA_CUR||seasonNow()]||SEASONS.verao).grass;
+  poly(c,[[WX0,WY0,0],[WX1,WY0,0],[WX1,WY1,0],[WX0,WY1,0]],g[0],false);
+  c.globalAlpha=.5;for(let k=WX0;k<WX1;k+=2)poly(c,[[k,WY0,0],[k+1,WY0,0],[k+1,WY1,0],[k,WY1,0]],g[1],false);c.globalAlpha=1;
+  c.globalAlpha=.35;poly(c,[[LX0,LY0,0],[LX1,LY0,0],[LX1,LY1,0],[LX0,LY1,0]],g[2],false);c.globalAlpha=1;
+  drawBeachGround(c);
+  for(let x=LX0;x<LX1;x+=1.3)blobs(c,[x+.5,LY1+.45,.12],[[-4,0,4,'#4fae62'],[4,1,4,'#3f9a55'],[0,-3,3,['#ee5d7c','#f0bd45','#ffffff','#8e6bbf'][(x*3|0)%4]]]);
+  grassDetail(c);drawStreet(c);}
+const LEAF_P={verao:null,
+  outono:[['#a8461b','#c25a20','#d9772a','#eb9a3c'],['#9c6f17','#b9891c','#d4a72c','#e8c650'],['#2f7a3f','#4a8c3c','#6a9c39','#8fae3e']],
+  inverno:[['#2b6342','#36744e','#43845a','#579467']],primavera:null};
+function drawTree(c,x,y,s){const kind=TREEK(x,y),sw=Math.sin(TT*.8+x)*1.2,sea=SEA_CUR||seasonNow(),hh=hash(Math.round(x*3),Math.round(y*3));
+  const p=P(x,y,0);c.fillStyle='rgba(20,50,25,.18)';c.beginPath();c.ellipse(p[0],p[1],14*s,6*s,0,0,7);c.fill();
+  if(kind===1){gbox(c,x-.07,y-.07,0,x+.07,y+.07,.7*s,'#6b4a33');const tiers=[[1.0,.6,26],[1.7,1.25,21],[2.35,1.85,15],[2.9,2.4,9]];const g=sea==='inverno'?['#1d5d39','#266f43','#2f7f4e','#3b8f5a']:['#1f6b3e','#2a7d49','#358f55','#43a062'];
+    tiers.forEach(([zt,zb,r],i)=>{const a=P(x,y,zt*s),b=P(x,y,zb*s);r*=s;c.fillStyle=g[i];c.beginPath();c.moveTo(a[0]+sw*.3*i,a[1]);c.lineTo(b[0]+r,b[1]);c.quadraticCurveTo(b[0],b[1]+r*.45,b[0]-r,b[1]);c.closePath();c.fill();
+      c.fillStyle='rgba(255,255,255,.08)';c.beginPath();c.moveTo(a[0]+sw*.3*i,a[1]);c.lineTo(b[0]-r,b[1]);c.quadraticCurveTo(b[0]-r*.5,b[1]+r*.25,b[0],b[1]+r*.2);c.closePath();c.fill();});
+    if(HOL_CUR==='natal'){for(let i=0;i<9;i++){const z=(1+i*.2)*s,a=P(x,y,z),r=(26-i*2.1)*s*.8,u=Math.sin(i*2.3+x)*r;c.fillStyle=['#ff4d4d','#ffd84a','#5ad1ff','#ff8ad8'][(i+Math.floor(TT*2))%4];circ(c,a[0]+u,a[1]+3*s,1.8*s);}}
+    return;}
+  gbox(c,x-.08,y-.08,0,x+.08,y+.08,1.3*s,'#7a5a3a');
+  const fl=kind===2;let g=fl?['#2f7a3f','#3b8d4b','#4aa058','#5bb466']:['#2a7a42','#3a9150','#4aa85f','#62bf72'];const LP=LEAF_P[sea];if(LP)g=LP[Math.floor(hh*LP.length)%LP.length];
+  const q=P(x,y,1.9*s),blobsT=[[-14,6,20,0],[14,5,19,0],[0,-2,24,1],[-8,-14,17,2],[9,-16,15,2],[0,-24,12,3]];
+  for(const [dx,dy,r,i] of blobsT){c.fillStyle=g[i];c.beginPath();c.arc(q[0]+dx*s+sw*(i/3),q[1]+dy*s,r*s,0,7);c.fill();}
+  c.fillStyle='rgba(255,255,220,.13)';for(const [dx,dy,r] of [[-10,-12,11],[-2,-22,8],[-16,0,8]]){c.beginPath();c.arc(q[0]+dx*s+sw*.6,q[1]+dy*s,r*s,0,7);c.fill();}
+  c.fillStyle='rgba(10,40,20,.12)';c.beginPath();c.arc(q[0]+10*s,q[1]+8*s,15*s,0,7);c.fill();
+  const bloom=fl||(sea==='primavera'&&hh<.55);
+  if(bloom&&sea!=='inverno'){const col=sea==='primavera'?(hh<.3?'#f7b6cf':hh<.45?'#ffffff':'#f29bbf'):hash(Math.round(x),Math.round(y))<.5?'#f2a3c6':'#f4cf4a';c.fillStyle=col;const n=sea==='primavera'?26:16;
+    for(let i=0;i<n;i++){const a=i*2.4+x,r=(6+((i*7)%17))*s;circ(c,q[0]+Math.cos(a)*r+sw*.5,q[1]-8*s+Math.sin(a)*r*.75,(sea==='primavera'?2.6:2.3)*s);}}
+  if(HOL_CUR==='natal'&&hh<.5){for(let i=0;i<10;i++){const a=i*1.9+x,r=(8+((i*5)%13))*s;c.fillStyle=['#ff4d4d','#ffd84a','#5ad1ff','#7dff8a'][(i+Math.floor(TT*2+x))%4];circ(c,q[0]+Math.cos(a)*r+sw*.5,q[1]-6*s+Math.sin(a)*r*.7,1.7*s);}}}
+/* pisca-pisca nas casas do bairro (Natal) */
+{const _hd=houseDetail;houseDetail=function(c,h){_hd(c,h);if(HOL_CUR!=='natal'||h.tower||VR||FREE())return;const x0=h.x,x1=h.x+h.w,y1=h.y+h.d;
+  c.strokeStyle='rgba(40,40,40,.5)';c.lineWidth=.6;const a=P(x0-.2,y1+.23,2.1),b=P(x1+.2,y1+.23,2.1);c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1]);c.stroke();
+  const n=Math.round(h.w*4);for(let i=0;i<=n;i++){const u=x0-.2+(h.w+.4)*i/n,p=P(u,y1+.23,2.1-Math.abs(Math.sin(i*1.3))*.04);c.fillStyle=['#ff4d4d','#ffd84a','#4fc3ff','#7dff8a'][i%4];circ(c,p[0],p[1]+1.5,1.6);}
+  const d=P(x0+Math.floor(h.w/2)+.5,y1+.02,1.55);c.strokeStyle='#2f7a3f';c.lineWidth=2.6;c.beginPath();c.arc(d[0],d[1],4.2,0,7);c.stroke();c.fillStyle='#d6283c';circ(c,d[0],d[1]+4,1.6);};}
+/* ---------- objetos sazonais ---------- */
+function xmasGift(s){const t=other(s)||household().find(x=>x!==s);const k='gift'+realD().getFullYear()+'-'+s.id;G.seaSeen=G.seaSeen||{};
+  if(G.seaSeen[k]){addMoodlet(s,'Clima de Natal',8,360,'feliz');toast(`${s.name} já deu o presente deste Natal. Ficou admirando a árvore ✨`);return;}
+  G.seaSeen[k]=1;const P_=['um suéter de tricô','um perfume cheiroso','um livro novo','uma caneca fofa','um pijama de Natal combinando','um porta-retrato do casal','um fone de ouvido','um vale-massagem','um colar delicado','uma caixa de bombons'];
+  const gift=P_[Math.floor(Math.random()*P_.length)];addMoodlet(s,'Presente de Natal',14,1440,'feliz');if(t){addMoodlet(t,'Ganhei presente de Natal!',18,1440,'feliz');try{addRel(s,t,6);}catch(_){}}
+  toast(`🎁 ${s.name} deu ${gift} de Natal para ${t?t.name:'a família'}!`,'love');SFX.wish();confetti();}
+DEF.arvore_natal={n:'Árvore de Natal',price:0,w:1,d:1,h:2.3,decor:4,afterAll:true,get cat(){return HOL_CUR==='natal'||HOL_CUR==='anonovo'?'decor':null;},
+  draw(B){B(.38,.38,0,.62,.62,.32,'#8b2f3a');B(.36,.36,.3,.64,.64,.34,'#f0bd45');B(.04,.64,0,.3,.9,.24,'#ee5d7c');B(.15,.64,0,.19,.9,.25,'#f4f1ec');B(.66,.08,0,.94,.32,.2,'#3d7fd1');B(.78,.08,0,.82,.32,.21,'#f0bd45');B(.68,.68,0,.9,.9,.16,'#43be86');},
+  after(c,o,fq,L,on,T){const base=P(...L(.5,.5,.34));const tiers=[[.34,1.0,24],[.85,1.5,19],[1.3,1.95,14],[1.75,2.3,9]],gs=['#1f6b3e','#2a7d49','#358f55','#43a062'];
+    tiers.forEach(([z0,z1,r],i)=>{const a=P(...L(.5,.5,z1)),b=P(...L(.5,.5,z0));c.fillStyle=gs[i];c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(b[0]+r,b[1]);c.quadraticCurveTo(b[0],b[1]+r*.4,b[0]-r,b[1]);c.closePath();c.fill();
+      c.fillStyle='rgba(255,255,255,.1)';c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(b[0]-r,b[1]);c.quadraticCurveTo(b[0]-r*.5,b[1]+r*.2,b[0],b[1]+r*.2);c.closePath();c.fill();});
+    for(let i=0;i<22;i++){const z=.45+i*.08,a=P(...L(.5,.5,z)),r=(24-(z-.34)*9.4)*.85,u=Math.sin(i*2.4)*r;c.fillStyle=['#ff4d4d','#ffd84a','#5ad1ff','#ff8ad8','#ffffff'][(i+Math.floor(T*2.5))%5];circ(c,a[0]+u,a[1]+2+Math.cos(i*2.4)*2,1.9);}
+    const st=P(...L(.5,.5,2.38));c.save();c.translate(st[0],st[1]);c.fillStyle='#ffd84a';c.shadowColor='#ffd84a';c.shadowBlur=8+Math.sin(T*3)*3;c.beginPath();for(let i=0;i<10;i++){const r=i%2?2.6:6.2,a=-Math.PI/2+i*Math.PI/5;c.lineTo(Math.cos(a)*r,Math.sin(a)*r);}c.closePath();c.fill();c.restore();},
+  actions:[A('presente','Dar presente de Natal','🎁','front',10,{social:30,diversao:40},{anim:'use',fnDone:xmasGift}),A('admirar_arvore','Admirar a árvore','✨','front',15,{diversao:25},{anim:'wave',fnDone:s=>addMoodlet(s,'Clima de Natal',8,360,'feliz')})]};
+DEF.cesta_pascoa={n:'Cesta de Páscoa',price:0,w:1,d:1,h:.7,decor:2,afterAll:true,get cat(){return HOL_CUR==='pascoa'?'decor':null;},
+  draw(B){B(.22,.22,0,.78,.78,.32,'#c9a27a');B(.2,.2,.3,.8,.8,.36,'#b07a4f');B(.47,.22,.36,.53,.28,.7,'#b07a4f');B(.47,.72,.36,.53,.78,.7,'#b07a4f');},
+  after(c,o,fq,L){blobs(c,L(.5,.5,.42),[[-8,0,5,'#8e6bbf'],[-1,-3,5.5,'#f0bd45'],[7,0,5,'#ee5d7c'],[3,3,4.5,'#5ad1ff'],[-5,4,4.5,'#5a3a22']]);},
+  actions:[A('ovo','Comer ovo de chocolate','🍫','front',8,{fome:25,diversao:35},{anim:'eat',prop:'prato',fnDone:s=>{addMoodlet(s,'Chocolate de Páscoa',10,480,'feliz');checkWish(s,'act:comer_doce');}})]};
+{const _aah=afterActHook;afterActHook=function(s,a,o,c){_aah(s,a,o,c);if(a&&typeof a.fnDone==='function'&&!G.demo)try{a.fnDone(s,o,c);}catch(e){console.warn(e);}};}
+/* ---------- efeitos no ar: folhas, pétalas, fogos, corações ---------- */
+{const _deo=drawExtraOverlay;drawExtraOverlay=function(c){_deo(c);if(!G)return;const sea=SEA_CUR||seasonNow();
+  if((sea==='outono'||sea==='primavera')&&G.weather.rain<.4){const cols=sea==='outono'?['#d9772a','#c25a20','#e8b23a']:['#f7b6cf','#ffffff','#f29bbf'];
+    for(let i=0;i<18;i++){const ph=(TT*.12+hash(i,3))%1,x=LX0+hash(i,1)*(LX1-LX0)+Math.sin(TT*.6+i)*.8,y=LY0+hash(i,2)*(LY1-LY0)+ph*2,z=3.6*(1-ph);const p=P(x,y,z);
+      c.save();c.translate(p[0],p[1]);c.rotate(TT*1.5+i);c.globalAlpha=Math.min(1,(1-ph)*4,ph*8);c.fillStyle=cols[i%3];c.beginPath();c.ellipse(0,0,sea==='outono'?3.2:2.4,sea==='outono'?1.6:1.5,0,0,7);c.fill();c.restore();}}
+  if(HOL_CUR==='namorados'){for(const s of household()){if(s.away||(!s.outside&&(s.l||0)>DLV()))continue;const ph=(TT*.35+s.id*.37)%1;if(ph>.6)continue;const t=ph/.6,p=P(s.x+Math.sin(TT+s.id)*.2,s.y,(s.l||0)*HALL+2.6+t*1.2);
+    c.save();c.translate(p[0],p[1]);c.scale(.42,.42);c.globalAlpha=1-t;heartPath(c);c.fillStyle='#ee4f78';c.fill();c.restore();}}};}
+{const _ff=drawFireflies;drawFireflies=function(){_ff();if(!G||HOL_CUR!=='anonovo'||daylight()>=.35)return;const c=ctx,S=p=>[p[0]*cam.z+cam.x,p[1]*cam.z+cam.y];c.save();c.globalCompositeOperation='lighter';
+  for(let k=0;k<8;k++){const T0=TT*.55+k*.31,ph=T0%1.7,seed=Math.floor(T0/1.7)*7+k;if(ph>1.2)continue;
+    const bx=-8+hash(seed,1)*22,by=29+hash(seed,2)*9,col=['255,77,109','255,216,74','90,209,255','125,255,138','255,138,216','255,255,255'][seed%6];
+    if(ph<.35){const q=S(P(bx,by,2+ph/.35*10));c.fillStyle='rgba(255,233,168,.9)';circ(c,q[0],q[1],2*cam.z+.6);continue;}
+    const t=(ph-.35)/.85,ctr=S(P(bx,by,12)),r=(16+t*90)*cam.z;
+    const g=c.createRadialGradient(ctr[0],ctr[1],0,ctr[0],ctr[1],r*1.3);g.addColorStop(0,`rgba(${col},${.25*(1-t)})`);g.addColorStop(1,`rgba(${col},0)`);c.fillStyle=g;c.fillRect(ctr[0]-r*1.3,ctr[1]-r*1.3,r*2.6,r*2.6);
+    c.fillStyle=`rgba(${col},${Math.max(0,1-t)})`;for(let i=0;i<24;i++){const a=i/24*Math.PI*2;circ(c,ctr[0]+Math.cos(a)*r,ctr[1]+Math.sin(a)*r*.9+t*t*16*cam.z,(3.4-1.6*t)*cam.z+.6);}}
+  c.restore();};}
+/* ---------- calendário no menu ---------- */
+function upcomingDates(){const d=realD(),y=d.getFullYear(),today=new Date(y,d.getMonth(),d.getDate());const L=[];
+  const add=(dt,i,n)=>{let x=new Date(dt);if(x<today)x=new Date(x.getFullYear()+1,x.getMonth(),x.getDate());L.push({d:x,i,n});};
+  add(new Date(y,0,9),'💌','Nosso dia especial');add(new Date(y,5,12),'💘','Dia dos Namorados');add(new Date(y,11,24),'🎄','Natal');add(new Date(y,11,31),'🎆','Réveillon');
+  {let e=easterOf(y);if(e<today)e=easterOf(y+1);L.push({d:e,i:'🐣',n:'Páscoa'});}
+  for(const [md,k] of [[[2,20],'outono'],[[5,21],'inverno'],[[8,23],'primavera'],[[11,21],'verao']])add(new Date(y,md[0],md[1]),SEASONS[k].i,'Começa o '+SEASONS[k].n.toLowerCase().replace('primavera','a primavera').replace('o a ','a '));
+  for(const x of (typeof GIFT!=='undefined'&&GIFT.datas)||[])if(!(x.dia===9&&x.mes===1))add(new Date(y,x.mes-1,x.dia),'💌',x.titulo||'Data especial');
+  return L.sort((a,b)=>a.d-b.d).map(x=>Object.assign(x,{left:Math.round((x.d-today)/864e5)}));}
+function openCalendar(){pauseFor();$('#menu').hidden=true;const S=SEASONS[SEA_CUR||seasonNow()],H=HOL_CUR&&HOLS[HOL_CUR];
+  $('#crTitle').textContent='📅 Calendário de Heartville';$('#crHint').textContent=`Agora: ${S.i} ${S.n}${H?` · ${H.i} ${H.n}`:''}. As estações e as festas seguem o calendário de verdade.`;
+  $('#crList').innerHTML=upcomingDates().map(x=>`<div class="cri" style="cursor:default"><span class="ic">${x.i}</span><span><b>${esc(x.n)}</b><small>${x.d.toLocaleDateString('pt-BR',{day:'2-digit',month:'long'})} · ${x.left===0?'é hoje!':x.left===1?'amanhã':'faltam '+x.left+' dias'}</small></span></div>`).join('');
+  $('#crList').onclick=null;$('#crClose').textContent='Fechar';$('#career').hidden=false;}
+{const mn=$('#mnLetters');if(mn)mn.insertAdjacentHTML('beforebegin','<button class="btn" id="mnCal">Calendário <span>📅</span></button>');const b=$('#mnCal');if(b)b.onclick=()=>openCalendar();}
+/* códigos para ver as festas antes da hora (e voltar ao normal) */
+Object.assign(CHEATS,{natal:['Modo Natal ligado 🎄',()=>{G.forceHol='natal';}],anonovo:['Modo Réveillon ligado 🎆',()=>{G.forceHol='anonovo';}],namorados:['Modo Dia dos Namorados 💘',()=>{G.forceHol='namorados';}],pascoa:['Modo Páscoa 🐣',()=>{G.forceHol='pascoa';}],
+  verao:['Verão ☀️',()=>{G.forceSeason='verao';}],outono:['Outono 🍂',()=>{G.forceSeason='outono';}],inverno:['Inverno 🧣',()=>{G.forceSeason='inverno';}],primavera:['Primavera 🌸',()=>{G.forceSeason='primavera';}],
+  calendario:['Estações e festas de volta ao calendário real',()=>{G.forceHol=null;G.forceSeason=null;}]});
+/* Réveillon: roupa de festa branca */
+{const _dl=defLook;defLook=function(s,cat){const r=_dl(s,cat);if(cat==='festa'&&HOL_CUR==='anonovo')return Object.assign({},r,{top:'#fbf8f2',bottom:r.outfit==='blazer'?'#f4f1ec':'#fbf8f2'});return r;};}
+{const _lc=lookCat;lookCat=function(s){const k=_lc(s);if(k==='dia'&&HOL_CUR==='anonovo'&&!s.outside&&(hourF()>=20||hourF()<2))return'festa';return k;};}
+setInterval(()=>{try{seasonTick();}catch(e){console.warn(e);}},1500);
+/* ================= app de verdade: funciona offline e abre em tela cheia ================= */
+if('serviceWorker' in navigator&&location.protocol==='https:'){addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});}
 /* ================= jogo na nuvem (Supabase) ================= */
 const CLOUD={url:'https://efsajtariawxlhwfgpzg.supabase.co',key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmc2FqdGFyaWF3eGxod2ZncHpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA2MDM2MjIsImV4cCI6MjEwNjE3OTYyMn0.0zy7jyLLTW6C1paFkJn70uzBLZ0KostufSGkGINZCQ8'};
 const CLOUD_KEY='morada.cloud';
@@ -4539,7 +4660,7 @@ function showSyncBanner(r){let b=$('#syncBanner');if(!b){b=document.createElemen
   b.textContent='☁️ Mudou no outro aparelho · tocar para carregar';b.hidden=false;b.onclick=()=>{b.hidden=true;startFromSave(r,'☁️ Jogo atualizado da nuvem!');};}
 setInterval(()=>{if(!document.hidden)cloudCheck();},20000);
 /* ---- aviso de versão nova do jogo ---- */
-const APPV='v32';
+const APPV='v33';
 async function checkAppVersion(){try{const t=await fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'');const m=t.match(/const APPV='([^']+)'/);
   if(m&&m[1]!==APPV){let b=$('#verBanner');if(!b){b=document.createElement('button');b.id='verBanner';b.className='glass';document.body.appendChild(b);}
     b.textContent=`✨ Versão nova (${m[1]}) · tocar para atualizar`;b.hidden=false;b.onclick=()=>{try{if(G&&!G.demo)save();}catch(_){}const go=()=>location.replace(location.pathname+'?v='+m[1]+'-'+Date.now());if(cloudCode&&G&&!G.demo)cloudPush(true).finally(go);else go();};}}catch(_){}}

@@ -840,9 +840,9 @@ function segInfoV(k,l){if(!VR)return segInfo(k,l);const sd=edgeSides(k),vn=vdir(
 function edgeRot(k,r){const p=k.split(','),x=+p[1],y=+p[2];const a=rotXY(x,y,r),b=rotXY(p[0]==='W'?x:x+1,p[0]==='W'?y+1:y,r);return a[0]===b[0]?'W,'+a[0]+','+Math.min(a[1],b[1]):'N,'+Math.min(a[0],b[0])+','+a[1];}
 let SEGL=0;const hasWallV=k=>WL(SEGL).has(VR?edgeRot(k,4-VR):k);
 function segInfoAB(a,b,l){l=l||0;const pIn=isIndoor(b[0],b[1],l),mIn=isIndoor(a[0],a[1],l);
-  const type=pIn&&!mIn?'back':(pIn?'int':'front'),free=!pIn&&!mIn;const lowB=typeof mode!=='undefined'&&mode==='build'&&buildTool&&['room','expand','wall','wipe','floor','remove','push'].includes(buildTool.kind);const h=l<viewL||roofOn()?HALL:type==='back'?(lowB?.55:HALL):type==='front'&&!free?.34:(G.wallsHigh&&!lowB?HALL:lowB?.55:.95);
+  const type=pIn&&!mIn?'back':(pIn?'int':'front'),free=!pIn&&!mIn;const lowB=typeof mode!=='undefined'&&mode==='build'&&buildTool&&['room','expand','wall','wipe','floor','remove','push'].includes(buildTool.kind);const h=l<viewL||roofOn()?HALL:type==='back'?(lowB?.55:HALL):type==='front'&&!free?.34:free&&lowB?HALL:(G.wallsHigh&&!lowB?HALL:lowB?.55:.95);
   const h2=(G.wallMode===3&&!(l<viewL)&&!roofOn()&&!lowB&&type!=='back')?cutH(a,b,l,type,free,h):h;
-  const wv=pIn?String(WC(l)[TI(b[0],b[1])]):'';return{type,h:h2,col:pIn?wv.split('|')[0]:(G.extCol||'#e9e1d5'),pat:pIn?wv.split('|')[1]:G.extPat,plus:b};}
+  const wv=pIn?String(WC(l)[TI(b[0],b[1])]):'';return{type,free,h:h2,col:pIn?wv.split('|')[0]:(G.extCol||'#e9e1d5'),pat:pIn?wv.split('|')[1]:G.extPat,plus:b};}
 function drawSeg(c,k,w,l){l=l||0;SEGL=l;ZO=l*HALL;try{if(!VR)return drawSegRaw(c,k,w,segInfo(k,l));const S=segInfoV(k,l);if(FREE())return drawSegFree(c,k,w,S);RAW=true;try{drawSegRaw(c,edgeRot(k,VR),w,S);}finally{RAW=false;}}finally{ZO=0;SEGL=0;}}
 function drawSegRaw(c,k,w,S){
   const p=k.split(','),d=p[0],x=+p[1],y=+p[2],h=S.h,cap='#f4efe8';
@@ -2801,7 +2801,7 @@ function bPoint(gx,gy,kind){return isLineTool(kind)?[Math.round(gx),Math.round(g
 /* precise picking: if the tap is on a visible wall, project onto that wall's line instead of the ground behind it */
 function wallScreenPoly(k,l,h){const p=k.split(','),x=+p[1],y=+p[2],z=l*HALL,pts=p[0]==='W'?[[x,y,z],[x,y+1,z],[x,y+1,z+h],[x,y,z+h]]:[[x,y,z],[x+1,y,z],[x+1,y,z+h],[x,y,z+h]];const oz=ZO;ZO=0;const r=pts.map(q=>{const s=P(q[0],q[1],q[2]);return[s[0]*cam.z+cam.x,s[1]*cam.z+cam.y];});ZO=oz;return r;}
 function pickGround(sx,sy){const l=viewL,cands=[];
-  for(const [k] of WL(l)){let h;try{h=segInfoV(k,l).h;}catch(_){h=HALL;}if(!(h>0))continue;const poly_=wallScreenPoly(k,l,h+.22);if(!pointInPoly(sx,sy,poly_))continue;
+  const lineT=mode==='build'&&buildTool&&isLineTool(buildTool.kind);for(const [k] of WL(l)){let h,fr=false;try{const si=segInfoV(k,l);h=si.h;fr=si.free;}catch(_){h=HALL;}if(!(h>0))continue;if(fr&&lineT)continue;const poly_=wallScreenPoly(k,l,h+.22);if(!pointInPoly(sx,sy,poly_))continue;
     const p=k.split(','),mx=p[0]==='W'?+p[1]:+p[1]+.5,my=p[0]==='W'?+p[2]+.5:+p[2],v=VR?toV(mx,my):[mx,my];cands.push({k,h,d:v[0]+v[1],p});}
   if(cands.length){cands.sort((a,b)=>b.d-a.d);const c=cands[0],line=c.p[0]==='W'?+c.p[1]:+c.p[2];let best=null,bd=1e9;
     for(let z=0;z<=c.h+.22+1e-6;z+=.02){const g=s2g(sx,sy,l*HALL+z),d=Math.abs((c.p[0]==='W'?g[0]:g[1])-line);if(d<bd){bd=d;best=g;}}
@@ -3205,19 +3205,20 @@ function strokeApply(x,y){const pg=pickGround(x,y),[gx,gy]=pg.g;const kind=build
 cv.addEventListener('pointerdown',e=>{ensureAudio();try{cv.setPointerCapture(e.pointerId);}catch(_){}ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
   if(ptrs.size===1){drag={x:e.clientX,y:e.clientY,cx:cam.x,cy:cam.y,moved:false};if(e.pointerType==='mouse'&&(e.button===2||e.button===1||e.shiftKey)){drag.rot=true;drag.paint=true;drag.vr0=VR;closePie();return;}if(e.button===0||e.pointerType!=='mouse')buyDragStart(e);
     if(mode==='build'&&buildTool&&isTwoTap(buildTool.kind)&&e.pointerType==='mouse'&&e.button===0&&G&&!G.demo){const [gx,gy]=pickGround(e.clientX,e.clientY).g,pt=bPoint(gx,gy,buildTool.kind);drag.paint=true;closePie();if(!bAnchor){bAnchor=pt;bEnd=pt;drag.rect='new';buildHint();}else drag.rect='second';}
+    else if(mode==='build'&&buildTool&&isTwoTap(buildTool.kind)&&e.pointerType!=='mouse'&&G&&!G.demo){const [gx,gy]=pickGround(e.clientX,e.clientY).g;drag.paint=true;drag.touch=true;closePie();if(!bAnchor){bTap(gx,gy,true);drag.rect=bAnchor?'new':null;if(!drag.rect)drag.paint=false;}else drag.rect='second';}
     else if(mode==='build'&&buildTool&&buildTool.kind!=='view'&&e.pointerType==='mouse'&&e.button===0&&G&&!G.demo){stroke={done:new Set(),dir:null};drag.paint=true;closePie();strokeApply(e.clientX,e.clientY);}}
-  else if(ptrs.size===2){const [a,b]=[...ptrs.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y)||1,z:cam.z,mx:(a.x+b.x)/2,my:(a.y+b.y)/2,cx:cam.x,cy:cam.y,ang:Math.atan2(b.y-a.y,b.x-a.x)};drag=null;stroke=null;}});
+  else if(ptrs.size===2){if(drag&&drag.touch&&drag.rect==='new'){bAnchor=null;bEnd=null;bPend=false;try{buildHint();}catch(_){}}const [a,b]=[...ptrs.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y)||1,z:cam.z,mx:(a.x+b.x)/2,my:(a.y+b.y)/2,cx:cam.x,cy:cam.y,ang:Math.atan2(b.y-a.y,b.x-a.x)};drag=null;stroke=null;}});
 cv.addEventListener('pointermove',e=>{
   if(ptrs.has(e.pointerId))ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
   if(pinch&&ptrs.size===2){const [a,b]=[...ptrs.values()];{let da=Math.atan2(b.y-a.y,b.x-a.x)-pinch.ang;da=Math.atan2(Math.sin(da),Math.cos(da));if(Math.abs(da)>(window._tw?.015:.25)){setVR(VR+da*2/Math.PI);ROTATING=true;window._tw=1;const q=[...ptrs.values()];pinch={d:Math.hypot(q[0].x-q[1].x,q[0].y-q[1].y)||1,z:cam.z,mx:(q[0].x+q[1].x)/2,my:(q[0].y+q[1].y)/2,cx:cam.x,cy:cam.y,ang:Math.atan2(q[1].y-q[0].y,q[1].x-q[0].x)};return;}}const d=Math.hypot(a.x-b.x,a.y-b.y);const nz=clamp(pinch.z*d/pinch.d,.2,2.6);const mx=(a.x+b.x)/2,my=(a.y+b.y)/2;cam.z=nz;cam.x=mx-(pinch.mx-pinch.cx)*(nz/pinch.z);cam.y=my-(pinch.my-pinch.cy)*(nz/pinch.z);return;}
   if(drag&&drag.paint&&stroke){strokeApply(e.clientX,e.clientY);return;}
   if(drag&&drag.rot){const dx=e.clientX-drag.x;if(Math.abs(dx)>3){ROTATING=true;setVR(drag.vr0-dx/140);}return;}
-  if(drag&&drag.rect){bMove(e.clientX,e.clientY);return;}
+  if(drag&&drag.rect){if(Math.hypot(e.clientX-drag.x,e.clientY-drag.y)>10)drag.dragged=true;bMove(e.clientX,e.clientY);return;}
   if(drag&&drag.obj&&ptrs.size===1&&buyDragMove(e))return;
   if(drag){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(!drag.moved&&Math.hypot(dx,dy)>8)drag.moved=true;if(drag.moved){cam.x=drag.cx+dx;cam.y=drag.cy+dy;}}
   if(e.pointerType==='mouse'&&!drag)hover(e.clientX,e.clientY);
 });
-const endPtr=e=>{if(drag&&drag.rot){ptrs.delete(e.pointerId);drag=null;if(ROTATING)rotEnd();return;}if(window._tw){window._tw=0;setTimeout(rotEnd,0);}if(drag&&drag.obj&&drag.moving&&e.type==='pointerup'){buyDragEnd();ptrs.delete(e.pointerId);if(ptrs.size===0){drag=null;stroke=null;}if(ptrs.size<2)pinch=null;return;}if(drag&&drag.rect&&e.type==='pointerup'&&buildTool){const [gx,gy]=bGround(e.clientX,e.clientY),pt=bPoint(gx,gy,buildTool.kind);if(drag.rect==='second'||(bAnchor&&Math.hypot(pt[0]-bAnchor[0],pt[1]-bAnchor[1])>.45))bTap(gx,gy);}const was=drag&&!drag.moved&&!drag.paint;ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;if(was&&ptrs.size===0&&e.type==='pointerup')click(e.clientX,e.clientY,e.pointerType);if(ptrs.size===0){drag=null;stroke=null;}};
+const endPtr=e=>{if(drag&&drag.rot){ptrs.delete(e.pointerId);drag=null;if(ROTATING)rotEnd();return;}if(window._tw){window._tw=0;setTimeout(rotEnd,0);}if(drag&&drag.obj&&drag.moving&&e.type==='pointerup'){buyDragEnd();ptrs.delete(e.pointerId);if(ptrs.size===0){drag=null;stroke=null;}if(ptrs.size<2)pinch=null;return;}if(drag&&drag.rect&&e.type==='pointerup'&&buildTool){const [gx,gy]=bGround(e.clientX,e.clientY),pt=bPoint(gx,gy,buildTool.kind);if(drag.rect==='second')bTap(gx,gy,drag.touch&&!drag.dragged);else if(bAnchor&&Math.hypot(pt[0]-bAnchor[0],pt[1]-bAnchor[1])>.45){bPend=false;bTap(gx,gy);}}const was=drag&&!drag.moved&&!drag.paint;ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;if(was&&ptrs.size===0&&e.type==='pointerup')click(e.clientX,e.clientY,e.pointerType);if(ptrs.size===0){drag=null;stroke=null;}};
 cv.addEventListener('pointerup',endPtr);cv.addEventListener('pointercancel',endPtr);
 cv.addEventListener('wheel',e=>{e.preventDefault();zoomAt(Math.exp(-e.deltaY*.0015),e.clientX,e.clientY);},{passive:false});
 addEventListener('keydown',e=>{if(!G||G.demo||e.target.tagName==='INPUT')return;
@@ -3417,7 +3418,7 @@ function tryPlace(){
   rebuildOcc();if(placed)stairPlaced(placed);repathAll();save();
 }
 const TOOLS=[['raise','⏫','Subir casa'],['room','⬛','Cômodo'],['expand','➕','Ampliar'],['push','↔️','Empurrar'],['wall','🧱','Parede'],['door','🚪','Porta'],['window','🪟','Janela'],['art','🖼️','Quadro'],['remove','🔨','Derrubar'],['wipe','💥','Demolir'],['floor','🟫','Piso'],['paint','🎨','Pintar'],['view','👁️','Visão']];
-const TOOL_HINT={push:'Toque numa parede da casa e depois no lugar para onde ela vai: o cômodo cresce ou diminui, levando portas e janelas junto.',raise:'Copia a casa inteira (piso e paredes) para o andar de cima com um toque no botão abaixo. Depois é só colocar uma escada.',room:`Toque num canto e depois no canto oposto: nasce um cômodo com piso e paredes (${fmt(COST.floor)}/m² + ${fmt(COST.wall)}/parede). Depois coloque uma porta.`,expand:`Para aumentar a casa: toque num canto encostado na casa e depois no canto oposto, do lado de fora. A parede antiga some e as novas sobem sozinhas.`,wipe:'Toque num canto e no canto oposto: derruba todas as paredes e tira o piso dessa área.',art:`Toque numa parede para pendurar um quadro (troca a cada toque) · ${fmt(200)}. Aparece com as paredes altas.`,wall:`Toque onde a parede começa e depois onde termina (numa reta) · ${fmt(COST.wall)} por parede.`,door:`Toque numa parede para colocar uma porta · ${fmt(COST.door)}.`,window:`Toque numa parede para colocar ou tirar uma janela · ${fmt(COST.window)}. Aparece nas paredes altas.`,remove:'Toque numa parede para derrubar.',floor:`Escolha o piso e toque nos quadrados · ${fmt(COST.floor)} cada. Piso interno no quintal aumenta a casa! Para construir em cima: ▲ e coloque piso sobre a casa (depois compre uma Escada em Comprar → Escadas).`,paint:`Escolha a cor e toque num cômodo · ${fmt(COST.paint)}.`,view:'Paredes baixas mostram melhor a casa; altas mostram janelas e quadros.'};
+const TOOL_HINT={push:'Toque numa parede da casa e depois no lugar para onde ela vai: o cômodo cresce ou diminui, levando portas e janelas junto.',raise:'Copia a casa inteira (piso e paredes) para o andar de cima com um toque no botão abaixo. Depois é só colocar uma escada.',room:`Toque num canto e depois no canto oposto: nasce um cômodo com piso e paredes (${fmt(COST.floor)}/m² + ${fmt(COST.wall)}/parede). Depois coloque uma porta.`,expand:`Para aumentar a casa: toque num canto encostado na casa e depois no canto oposto, do lado de fora. A parede antiga some e as novas sobem sozinhas.`,wipe:'Toque num canto e no canto oposto: derruba todas as paredes e tira o piso dessa área.',art:`Toque numa parede para pendurar um quadro (troca a cada toque) · ${fmt(200)}. Aparece com as paredes altas.`,wall:`Arraste o dedo (ou o mouse) de onde a parede começa até onde termina · ${fmt(COST.wall)} por parede. Dois dedos movem a câmera.`,door:`Toque numa parede para colocar uma porta · ${fmt(COST.door)}.`,window:`Toque numa parede para colocar ou tirar uma janela · ${fmt(COST.window)}. Aparece nas paredes altas.`,remove:'Toque numa parede para derrubar.',floor:`Escolha o piso e toque nos quadrados · ${fmt(COST.floor)} cada. Piso interno no quintal aumenta a casa! Para construir em cima: ▲ e coloque piso sobre a casa (depois compre uma Escada em Comprar → Escadas).`,paint:`Escolha a cor e toque num cômodo · ${fmt(COST.paint)}.`,view:'Paredes baixas mostram melhor a casa; altas mostram janelas e quadros.'};
 function buildBuildPanel(){
   $('#bpTools').innerHTML=TOOLS.map(([k,ic,n])=>`<button data-k="${k}" class="${buildTool&&buildTool.kind===k?'on':''}"><span class="tool-ic">${ic}</span>${n}</button>`).join('');
   $('#bpTools').onclick=e=>{const b=e.target.closest('button');if(!b)return;const k=b.dataset.k;const prev=buildTool||{};bAnchor=null;bEnd=null;buildTool={kind:k,floor:prev.floor||'madeira',color:prev.color||WALLCOLS[0],pat:prev.pat||'',fill:!!prev.fill};buildBuildPanel();SFX.click();};
@@ -4932,7 +4933,7 @@ function showSyncBanner(r){let b=$('#syncBanner');if(!b){b=document.createElemen
   b.textContent='☁️ Mudou no outro aparelho · tocar para carregar';b.hidden=false;b.onclick=()=>{b.hidden=true;startFromSave(r,'☁️ Jogo atualizado da nuvem!');};}
 setInterval(()=>{if(!document.hidden)cloudCheck();},20000);
 /* ---- aviso de versão nova do jogo ---- */
-const APPV='v40';
+const APPV='v41';
 async function checkAppVersion(){try{const t=await fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'');const m=t.match(/const APPV='([^']+)'/);
   if(m&&m[1]!==APPV){let b=$('#verBanner');if(!b){b=document.createElement('button');b.id='verBanner';b.className='glass';document.body.appendChild(b);}
     b.textContent=`✨ Versão nova (${m[1]}) · tocar para atualizar`;b.hidden=false;b.onclick=()=>{try{if(G&&!G.demo)save();}catch(_){}const go=()=>location.replace(location.pathname+'?v='+m[1]+'-'+Date.now());if(cloudCode&&G&&!G.demo)cloudPush(true).finally(go);else go();};}}catch(_){}}
@@ -5062,9 +5063,11 @@ function tutShow(){const S=TUT_STEPS[TUT.i];if(!S){tutEnd();return;}if(TUT.hl){T
   if(S.obj){const o=G.objects.find(o=>o.type===S.obj&&(o.l||0)===0);if(o){const c=objCenter(o);lookAt(c[0],c[1]);}}
   $('#tutT').textContent=S.t;$('#tutN').textContent=`${TUT.i+1} de ${TUT_STEPS.length}`;const g=$('#tutGo');g.hidden=!S.next;g.textContent=S.next||'';$('#tutSkip').hidden=!!S.end;
   const el=$('#tut');el.hidden=false;tutPlace();}
-function tutPlace(){const el=$('#tut');if(el.hidden)return;const r=TUT.hl&&TUT.hl.getBoundingClientRect(),h=el.offsetHeight||110;let top;
-  if(r&&r.height){top=r.top>innerHeight/2?Math.max(8,r.top-h-14):Math.min(innerHeight-h-8,r.bottom+14);}else top=innerWidth<640?Math.round(innerHeight*.14):110;
-  el.style.top=top+'px';}
+function tutPlace(){const el=$('#tut');if(el.hidden)return;const h=el.offsetHeight||110,top0=(()=>{const t=$('#topR');const r=t&&t.getBoundingClientRect();return r?r.bottom+10:110;})();
+  const sp=$('#simPanel'),spr=sp&&sp.offsetParent!==null?sp.getBoundingClientRect():null,bot=spr&&spr.top>top0+h?spr.top-10:innerHeight-10;
+  const r=TUT.hl&&TUT.hl.getBoundingClientRect();let top=top0;
+  if(r&&r.height){if(r.top>innerHeight/2)top=r.top-h-14;else top=Math.max(top0,r.bottom+14);}
+  top=Math.max(top0,Math.min(top,bot-h));if(top<top0)top=top0;el.style.top=top+'px';}
 function tutNext(){TUT.i++;SFX.click();if(TUT.i>=TUT_STEPS.length){tutEnd();return;}tutShow();}
 function tutEnd(skipped){TUT.on=false;$('#tut').hidden=true;if(TUT.hl){TUT.hl.classList.remove('tut-hl');TUT.hl=null;}if(G){G.tutDone=1;save();}if(!skipped){SFX.wish();toast('Dica: o tutorial fica no Menu ☰ se quiser ver de novo.','good');}}
 setInterval(()=>{if(!TUT.on||!G)return;const S=TUT_STEPS[TUT.i];if(S&&S.done&&S.done(sel())){SFX.pop();tutNext();return;}tutPlace();},400);

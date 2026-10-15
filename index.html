@@ -4154,7 +4154,11 @@ let _fhT=-1;
 function frameHook(){if(_fhT===TT||!G||G.demo)return;_fhT=TT;const day=Math.floor(G.min/1440);
   if(G._decayDay==null)G._decayDay=day;while(G._decayDay<day&&day-G._decayDay<=10){G._decayDay++;try{decayDay();}catch(e){}}if(G._decayDay<day)G._decayDay=day;
   if(!G.seen29&&!G.demo){G.seen29=1;setTimeout(()=>toast('Novidades: sims mais expressivos, desviam uns dos outros, paredes recortadas (botão ✂️ no topo), empurrar parede no Reformar e fofoca!','good'),2500);}}
-function bGround(sx,sy){return buildTool&&buildTool.kind==='push'&&bAnchor?s2g(sx,sy,LZ()):pickGround(sx,sy).g;}
+function bGround(sx,sy){if(buildTool&&buildTool.kind==='push'&&bAnchor)return s2g(sx,sy,LZ());const r=pickGround(sx,sy);
+  /* segundo clique de uma linha: se o ponto caiu em cima de uma parede paralela em outra linha (ela só estava na frente do chão), usa o chão */
+  if(r.wall&&bAnchor&&isLineTool(buildTool.kind)){const g0=s2g(sx,sy,LZ()),p=r.wall.split(','),horiz=Math.abs(g0[0]-bAnchor[0])>=Math.abs(g0[1]-bAnchor[1]);
+    if((p[0]==='N')===horiz){const line=p[0]==='N'?+p[2]:+p[1],anc=p[0]==='N'?bAnchor[1]:bAnchor[0];if(Math.abs(line-anc)>.01)return g0;}}
+  return r.g;}
 /* ================= v30: centro com prédios, comércio, escritório e ir trabalhar ================= */
 /* ---------- prédios ---------- */
 const TOWERS=[
@@ -4928,7 +4932,7 @@ function showSyncBanner(r){let b=$('#syncBanner');if(!b){b=document.createElemen
   b.textContent='☁️ Mudou no outro aparelho · tocar para carregar';b.hidden=false;b.onclick=()=>{b.hidden=true;startFromSave(r,'☁️ Jogo atualizado da nuvem!');};}
 setInterval(()=>{if(!document.hidden)cloudCheck();},20000);
 /* ---- aviso de versão nova do jogo ---- */
-const APPV='v39';
+const APPV='v40';
 async function checkAppVersion(){try{const t=await fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'');const m=t.match(/const APPV='([^']+)'/);
   if(m&&m[1]!==APPV){let b=$('#verBanner');if(!b){b=document.createElement('button');b.id='verBanner';b.className='glass';document.body.appendChild(b);}
     b.textContent=`✨ Versão nova (${m[1]}) · tocar para atualizar`;b.hidden=false;b.onclick=()=>{try{if(G&&!G.demo)save();}catch(_){}const go=()=>location.replace(location.pathname+'?v='+m[1]+'-'+Date.now());if(cloudCode&&G&&!G.demo)cloudPush(true).finally(go);else go();};}}catch(_){}}

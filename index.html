@@ -2759,7 +2759,7 @@ function updPartyBanner(){let b=document.getElementById('partyBanner');const p=G
   b.innerHTML=`🎉 <b>Festa</b> <span class="pb"><i style="width:${pct*100}%"></i></span> ${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)} <small>${left}h</small>`;}
 /* ================= escrita, novas interações ================= */
 DEF.escrivaninha.actions.push(A('escrever','Escrever um livro','✍️','seat',120,{diversao:10},{anim:'type',skill:'escrita',skillRate:1.2}));
-const BOOK_T=['Amor em Angra','O Segredo do Balneário','Receitas da Vovó','Noites de Verão','O Pug Detetive','Cartas para Isabel','A Casa Morada','Maré Alta','Café com Saudade','Diário de uma Advogada'];
+const BOOK_T=['Amor em Angra','O Segredo do Balneário','Receitas da Vovó','Noites de Verão','O Pug Detetive','Cartas de amor','A Casa Morada','Maré Alta','Café com Saudade','Diário de uma Advogada'];
 function finishWriting(s,c){if(c.t<c.act.dur*.95)return;const roy=Math.round(15+(s.skills.escrita||0)*28);G.books=G.books||[];const t=pick(BOOK_T);G.books.push({t,roy,days:7});s.stats=s.stats||{};s.stats.books=(s.stats.books||0)+1;
   addMoodlet(s,'Livro publicado!',12,720,'confiante');if(!G.demo){toast(`📚 ${s.name} publicou "${t}"! Vai render ${fmt(roy)} por dia durante 7 dias.`,'good');SFX.wish();}checkWish(s,'escrever');}
 Object.assign(SOC,{
@@ -3516,7 +3516,7 @@ function drawPetModal(){if($('#petm').hidden)return;pmCtx.setTransform(1,0,0,1,0
 
 /* ================= save / load ================= */
 const SAVE_KEY='morada.save.v1';
-function serialize(){return JSON.stringify({v:3,fw2:1,savedAt:Date.now(),couples:G.couples||{},preg:G.preg||null,dow0:G.dow0||0,rels:G.rels,partners:G.partners,townies:G.townies,pendingVisits:G.pendingVisits,welcomed:G.welcomed,nextSimId:G.nextSimId,pizzaAt:G.pizzaAt,sushiAt:G.sushiAt,luck:1,relT:G.relT||{},seen29:G.seen29||0,seen30:G.seen30||0,seaSeen:G.seaSeen||{},ach:G.ach||null,achC:G.achC||{},cheated:G.cheated||0,tripState:G.tripState||null,trips:G.trips||0,tutDone:G.tutDone||0,forceHol:G.forceHol||null,forceSeason:G.forceSeason||null,money:G.money,min:G.min,speed:G.speed||1,sel:G.sel,nextId:G.nextId,freeWill:G.freeWill,wallsHigh:G.wallsHigh,sound:G.sound,music:G.music,
+function serialize(){return JSON.stringify({v:3,fw2:1,savedAt:Date.now(),couples:G.couples||{},preg:G.preg||null,dow0:G.dow0||0,rels:G.rels,partners:G.partners,townies:G.townies,pendingVisits:G.pendingVisits,welcomed:G.welcomed,nextSimId:G.nextSimId,pizzaAt:G.pizzaAt,sushiAt:G.sushiAt,luck:1,relT:G.relT||{},seen29:G.seen29||0,seen30:G.seen30||0,seaSeen:G.seaSeen||{},ach:G.ach||null,achC:G.achC||{},cheated:G.cheated||0,tripState:G.tripState||null,trips:G.trips||0,tutDone:G.tutDone||0,legacy:G.legacy===0?0:1,forceHol:G.forceHol||null,forceSeason:G.forceSeason||null,money:G.money,min:G.min,speed:G.speed||1,sel:G.sel,nextId:G.nextId,freeWill:G.freeWill,wallsHigh:G.wallsHigh,sound:G.sound,music:G.music,
   walls:[...G.walls],floor:G.floor,wcol:G.wcol,lot2:1,trash:G.trash||0,bill:G.bill||null,maid:!!G.maid,autopay:!!G.autopay,powerOff:!!G.powerOff,pantry:G.pantry||{},techAt:G.techAt||0,party:G.party||null,books:G.books||[],aging:G.aging||'off',extCol:G.extCol,extPat:G.extPat,wallMode:G.wallMode||0,roofColor:G.roofColor,roofStyle:G.roofStyle,viewL,up:(G.up||[]).map(u=>({walls:[...u.walls],floor:u.floor,wcol:u.wcol})),mail:G.mail,weather:G.weather,lastDay:G.lastDay,celebrated:G.celebrated,
   objects:G.objects.map(o=>({id:o.id,type:o.type,x:o.x,y:o.y,l:o.l||0,rot:o.rot,color:o.color,food:o.food||0,slices:o.slices||0,dishes:o.dishes||0,broken:o.broken||0,plant:o.plant||undefined,baby:o.baby?Object.assign({},o.baby,{held:false,cry:false}):undefined})),
   pet:G.pet?{breed:G.pet.breed||null,kind:G.pet.kind,name:G.pet.name,color:G.pet.color,pattern:G.pet.pattern,needs:G.pet.needs,x:G.pet.bed&&G.pet.app?G.pet.app[0]+.5:G.pet.x,y:G.pet.bed&&G.pet.app?G.pet.app[1]+.5:G.pet.y}:null,
@@ -3563,7 +3563,7 @@ let casCrib=null;
 function enterGame(){viewL=0;if(G.wallMode==null)G.wallMode=G.wallsHigh?1:3;setWallMode(G.wallMode);roofVer++;updLevelUI();dirtyLayer();rebuildOcc();computeRegions();G.sims.forEach(fillWishes);$('#title').hidden=true;$('#cas').hidden=true;$('#hud').hidden=false;buildPortraits();buildNeedsUI();mode='live';setMode('live');setSpeed(G.speed||1);fitCam();checkSpecialDates();}
 $('#casGo').onclick=()=>{
   for(const sp of casSpecs)sp.name=(sp.name||'').trim()||'Sem nome';
-  if(casMode==='new'){G=newWorld(casSpecs);G.pet=makePet('cachorro','Luck','#d9b07a','pug');enterGame();save();toast(`Bem-vindos, ${G.sims[0].name} e ${G.sims[1].name}! Toque nos móveis para começar.`,'love');SFX.wish();confetti();}
+  if(casMode==='new'){G=newWorld(casSpecs);G.pet=makePet('cachorro',PET_NAME(),'#d9b07a','pug');enterGame();save();toast(`Bem-vindos, ${G.sims[0].name} e ${G.sims[1].name}! Toque nos móveis para começar.`,'love');SFX.wish();confetti();}
   else if(casMode==='baby'){const sp=casSpecs[0];if(sp.name==='Sem nome')sp.name='Bebê';const b=casCrib&&casCrib.baby;if(b){b.spec=Object.assign({},sp);b.name=sp.name;b.skin=sp.skin;b.hairColor=sp.hairColor;}$('#cas').hidden=true;resumeFrom();toast(`👶 Bem-vindo(a) ao mundo, ${sp.name}! Cuide pelo berço: mamadeira, ninar, fralda e brincar.`,'love');save();}
   else if(casMode==='add'){const sp=casSpecs[0];const g=gateTile();const n=mkSim(sp,G.nextSimId++,g[0],g[1]);if(sp.degree&&COURSES[sp.degree]){n.job={id:COURSES[sp.degree].career,level:1,perf:0};n.skills[COURSES[sp.degree].sk]=2;}G.sims.push(n);for(const h of household())if(h!==n)G.rels[rkey(h.id,n.id)]=30;fillWishes(n);$('#cas').hidden=true;buildPortraits();resumeFrom();toast(`${n.name} se mudou para a casa!`,'love');confetti();save();}
   else{const s=G.sims[casIdx],sp=casSpecs[casIdx];Object.assign(s,{name:sp.name,skin:sp.skin,hair:sp.hair,hairColor:sp.hairColor,outfit:sp.outfit,pat:sp.pat||'',top:sp.top,bottom:sp.bottom,acc:(sp.acc||[]).slice()});$('#cas').hidden=true;buildPortraits();hudSig='';resumeFrom();addMoodlet(s,'Visual novo',10,180);save();}
@@ -3574,10 +3574,10 @@ function drawCreator(){if($('#cas').hidden)return;const sp=casSpecs[casIdx];casC
   casCtx.fillStyle='rgba(21,156,147,.12)';casCtx.beginPath();casCtx.ellipse(200,468,100,24,0,0,7);casCtx.fill();drawSim(casCtx,fake,200,468,{scale:5.4*(sp.age==='crianca'?.8:1),mood:60,noShadow:true});}
 
 /* ================= boot ================= */
-function startDemo(){viewL=0;dirtyLayer();const g=newWorld(DEFAULT_SIMS);g.demo=true;g.speed=2;g.min=60*2;g.lastDay=1;G=g;G.pet=makePet('cachorro','Luck','#d9b07a','pug');rebuildOcc();computeRegions();mode='live';ghost=null;selObj=null;fitCam();}
+function startDemo(){viewL=0;dirtyLayer();const g=newWorld(DEFAULT_SIMS);g.demo=true;g.speed=2;g.min=60*2;g.lastDay=1;G=g;G.pet=makePet('cachorro',PET_NAME(),'#d9b07a','pug');rebuildOcc();computeRegions();mode='live';ghost=null;selObj=null;fitCam();}
 $('#dedic').textContent=GIFT.dedicatoria||'';
 $('#btnNew').onclick=()=>{ensureAudio();openCreator('new');};
-$('#btnCont').onclick=()=>{ensureAudio();const d=load();if(!d)return;G=fromSave(d);enterGame();toast('Bem-vindos de volta!','good');if(!d.luck&&!G.pet){G.pet=makePet('cachorro','Luck','#d9b07a','pug');setTimeout(()=>toast('Luck, o pug, chegou para morar com vocês! 🐶','love'),1500);save();}};
+$('#btnCont').onclick=()=>{ensureAudio();const d=load();if(!d)return;G=fromSave(d);enterGame();toast('Bem-vindos de volta!','good');if(!d.luck&&!G.pet){G.pet=makePet('cachorro',PET_NAME(),'#d9b07a','pug');setTimeout(()=>toast(PET_NAME()+', o pug, chegou para morar com vocês! 🐶','love'),1500);save();}};
 if(load())$('#btnCont').hidden=false;
 startDemo();
 let last=performance.now(),saveT=0;
@@ -4580,7 +4580,7 @@ DEF.cesta_pascoa={n:'Cesta de Páscoa',price:0,w:1,d:1,h:.7,decor:2,afterAll:tru
 /* ---------- calendário no menu ---------- */
 function upcomingDates(){const d=realD(),y=d.getFullYear(),today=new Date(y,d.getMonth(),d.getDate());const L=[];
   const add=(dt,i,n)=>{let x=new Date(dt);if(x<today)x=new Date(x.getFullYear()+1,x.getMonth(),x.getDate());L.push({d:x,i,n});};
-  add(new Date(y,0,9),'💌','Nosso dia especial');add(new Date(y,5,12),'💘','Dia dos Namorados');add(new Date(y,11,24),'🎄','Natal');add(new Date(y,11,31),'🎆','Réveillon');
+  if(ED_PERSONAL!==false)add(new Date(y,0,9),'💌','Nosso dia especial');add(new Date(y,5,12),'💘','Dia dos Namorados');add(new Date(y,11,24),'🎄','Natal');add(new Date(y,11,31),'🎆','Réveillon');
   {let e=easterOf(y);if(e<today)e=easterOf(y+1);L.push({d:e,i:'🐣',n:'Páscoa'});}
   for(const [md,k] of [[[2,20],'outono'],[[5,21],'inverno'],[[8,23],'primavera'],[[11,21],'verao']])add(new Date(y,md[0],md[1]),SEASONS[k].i,'Começa o '+SEASONS[k].n.toLowerCase().replace('primavera','a primavera').replace('o a ','a '));
   for(const x of (typeof GIFT!=='undefined'&&GIFT.datas)||[])if(!(x.dia===9&&x.mes===1))add(new Date(y,x.mes-1,x.dia),'💌',x.titulo||'Data especial');
@@ -4904,7 +4904,7 @@ $('#clOver').onclick=async()=>{if(!clPending)return;setCloudCode(clPending.code)
 $('#mnCloud').onclick=()=>{$('#menu').hidden=true;openCloud('menu');};
 $('#btnCloud').onclick=()=>{ensureAudio();openCloud('title');};
 function startFromSave(d,msg){cloudKnown=Math.max(cloudKnown,d.savedAt||0);try{localStorage.setItem(SAVE_KEY,JSON.stringify(d));}catch(_){}G=fromSave(d);$('#menu').hidden=true;enterGame();toast(msg||'Bem-vindos de volta!','good');
-  if(!d.luck&&!G.pet){G.pet=makePet('cachorro','Luck','#d9b07a','pug');save();}}
+  if(!d.luck&&!G.pet){G.pet=makePet('cachorro',PET_NAME(),'#d9b07a','pug');save();}}
 $('#btnCont').onclick=async()=>{ensureAudio();const local=load();let d=local;
   if(cloudCode){const b=$('#btnCont');b.disabled=true;b.textContent='Buscando na nuvem…';
     try{const c=await cloudFetch(cloudCode);if(c)cloudKnown=c.savedAt||0;if(c&&(!local||(c.savedAt||0)>(local.savedAt||0)))d=c;}catch(_){toast('Sem conexão com a nuvem: abrindo o jogo deste aparelho.');}
@@ -4928,7 +4928,7 @@ function showSyncBanner(r){let b=$('#syncBanner');if(!b){b=document.createElemen
   b.textContent='☁️ Mudou no outro aparelho · tocar para carregar';b.hidden=false;b.onclick=()=>{b.hidden=true;startFromSave(r,'☁️ Jogo atualizado da nuvem!');};}
 setInterval(()=>{if(!document.hidden)cloudCheck();},20000);
 /* ---- aviso de versão nova do jogo ---- */
-const APPV='v38';
+const APPV='v39';
 async function checkAppVersion(){try{const t=await fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'');const m=t.match(/const APPV='([^']+)'/);
   if(m&&m[1]!==APPV){let b=$('#verBanner');if(!b){b=document.createElement('button');b.id='verBanner';b.className='glass';document.body.appendChild(b);}
     b.textContent=`✨ Versão nova (${m[1]}) · tocar para atualizar`;b.hidden=false;b.onclick=()=>{try{if(G&&!G.demo)save();}catch(_){}const go=()=>location.replace(location.pathname+'?v='+m[1]+'-'+Date.now());if(cloudCode&&G&&!G.demo)cloudPush(true).finally(go);else go();};}}catch(_){}}
@@ -5073,5 +5073,30 @@ addEventListener('resize',()=>tutPlace());
   const a=P(p[0],p[1],z+.5+Math.abs(Math.sin(TT*4))*.25);c.fillStyle='#ee5d7c';c.beginPath();c.moveTo(a[0],a[1]+10);c.lineTo(a[0]-8,a[1]-2);c.lineTo(a[0]+8,a[1]-2);c.closePath();c.fill();c.restore();};}
 /* começa sozinho no primeiro jogo novo */
 {const g=$('#casGo'),_go=g.onclick;g.onclick=function(e){const isNew=casMode==='new';const r=_go.call(this,e);if(isNew&&G&&!G.demo){G.seen29=G.seen30=1;if(!G.ach){G.ach={};G.achC={};for(const a of ACH){try{if(a.t&&a.t())G.ach[a.k]=Date.now();}catch(_){}}}document.querySelectorAll('.toast').forEach(t=>{if(/Novidade/.test(t.textContent))t.remove();});}if(isNew)setTimeout(()=>{if(G&&!G.demo&&!G.tutDone&&!TUT.on){if($('#letter').hidden)tutStart();else{const w=setInterval(()=>{if($('#letter').hidden){clearInterval(w);tutStart();}},500);}}},2600);return r;};}
+/* ================= v39: edição — o jogo da Isabel continua pessoal; jogos novos são para todo mundo ================= */
+var ED_PERSONAL=true;
+function PET_NAME(){return ED_PERSONAL===false?'Biscoito':'Luck';}
+const ED={P:{gift:JSON.parse(JSON.stringify(GIFT)),sims:DEFAULT_SIMS.map(s=>Object.assign({},s)),ach:Object.fromEntries(ACH.map(a=>[a.k,a.m])),dia9:Object.assign({},ACH.find(a=>a.k==='dia9')||{})},
+  G:{gift:{de:'Heartville',para:'',dedicatoria:'',datas:[],favoritas:[],cartas:[{dia:1,titulo:'Bem-vindos a Heartville!',texto:'Essa casinha agora é de vocês.\n\nCuide das necessidades, realize os desejos e encha a casa de lembranças. Tudo fica salvo no álbum e nas conquistas.'},
+    {dia:3,titulo:'Um segredo do jogo',texto:'Se alguém cozinhar quando o outro estiver com fome, os dois comem juntos na mesa.\n\nDormir juntinhos, ver TV lado a lado e conversar bastante aproximam o casal.'},
+    {dia:7,titulo:'Uma semana de casa nova',texto:'Uma semana inteira nessa casa! Que tal planejar uma viagem de férias pelo telefone ou dar uma festa para os vizinhos?'}],cartaCasamento:{titulo:'Felizes para sempre',texto:'Parabéns pelo casamento! Que essa casa continue cheia de amor.'}},ach:{conversa:'Toda história começa com um "oi".',piadas:'Rir junto é o melhor remédio.',abracos:'Abraço apertado resolve quase tudo.',beijo:'O primeiro beijo a gente nunca esquece.',beijos100:'Cem beijos, e contando.',
+  danca:'Dois pra lá, dois pra cá.',serenata:'Uma canção feita de coração.',cafune:'Cafuné cura qualquer dia ruim.',elogios:'Gentileza gera gentileza.',massagem:'Cuidar também é um jeito de amar.',encontro:'Qualquer lugar fica especial a dois.',
+  namoro:'Começou uma linda história.',apaixonados:'Paixão que só aumenta.',noivado:'Disse sim! Agora é planejar o grande dia.',casamento:'Felizes para sempre começa hoje.',bebe:'A família está crescendo!',luck:'Pet feliz, casa feliz.',
+  chef:'O melhor tempero é comer junto.',sushi:'Noite especial pede sushi.',brigadeiro:'Docinho bom é feito em casa.',estrelas:'O céu fica mais bonito a dois.',praia:'Mar, sol e boa companhia.',casa:'Lar, doce lar.',rico:'Um tijolinho de cada vez.',
+  mestre:'Prática leva à perfeição.',carreira:'Sucesso merecido!',formatura:'Diploma na mão!',aspiracao:'Sonho realizado!',festa:'A festa da vizinhança!',fotos:'Cada foto é um pedacinho da história de vocês.',natal:'Feliz Natal!',anonovo:'Feliz Ano Novo!',
+  mes:'Um mês em Heartville!',tudo:'Vocês completaram quase tudo. Que venham as próximas histórias!',viagem:'Pé na estrada!',carro:'Bora dar uma volta?'}}};
+ED.P.dia9.t=undefined;
+function genericSims(){const N=[['Ana','Leo'],['Bia','Theo'],['Clara','Davi'],['Lara','Gabriel'],['Manu','Rafa']][Math.floor(Math.random()*5)];
+  return [Object.assign({},ED.P.sims[0],{name:N[0],trait:'romantico',traits2:['criativo','organizado'],asp:'amor',degree:undefined}),Object.assign({},ED.P.sims[1],{name:N[1],trait:'comilao',traits2:['trabalhador','familia'],asp:'rico',degree:undefined})];}
+function applyEdition(personal){ED_PERSONAL=!!personal;const S=personal?ED.P:ED.G;
+  for(const k of Object.keys(GIFT))delete GIFT[k];Object.assign(GIFT,JSON.parse(JSON.stringify(personal?ED.P.gift:ED.G.gift)));
+  const sims=personal?ED.P.sims:genericSims();sims.forEach((s,i)=>{for(const k of Object.keys(DEFAULT_SIMS[i]))delete DEFAULT_SIMS[i][k];Object.assign(DEFAULT_SIMS[i],s);if(DEFAULT_SIMS[i].degree===undefined)delete DEFAULT_SIMS[i].degree;});
+  for(const a of ACH){const m=(personal?ED.P.ach:ED.G.ach)[a.k];if(m!=null)a.m=m;}
+  const i9=ACH.findIndex(a=>a.k==='dia9');if(!personal&&i9>=0)ACH.splice(i9,1);if(personal&&i9<0&&ED.P.dia9.k)ACH.splice(ACH.length-1,0,Object.assign({},ED.P.dia9));
+  const d=$('#dedic');if(d)d.textContent=GIFT.dedicatoria||'';}
+{let leg=false;try{const s=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');leg=!!(s&&s.legacy!==0);}catch(_){}applyEdition(leg);}
+{const _fs=fromSave;fromSave=function(d){const leg=!!(d&&d.legacy!==0);applyEdition(leg);const g=_fs(d);g.legacy=leg?1:0;return g;};}
+{const _oc=openCreator;openCreator=function(m,idx){if(m==='new')applyEdition(false);return _oc(m,idx);};}
+{const g=$('#casGo'),_go=g.onclick;g.onclick=function(e){const isNew=casMode==='new';const r=_go.call(this,e);if(isNew&&G&&!G.demo){G.legacy=0;save();}return r;};}
 </script>
 </body></html>

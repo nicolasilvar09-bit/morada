@@ -1,0 +1,7 @@
+{
+  "appId": "com.nicolas.heartville",
+  "appName": "Heartville",
+  "webDir": "www",
+  "backgroundColor": "#fbeef2",
+  "ios": { "contentInset": "never", "backgroundColor": "#fbeef2", "scrollEnabled": false, "allowsLinkPreview": false }
+}

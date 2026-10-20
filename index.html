@@ -2198,15 +2198,15 @@ function drawBeachItem(c,it){if(it.pk)return drawParkItem(c,it);
   if(it.castle){const C=it.castle,k=C.k,x=C.x,y=C.y;gbox(c,x-.3,y-.3,0,x+.3,y+.3,.22*k+.02,'#e6cf98');if(k>.35)gbox(c,x-.18,y-.18,.22*k,x+.18,y+.18,.45*k,'#e9d4a0');if(k>.65){for(const [a,b] of [[-.28,-.28],[.18,-.28],[-.28,.18],[.18,.18]])gbox(c,x+a,y+b,0,x+a+.1,y+b+.1,.4*k,'#e6cf98');}if(k>.95){gbox(c,x-.01,y-.01,.45,x+.01,y+.01,.75,'#8b5e3c');const p=P(x,y,.72);c.fillStyle='#ee5d7c';c.beginPath();c.moveTo(p[0],p[1]);c.lineTo(p[0]+9,p[1]+2);c.lineTo(p[0],p[1]+5);c.fill();}return;}}
 venueInit();
 /* ================= bairro maior: ruas novas, comércio, parque, igreja ================= */
-const WX0=-44,WX1=110,WY0=-62,WY1=48;
+const WX0=-44,WX1=110,WY0=-62,WY1=84;
 const ROADS=[{v:1,a:19,b:23},{v:1,a:44,b:48},{v:0,a:-21,b:-17}];
 /* walking lines (center of sidewalks) + crosswalks */
 const WALK=[
   {v:1,c:18.5,a:WY0+2,b:WY1-2},{v:1,c:23.5,a:WY0+2,b:WY1-2},{v:1,c:43.5,a:WY0+2,b:WY1-2},{v:1,c:48.5,a:WY0+2,b:WY1-2},
   {v:0,c:-21.5,a:WX0+2,b:WX1-2},{v:0,c:-16.5,a:WX0+2,b:WX1-2},
   {v:0,c:-1.2,a:23.5,b:43.5,path:1},{v:0,c:8.6,a:23.5,b:43.5,path:1},{v:0,c:18.4,a:23.5,b:43.5,path:1},{v:0,c:27.6,a:23.5,b:43.5,path:1},
-  {v:0,c:2.5,a:18.5,b:23.5},{v:0,c:-4,a:43.5,b:48.5},{v:0,c:8,a:43.5,b:48.5},{v:0,c:30,a:43.5,b:48.5},{v:0,c:15.25,a:48.5,b:67.5,path:1},{v:0,c:28,a:48.5,b:79.5,path:1}];
-const ZEBRA=[[0,2.5],[1,-4],[1,8],[1,30],[0,-21.5],[0,-16.5],[1,-21.5],[1,-16.5]];
+  {v:0,c:2.5,a:18.5,b:23.5},{v:0,c:-4,a:43.5,b:48.5},{v:0,c:8,a:43.5,b:48.5},{v:0,c:30,a:43.5,b:48.5},{v:0,c:15.25,a:48.5,b:67.5,path:1},{v:0,c:28,a:48.5,b:79.5,path:1},{v:0,c:56.5,a:23.5,b:87},{v:0,c:74.5,a:23.5,b:74}];
+const ZEBRA=[[1,55.6],[1,75.2],[0,2.5],[1,-4],[1,8],[1,30],[0,-21.5],[0,-16.5],[1,-21.5],[1,-16.5]];
 /* ---- walk graph ---- */
 const WG=(()=>{const nodes=new Map(),adj=new Map(),key=p=>p[0].toFixed(2)+','+p[1].toFixed(2);
   const add=p=>{const k=key(p);if(!nodes.has(k)){nodes.set(k,p);adj.set(k,[]);}return k;};
@@ -4937,7 +4937,7 @@ function showSyncBanner(r){let b=$('#syncBanner');if(!b){b=document.createElemen
   b.textContent='☁️ Mudou no outro aparelho · tocar para carregar';b.hidden=false;b.onclick=()=>{b.hidden=true;startFromSave(r,'☁️ Jogo atualizado da nuvem!');};}
 setInterval(()=>{if(!document.hidden)cloudCheck();},20000);
 /* ---- aviso de versão nova do jogo ---- */
-const APPV='v53';
+const APPV='v54';
 async function checkAppVersion(){try{const t=await fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'');const m=t.match(/const APPV='([^']+)'/);
   if(m&&m[1]!==APPV){let b=$('#verBanner');if(!b){b=document.createElement('button');b.id='verBanner';b.className='glass';document.body.appendChild(b);}
     b.textContent=`✨ Versão nova (${m[1]}) · tocar para atualizar`;b.hidden=false;b.onclick=()=>{try{if(G&&!G.demo)save();}catch(_){}const go=()=>location.replace(location.pathname+'?v='+m[1]+'-'+Date.now());if(cloudCode&&G&&!G.demo)cloudPush(true).finally(go);else go();};}}catch(_){}}
@@ -5889,6 +5889,154 @@ const MAP_PLACES=[['🏠','Minha casa',()=>{const s=G.sims[0];return[s.x,s.y];}]
   $('#mapaL').onclick=e=>{const b=e.target.closest('button');if(!b)return;const [x,y]=MAP_PLACES[+b.dataset.i][2]();$('#mapa').hidden=true;resumeFrom();if(viewL)setViewLevel(0,true);cam.z=Math.min(cam.z,.85);lookAt(x,y);SFX.click();};
   $('#mapaX').onclick=()=>{$('#mapa').hidden=true;resumeFrom();};
   $('#mnMapa').onclick=()=>{$('#menu').hidden=true;pauseFor();$('#mapa').hidden=false;};})();
+/* ================= v54: Mata Atlântica com morros em volta da cidade + bairro Recanto da Serra ================= */
+const MORROS=[{x:81.5,y:46,R:7.5,H:5.6},{x:105,y:67,R:13,H:10},{x:124,y:44,R:15,H:11},{x:92,y:99,R:14,H:9},{x:128,y:88,R:17,H:13},{x:58,y:106,R:15,H:10},{x:22,y:110,R:13,H:8},
+  {x:134,y:10,R:15,H:11},{x:130,y:-28,R:16,H:12},{x:127,y:-62,R:15,H:10},{x:96,y:-88,R:16,H:11},{x:52,y:-86,R:16,H:12},{x:6,y:-88,R:15,H:10},{x:-38,y:-90,R:17,H:13},
+  {x:-70,y:-56,R:15,H:10},{x:-68,y:-16,R:13,H:8},{x:-71,y:8,R:9,H:5}];
+function morroZ(x,y){let z=0;for(const m of MORROS){const dx=x-m.x,dy=y-m.y;if(Math.abs(dx)>m.R||Math.abs(dy)>m.R)continue;const d=Math.hypot(dx,dy)/m.R;if(d<1){const h=m.H*(1-d*d)*(1-.12*d);if(h>z)z=h;}}return z;}
+function mNoise(x,y){return Math.sin(x*.37+y*.11)*1.2+Math.sin(y*.29-x*.17)*.9;}
+const FALLS={a:[84.2,51.2],b:[86.3,55.2],pool:[86.6,56.1]};
+function segD(px,py,a,b){const vx=b[0]-a[0],vy=b[1]-a[1],t=clamp(((px-a[0])*vx+(py-a[1])*vy)/(vx*vx+vy*vy),0,1);return Math.hypot(px-a[0]-t*vx,py-a[1]-t*vy);}
+function inMata(x,y){if(x<17.95&&y>19.6)return false;
+  if(Math.abs(x-21)<3.6&&(y>WY1-1||y<WY0+1))return false;if(Math.abs(x-46)<3.6&&(y>WY1-1||y<WY0+1))return false;if(Math.abs(y+19)<3.6&&(x<WX0+1||x>WX1-1))return false;
+  if(y>54.6&&y<58.6&&x>70&&x<88)return false;{const dx=x-FALLS.pool[0],dy=y-FALLS.pool[1];if(Math.hypot(dx,dy)<3||(dx+dy>0&&Math.hypot(dx,dy)<5.2))return false;}if(segD(x,y,FALLS.a,FALLS.b)<1.1)return false;
+  const n=mNoise(x,y);const city=x>WX0+1.5+n&&x<WX1-1.5+n&&y>WY0+1.5+n&&y<48+n,bairro=x>17&&x<74.6+n&&y>40&&y<WY1+.6+n*.6;
+  if(bairro)return false;if(city&&!(x>75.6+n&&y>40.6+n))return false;return true;}
+/* copas das árvores da mata (pré-calculadas) */
+const MATA={};
+function mataBlobs(sp){if(MATA[sp])return MATA[sp];const out=[],R=mulberry(sp*1000+7),G0=['#2f6b34','#36773a','#2b6030','#3f8442','#2d6631','#447f3b'];
+  for(let y=-150;y<175;y+=sp)for(let x=-120;x<190;x+=sp){const jx=x+(R()-.5)*sp*.8,jy=y+(R()-.5)*sp*.8;if(!inMata(jx,jy))continue;
+    const z0=morroZ(jx,jy),gx=morroZ(jx+.6,jy)-morroZ(jx-.6,jy),gy=morroZ(jx,jy+.6)-morroZ(jx,jy-.6);
+    const f=clamp(1+.3*(gx-gy)+z0*.014+(R()-.5)*.1,.55,1.4);const ipe=R();
+    const col=ipe<.008?'#e9b93a':ipe<.013?'#d97aa3':shade(G0[(R()*G0.length)|0],f);
+    const edge=!inMata(jx+sp,jy)||!inMata(jx,jy+sp)||!inMata(jx-sp,jy)||!inMata(jx,jy-sp);
+    out.push({x:jx,y:jy,z0,z:z0+1.05+R()*.5,col,hi:shade(col,1.18),r:sp*(19+R()*6),edge});}
+  MATA[sp]=out;return out;}
+const MATA_SORT={};
+function mataSorted(sp){const k=sp+'|'+VR;if(MATA_SORT[k])return MATA_SORT[k];const L=mataBlobs(sp).slice();
+  const key=b=>{if(!VR)return b.x+b.y;const v=toV(b.x,b.y);return v[0]+v[1];};L.forEach(b=>b._k=key(b));L.sort((a,b)=>a._k-b._k);MATA_SORT[k]=L;return L;}
+function drawMata(c){const sp=cam.z<.42?3:1.5,LB=window._LB||{x0:-1e9,y0:-1e9,w:2e9,h:2e9};const L=mataSorted(sp);
+  /* chão escuro da mata */
+  for(const b of L){const r=b.r*1.5;const p=P(b.x,b.y,b.z0);if(p[0]<LB.x0-r||p[0]>LB.x0+LB.w+r||p[1]<LB.y0-r||p[1]>LB.y0+LB.h+r)continue;c.fillStyle='#1f4725';c.beginPath();c.ellipse(p[0],p[1]-r*.3,r,r*.75,0,0,Math.PI*2);c.fill();}
+  for(const b of L){const p=P(b.x,b.y,b.z);if(p[0]<LB.x0-b.r||p[0]>LB.x0+LB.w+b.r||p[1]<LB.y0-b.r||p[1]>LB.y0+LB.h+b.r+60)continue;
+    if(b.edge){const g=P(b.x,b.y,b.z0);c.fillStyle='rgba(0,0,0,.16)';c.beginPath();c.ellipse(g[0],g[1],b.r*.8,b.r*.4,0,0,Math.PI*2);c.fill();c.fillStyle='#6b4a2e';c.fillRect(g[0]-1.6,p[1],3.2,g[1]-p[1]);}
+    c.fillStyle=b.col;c.beginPath();c.arc(p[0],p[1],b.r,0,Math.PI*2);c.fill();
+    c.fillStyle=b.hi;c.beginPath();c.arc(p[0]-b.r*.3,p[1]-b.r*.32,b.r*.5,0,Math.PI*2);c.fill();}}
+/* árvores soltas que ficaram dentro da mata ou do bairro saem */
+for(let i=TREES.length-1;i>=0;i--){const [x,y]=TREES[i];if(inMata(x,y)||(y>48&&x>17))TREES.splice(i,1);}
+/* ---------- bairro Recanto da Serra ---------- */
+NB.push(
+  {x:25,y:50,w:5,d:5,wall:'#f7e9c9',roof:'#c0504d',name:'Casa amarela'},
+  {x:31,y:50,w:5,d:5,wall:'#d8ecf5',roof:'#3d6f9e',name:'Casa azul-clara'},
+  {x:37,y:50,w:5,d:5,wall:'#f3d9cf',roof:'#7a4a3a',name:'Casa de tijolinho'},
+  {x:50,y:50,w:5,d:5,wall:'#e3f0d8',roof:'#5b7a3a',name:'Casa verde-água'},
+  {x:56,y:50,w:5,d:5,wall:'#fbe3ec',roof:'#9a4a6a',name:'Casa rosa-chá'},
+  {x:62,y:50,w:7,d:5,wall:'#fdf0d8',roof:'#a5602e',name:'Padaria Pão Quente',padaria:1,shop:1,sign:'PADARIA PÃO QUENTE',signCol:'#8a4a1e',signBg:'#fff8ea',awn:['#e39b3c','#fff6ef']},
+  {x:25,y:62.5,w:6,d:5,wall:'#eef3f6',roof:'#2f6f5a',name:'Mercadinho do Bairro',shop:1,sign:'MERCADINHO',signCol:'#2f6f5a',signBg:'#f4f1ec',awn:['#43be86','#f4f1ec']},
+  {x:32,y:62.5,w:5,d:5,wall:'#e8dff2',roof:'#5f4a7a',name:'Casa lilás-clara'},
+  {x:38,y:62.5,w:4,d:5,wall:'#fff3c4',roof:'#c07a2e',name:'Casinha amarela'},
+  {x:50,y:62.5,w:5,d:5,wall:'#dbe9f7',roof:'#c0504d',name:'Casa do sobrado azul'},
+  {x:56,y:62.5,w:5,d:5,wall:'#f6e3b4',roof:'#4a6a8a',name:'Casa creme'},
+  {x:62,y:62.5,w:6,d:5,wall:'#f0e2d6',roof:'#2c3e5a',name:'Casa da esquina'});
+TREES.push([52,77.4,.9],[55.5,80.6,1],[59,77.6,.85],[62.5,81,1.05],[66,77.8,.9],[69.5,80.8,1],[71.5,77.2,.85],[24.6,79.6,.9],[42.3,77.4,.85],[42.4,82.6,.9]);
+LAMPS.push([23.45,52],[23.45,66],[23.45,79],[43.45,61],[48.55,69],[43.45,81],[28,56.4],[40,56.4],[53,56.4],[70.5,56.4],[30,74.6],[54,74.6],[68,74.6]);
+/* ---------- desenho no chão: ruas do bairro, campinho, trilha, poço da cachoeira, estradas e mata ---------- */
+{const _dg=drawGround;drawGround=function(c){_dg(c);const tex=!ROTATING&&typeof isoPat==='function';
+  const SW='#d9d3c8',RD='#4d525c',pat=tex?isoPat(c,texAsphalt(),6):null;
+  /* estradas saindo da cidade pela mata */
+  for(const [a,b] of [[19,23],[44,48]]){rectPoly(c,a-1,WY1,b+1,WY1+90,SW);rectPoly(c,a,WY1,b,WY1+90,RD);rectPoly(c,a-1,WY0-90,b+1,WY0,SW);rectPoly(c,a,WY0-90,b,WY0,RD);
+    if(pat){rectPoly(c,a,WY1,b,WY1+90,pat,.0008);rectPoly(c,a,WY0-90,b,WY0,pat,.0008);}
+    for(let y=WY1;y<WY1+90;y+=1.5)rectPoly(c,(a+b)/2-.05,y,(a+b)/2+.05,y+.75,'#f0d36a',.006);for(let y=WY0-90;y<WY0;y+=1.5)rectPoly(c,(a+b)/2-.05,y,(a+b)/2+.05,y+.75,'#f0d36a',.006);}
+  rectPoly(c,WX0-90,-22,WX0,-16,SW);rectPoly(c,WX0-90,-21,WX0,-17,RD);rectPoly(c,WX1,-22,WX1+90,-16,SW);rectPoly(c,WX1,-21,WX1+90,-17,RD);
+  if(pat){rectPoly(c,WX0-90,-21,WX0,-17,pat,.0008);rectPoly(c,WX1,-21,WX1+90,-17,pat,.0008);}
+  /* ruas do bairro */
+  for(const [y0,x1] of [[56,74.6],[70,74.6]]){rectPoly(c,23,y0,x1,y0+5,SW,.001);rectPoly(c,23,y0+1,x1,y0+4,RD,.0015);if(pat)rectPoly(c,23,y0+1,x1,y0+4,pat,.0018);
+    c.strokeStyle='rgba(0,0,0,.08)';c.lineWidth=.8;for(let x=24;x<x1;x++){if(x>42&&x<50)continue;line(c,[x,y0,.002],[x,y0+1,.002]);line(c,[x,y0+4,.002],[x,y0+5,.002]);}
+    for(let x=24.5;x<x1-1;x+=1.5){if(x>42.5&&x<49.5)continue;rectPoly(c,x,y0+2.45,x+.75,y0+2.55,'#f0d36a',.0025);}
+    rectPoly(c,x1-.1,y0+1,x1,y0+4,'#a59e92',.002);}
+  /* trilha de terra até a cachoeira */
+  c.save();c.strokeStyle='rgba(166,128,86,.92)';c.lineWidth=9;c.lineCap='round';c.lineJoin='round';c.beginPath();
+  for(const [i,q] of [[74.6,56.5],[78,56.8],[81,56.3],[84,56.9],[85.4,57.4]].entries()){const p=P(q[0],q[1],.003);i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]);}c.stroke();c.restore();
+  /* paredão de pedra e poço da cachoeira */
+  {const [ax,ay]=FALLS.a,[bx,by]=FALLS.b,pts=[];for(let k=0;k<=10;k++){const t=k/10,x=ax+(bx-ax)*t,y=ay+(by-ay)*t;pts.push([x-1.05,y+.2,morroZ(x-1,y)]);}
+    for(let k=10;k>=0;k--){const t=k/10,x=ax+(bx-ax)*t,y=ay+(by-ay)*t;pts.push([x+1.05,y-.2,morroZ(x+1,y)]);}poly(c,pts,'#7d7a73',false);
+    const pa=P(ax,ay,morroZ(ax,ay)+.4),pb=P(bx,by,0),gr=c.createLinearGradient(pa[0],pa[1],pb[0],pb[1]);gr.addColorStop(0,'rgba(255,255,255,.12)');gr.addColorStop(1,'rgba(0,0,0,.22)');poly(c,pts,gr,false);}
+  {const [px,py]=FALLS.pool,ring=(r,z)=>{const q=[];for(let i=0;i<28;i++){const a=i/28*Math.PI*2;q.push([px+Math.cos(a)*r,py+Math.sin(a)*r*.82,z]);}return q;};
+    poly(c,ring(2.25,.002),'#8f8a80',false);poly(c,ring(1.85,.003),'#2f8fbc',false);poly(c,ring(1.3,.004),'#3fa6cf',false);
+    const R=mulberry(77);for(let i=0;i<14;i++){const a=R()*Math.PI*2,r=2.05+R()*.35,p=P(px+Math.cos(a)*r,py+Math.sin(a)*r*.82,.05);c.fillStyle=['#9a958b','#86827a','#aaa59a'][i%3];c.beginPath();c.ellipse(p[0],p[1],6+R()*6,4+R()*3,0,0,Math.PI*2);c.fill();}}
+  /* campinho de terra e grama */
+  rectPoly(c,26,76.6,41,83.2,'#8fbf62',.001);for(let i=0;i<5;i++)rectPoly(c,26+i*3,76.6,27.5+i*3,83.2,'#86b65a',.0012);
+  c.strokeStyle='rgba(255,255,255,.9)';c.lineWidth=1.4;const L3=(a,b)=>line(c,[a[0],a[1],.002],[b[0],b[1],.002]);
+  L3([26.4,77],[40.6,77]);L3([40.6,77],[40.6,82.8]);L3([40.6,82.8],[26.4,82.8]);L3([26.4,82.8],[26.4,77]);L3([33.5,77],[33.5,82.8]);
+  {const q=[];for(let i=0;i<=24;i++){const a=i/24*Math.PI*2;q.push(P(33.5+Math.cos(a)*1.4,79.9+Math.sin(a)*1.4,.002));}c.beginPath();q.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));c.stroke();}
+  L3([26.4,78.6],[28.2,78.6]);L3([28.2,78.6],[28.2,81.2]);L3([28.2,81.2],[26.4,81.2]);L3([40.6,78.6],[38.8,78.6]);L3([38.8,78.6],[38.8,81.2]);L3([38.8,81.2],[40.6,81.2]);
+  /* mata atlântica com os morros */
+  drawMata(c);};}
+/* ---------- objetos: cachoeira, traves, arquibancada, placa do bairro, bola ---------- */
+function drawFalls(c){const [ax,ay]=FALLS.a,[bx,by]=FALLS.b,za=morroZ(ax,ay)+.35;
+  c.save();{const q=[P(ax-.55,ay,za),P(ax+.55,ay,za),P(bx+.55,by,.05),P(bx-.55,by,.05)];c.fillStyle='rgba(200,232,248,.55)';c.beginPath();q.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));c.closePath();c.fill();}
+  for(let k=0;k<7;k++){const off=(k-3)*.16,t0=(TT*1.6+k*.37)%1;const p0=P(ax+off,ay,za),p1=P(bx+off,by,.05);
+    c.strokeStyle=k%2?'rgba(235,248,255,.85)':'rgba(190,228,245,.75)';c.lineWidth=3;c.beginPath();c.moveTo(p0[0],p0[1]);c.quadraticCurveTo(p0[0]+2,(p0[1]+p1[1])/2,p1[0],p1[1]);c.stroke();
+    const m=[p0[0]+(p1[0]-p0[0])*t0,p0[1]+(p1[1]-p0[1])*t0];c.fillStyle='rgba(255,255,255,.95)';c.fillRect(m[0]-1.2,m[1]-3,2.4,6);}
+  const f=P(bx,by,.06);c.fillStyle='rgba(255,255,255,.75)';for(let i=0;i<6;i++){const a=TT*3+i;c.beginPath();c.ellipse(f[0]+Math.cos(a)*7,f[1]+Math.sin(a*1.3)*2.5,4+Math.sin(a*2)*1.5,2.4,0,0,Math.PI*2);c.fill();}
+  c.restore();if(Math.random()<.08)puff('drop',bx+rand(-.5,.5),by+rand(-.3,.3),.3,{});}
+function drawGoal(c,x,dir){const y0=79.1,y1=80.7;gbox(c,x-.05,y0-.05,0,x+.05,y0+.05,1.0,'#f4f1ec');gbox(c,x-.05,y1-.05,0,x+.05,y1+.05,1.0,'#f4f1ec');gbox(c,x-.05,y0-.05,.95,x+.05,y1+.05,1.05,'#f4f1ec');
+  c.save();c.globalAlpha=.35;gbox(c,Math.min(x,x+dir*.6),y0,0,Math.max(x,x+dir*.6),y1,.95,'#ffffff');c.restore();}
+function drawStands(c){for(let i=0;i<2;i++)gbox(c,27.4,75.5+i*.32,0,32.6,75.82+i*.32,.25+i*.22,i?'#c9a27a':'#b08a62');}
+function drawBairroSign(c){const x=24.4,y=55.4;gbox(c,x-.05,y-.05,0,x+.05,y+.05,1.6,'#5a3a22');gbox(c,x+2.35,y-.05,0,x+2.45,y+.05,1.6,'#5a3a22');gbox(c,x-.15,y-.06,1.15,x+2.55,y+.06,1.8,'#2f6b34');
+  planeText(c,'N',x+1.2,y+.07,1.33,'RECANTO DA SERRA',9,'#fff6ef');}
+const PELADA={players:[],ball:[33.5,80,0]};
+function pelaOn(){const h=hourF();return h>=7&&h<18.5&&!(G&&G.weather&&G.weather.rain>.4);}
+function drawBallP(c){const [x,y,z]=PELADA.ball,p=P(x,y,z+.12),g=P(x,y,0);c.fillStyle='rgba(0,0,0,.2)';c.beginPath();c.ellipse(g[0],g[1],4,2,0,0,Math.PI*2);c.fill();c.fillStyle='#fff';c.beginPath();c.arc(p[0],p[1],3.4,0,Math.PI*2);c.fill();c.fillStyle='#22252e';c.beginPath();c.arc(p[0]+.6,p[1]-.4,1.2,0,Math.PI*2);c.fill();}
+{const _bi=beachItems;beachItems=function(items){_bi(items);
+  items.push({b:[FALLS.a[0]-1,FALLS.a[1]-.2,0,FALLS.b[0]+.2,FALLS.b[1]+.3,morroZ(...FALLS.a)+.5],pk:'cust',cust:drawFalls});
+  items.push({b:[26.25,79,0,26.9,80.8,1.05],pk:'cust',cust:c=>drawGoal(c,26.3,1)});items.push({b:[40.1,79,0,40.75,80.8,1.05],pk:'cust',cust:c=>drawGoal(c,40.7,-1)});
+  items.push({b:[27.4,75.5,0,32.6,76.15,.5],pk:'cust',cust:drawStands});items.push({b:[24.3,55.3,0,26.9,55.5,1.8],pk:'cust',cust:drawBairroSign});
+  for(const [bx,by,f] of [[56,79.3,[0,1]],[65,79.4,[0,1]]])items.push({b:[bx-.6,by-.25,0,bx+.6,by+.25,.9],pk:'bench',x:bx,y:by,f});
+  if(pelaOn()){for(const m of PELADA.players)items.push({b:simBox(m),staff:m});const [x,y,z]=PELADA.ball;items.push({b:[x-.12,y-.12,z,x+.12,y+.12,z+.25],pk:'cust',cust:drawBallP});}};}
+/* time da pelada: jogadores correndo atrás da bola */
+{const LOOKS=[{name:'Juninho',skin:'#8d5524',hair:'raspado',hairColor:'#1b1310',outfit:'camisa_futebol',top:'#f0bd45',bottom:'#2c3e5a'},{name:'Rafa',skin:'#e0a87e',hair:'curto',hairColor:'#3b2a20',outfit:'camisa_futebol',top:'#f0bd45',bottom:'#2c3e5a'},
+  {name:'Biel',skin:'#c68642',hair:'cacheado',hairColor:'#2a201b',outfit:'camisa_futebol',top:'#ec5f5c',bottom:'#f4f1ec'},{name:'Duda',skin:'#f1c6a4',hair:'rabo',hairColor:'#6b4226',outfit:'camisa_futebol',top:'#ec5f5c',bottom:'#f4f1ec'}];
+  const BASE=[[29.5,79],[31.5,81.4],[37.5,78.8],[35.5,81.2]];
+  PELADA.players=LOOKS.map((lk,i)=>{let m;try{m=mkSim(Object.assign({trait:'animado'},lk),980+i,0,0);}catch(e){return null;}m.x=BASE[i][0];m.y=BASE[i][1];m.face=[1,0];m.staff={anims:['cheer']};m.animT=99;m._b=BASE[i];m._i=i;return m;}).filter(Boolean);
+  const _us=updateStaff;updateStaff=function(dt){_us(dt);if(!PELADA.players.length)return;const n=PELADA.players.length,per=1.5,k=Math.floor(TT/per),t=(TT/per)%1;
+    const from=PELADA.players[k%n],to=PELADA.players[(k*3+1)%n===k%n?(k+1)%n:(k*3+1)%n];
+    const bx=from.x+(to.x-from.x)*t,by=from.y+(to.y-from.y)*t;PELADA.ball=[bx,by,Math.sin(t*Math.PI)*.55];
+    for(const m of PELADA.players){const tgt=m===to?[bx,by]:[m._b[0]+Math.sin(TT*.6+m._i*1.7)*1.6,m._b[1]+Math.cos(TT*.5+m._i)*.9];const dx=tgt[0]-m.x,dy=tgt[1]-m.y,d=Math.hypot(dx,dy);
+      const v=Math.min(d,dt*(m===to?3.2:1.4));if(d>.05){m.x=clamp(m.x+dx/d*v,26.8,40.2);m.y=clamp(m.y+dy/d*v,77.3,82.5);m.face=Math.abs(dx)>Math.abs(dy)?[Math.sign(dx),0]:[0,Math.sign(dy)];}
+      if(d>.15){m.pose='run';m.anim=null;m.walkPh=(m.walkPh||0)+dt*14;}else{m.pose='stand';m.anim='cheer';}}};}
+/* ---------- passeios novos ---------- */
+defVenue('padaria',{name:'Padaria Pão Quente',icon:'🥖',flag:'padaria',indoor:true,doorU:DOOR(7),floor:'#d9c3a0',wallIn:'#fdf0d8',hint:'pão na chapa, sonho e café da manhã',
+  spots:[{k:'mesa',t:'A',u:.9,w:3.7,pose:'sit',z:.5,face:[1,0]},{k:'mesa',t:'A',u:2.3,w:3.7,pose:'sit',z:.5,face:[-1,0]},{k:'mesa',t:'B',u:4.7,w:3.7,pose:'sit',z:.5,face:[1,0]},{k:'mesa',t:'B',u:6.1,w:3.7,pose:'sit',z:.5,face:[-1,0]},
+    {k:'balcao',u:2.2,w:2.1,pose:'stand',z:0,face:[0,-1]},{k:'balcao',u:3.4,w:2.1,pose:'stand',z:0,face:[0,-1]},{k:'balcao',u:4.6,w:2.1,pose:'stand',z:0,face:[0,-1]}],
+  acts:[{id:'pao_chapa',label:'Pão na chapa com pingado',icon:'☕',price:14,dur:25,spot:['balcao','mesa'],rates:{fome:120,energia:45,diversao:15},anim:'eat',prop:'caneca',fx:'steam',mood:['Pão na chapa quentinho',8,300,'feliz']},
+    {id:'sonho',label:'Comer um sonho de padaria',icon:'🍩',price:8,dur:15,spot:['balcao','mesa'],rates:{fome:60,diversao:30},anim:'eat',prop:'prato'},
+    {id:'cafe_manha_dois',label:'Café da manhã a dois',icon:'🥐',price:35,dur:40,spot:['mesa'],rates:{fome:160,social:60,diversao:35,energia:30},anim:'eat',prop:'prato',date:1,req:()=>{const h=hourF();return h>=6&&h<12?null:'só de manhã (6h ao meio-dia)';},mood:['Café da manhã juntinhos',14,480,'feliz']}],
+  staff:[{u:3.4,w:.75,face:[0,1],look:{name:'Dona Cida',skin:'#c68642',hair:'coque',hairColor:'#4a3a30',outfit:'avental',top:'#f4f1ec',bottom:'#3a3a46'},anims:['use','wave','cook']}],
+  decor:({B,VQ,x0,y0})=>{B(1.4,1.25,0,5.6,1.65,.95,'#c9a27a');B(1.35,1.2,.95,5.65,1.7,1.0,'#efe7da');B(1.45,1.3,1.0,5.55,1.6,1.32,'#cfe8f2');
+    const R=mulberry(5);for(let i=0;i<14;i++){const u=1.6+i*.28;B(u,1.35,1.0,u+.2,1.5,1.07+R()*.04,['#d9a05b','#c78a44','#f0d9a8'][i%3]);}
+    B(.8,.1,0,6.2,.45,2.1,'#8b5e3c');for(const z of [.6,1.1,1.6])for(let i=0;i<9;i++)B(1.0+i*.56,.15,z,1.4+i*.56,.4,z+.18,['#d9a05b','#b8783a','#e8c07a'][(i+z*10)%3|0]);
+    VQ('N',x0+.3,y0,0,1.2,1.3,1.8,'#f3e2c0');
+    for(const [u,w] of [[1.6,3.7],[5.4,3.7]]){B(u-.05,w-.05,0,u+.05,w+.05,.7,'#3a3a46');B(u-.42,w-.38,.7,u+.42,w+.38,.76,'#fbf5ea');B(u-.08,w-.08,.76,u+.08,w+.08,.86,'#f4f1ec');}
+    for(const [u,w,fa] of [[.9,3.7,1],[2.3,3.7,-1],[4.7,3.7,1],[6.1,3.7,-1]]){B(u-.2,w-.2,0,u+.2,w+.2,.48,'#8b5e3c');B(fa>0?u-.22:u+.14,w-.2,.48,fa>0?u-.14:u+.22,w+.2,1.0,'#8b5e3c');}}});
+defVenue('cachoeira',{name:'Cachoeira da Serra',icon:'💦',indoor:false,ox:0,oy:0,door:[79,56.5],aisle:56.6,rect:[77,50,91,60],hint:'banho de cachoeira, trilha e natureza',
+  spots:[{k:'agua',t:'A',u:85.9,w:56.0,pose:'stand',z:-.1,face:[0,-1]},{k:'agua',t:'A',u:86.9,w:56.4,pose:'stand',z:-.1,face:[-1,0]},
+    {k:'pedra',t:'B',u:88.7,w:57.4,pose:'sit',z:.3,face:[-1,0]},{k:'pedra',t:'B',u:84.4,w:57.9,pose:'sit',z:.3,face:[1,0]},
+    {k:'trilha',u:80.5,w:56.7,pose:'stand',z:0,face:[1,0]},{k:'trilha',u:82.5,w:56.4,pose:'stand',z:0,face:[1,0]}],
+  acts:[{id:'banho_cachoeira',label:'Banho de cachoeira',icon:'💦',price:0,dur:35,spot:['agua'],rates:{higiene:70,diversao:60,energia:12},anim:'shower',req:()=>isNight()?'a cachoeira é melhor de dia':null,mood:['Banho de cachoeira',14,600,'energizado']},
+    {id:'cachoeira_dois',label:'Banho de cachoeira a dois',icon:'💞',price:0,dur:40,spot:['agua'],rates:{social:60,diversao:65,higiene:45},anim:'talk',date:1,req:()=>isNight()?'a cachoeira é melhor de dia':null,mood:['Cachoeira a dois',16,720,'paquerador']},
+    {id:'relaxar_pedra',label:'Relaxar nas pedras ouvindo a água',icon:'🪨',price:0,dur:30,spot:['pedra'],rates:{energia:25,diversao:35},mood:['Paz na natureza',10,480,'feliz']},
+    {id:'trilha_mata',label:'Trilha na Mata Atlântica',icon:'🥾',price:0,dur:45,spot:['trilha'],rates:{diversao:40,energia:-14,higiene:-12},skill:'fitness',skillRate:1.3,anim:'stretch',mood:['Trilha na mata!',10,360,'energizado']}],staff:[]});
+defVenue('campinho',{name:'Campinho do Recanto',icon:'⚽',indoor:false,ox:0,oy:0,door:[33.5,75.2],aisle:75.6,rect:[25.5,75.2,41.5,83.6],hint:'pelada com a galera e torcida',
+  spots:[{k:'jogo',u:30,w:78.2,pose:'stand',z:0,face:[1,0]},{k:'jogo',u:36.5,w:82,pose:'stand',z:0,face:[-1,0]},{k:'jogo',u:32,w:80.6,pose:'stand',z:0,face:[1,0]},{k:'jogo',u:38.4,w:78.4,pose:'stand',z:0,face:[-1,0]},
+    {k:'arq',t:'A',u:28.4,w:75.9,pose:'sit',z:.48,face:[0,1]},{k:'arq',t:'A',u:29.2,w:75.9,pose:'sit',z:.48,face:[0,1]},{k:'arq',u:30.6,w:75.9,pose:'sit',z:.48,face:[0,1]},{k:'arq',u:31.6,w:75.9,pose:'sit',z:.48,face:[0,1]}],
+  acts:[{id:'pelada',label:'Jogar uma pelada com a galera',icon:'⚽',price:0,dur:50,spot:['jogo'],rates:{diversao:75,social:40,energia:-18,higiene:-20},anim:'cheer',skill:'fitness',skillRate:1.4,req:()=>pelaOn()?null:'a pelada é de dia, sem chuva',mood:['Golaço na pelada!',12,480,'brincalhao']},
+    {id:'torcer',label:'Torcer na arquibancada',icon:'📣',price:0,dur:35,spot:['arq'],rates:{diversao:50,social:30},anim:'cheer'},
+    {id:'torcer_dois',label:'Ver o jogo juntinhos',icon:'💕',price:0,dur:35,spot:['arq'],rates:{diversao:45,social:50},date:1,anim:'talk'}],staff:[]});
+venueInit();
+/* ---------- mapa da cidade ---------- */
+MAP_PLACES.push(['🌿','Bairro Recanto da Serra',()=>[46,62]],['🥖','Padaria Pão Quente',()=>[65.5,54]],['⚽','Campinho do Recanto',()=>[33.5,80]],['💦','Cachoeira da Serra',()=>[85,54]],['🌳','Mata Atlântica',()=>[100,70]]);
+try{$('#mapaL').innerHTML=MAP_PLACES.map((p,i)=>`<button data-i="${i}"><span>${p[0]}</span>${p[1]}</button>`).join('');}catch(e){}
 /* ================= v39: edição — o jogo da Isabel continua pessoal; jogos novos são para todo mundo ================= */
 var ED_PERSONAL=true;
 function PET_NAME(){return ED_PERSONAL===false?'Biscoito':'Luck';}

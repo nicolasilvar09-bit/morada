@@ -4938,7 +4938,7 @@ function showSyncBanner(r){let b=$('#syncBanner');if(!b){b=document.createElemen
   b.textContent='☁️ Mudou no outro aparelho · tocar para carregar';b.hidden=false;b.onclick=()=>{b.hidden=true;startFromSave(r,'☁️ Jogo atualizado da nuvem!');};}
 setInterval(()=>{if(!document.hidden)cloudCheck();},20000);
 /* ---- aviso de versão nova do jogo ---- */
-const APPV='v55';
+const APPV='v56';
 async function checkAppVersion(){try{const t=await fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'');const m=t.match(/const APPV='([^']+)'/);
   if(m&&m[1]!==APPV){let b=$('#verBanner');if(!b){b=document.createElement('button');b.id='verBanner';b.className='glass';document.body.appendChild(b);}
     b.textContent=`✨ Versão nova (${m[1]}) · tocar para atualizar`;b.hidden=false;b.onclick=()=>{try{if(G&&!G.demo)save();}catch(_){}const go=()=>location.replace(location.pathname+'?v='+m[1]+'-'+Date.now());if(cloudCode&&G&&!G.demo)cloudPush(true).finally(go);else go();};}}catch(_){}}
@@ -6241,6 +6241,37 @@ VENUES.campinho.acts.push({id:'quadrilha',label:'Dançar quadrilha a dois',icon:
   {id:'comidas_tipicas',label:'Pamonha, canjica e quentão',icon:'🌽',price:18,dur:30,spot:['barraca'],rates:{fome:140,diversao:40,social:20},anim:'eat',prop:'caneca',req:()=>evOn('festa')?null:'a festa é no sábado, das 18h às 23h',mood:['Comida de festa',10,360,'feliz']});
 VENUES.marina.acts.push({id:'regata',label:'Assistir a regata no píer',icon:'⛵',price:0,dur:40,spot:['pier','cais'],rates:{diversao:55,social:20,energia:6},req:()=>evOn('regata')?null:'a regata é no domingo, das 9h às 17h',mood:['Regata na baía',10,480,'feliz']});
 venueInit();
+/* ================= v56: Fórum da Comarca e Justiça Federal (prédios públicos com placa) ================= */
+const CIVIC=[
+  {from:'Residencial Vista',name:'Fórum da Comarca',sign:'FÓRUM DA COMARCA',top:'FÓRUM',sub:'PODER JUDICIÁRIO · TJRJ',floors:5,wall:'#ece4d4',glass:'#a9c0d0',base:'#5b4a3a',band:'#2f5a3a'},
+  {from:'Edifício Delta',name:'Justiça Federal',sign:'JUSTIÇA FEDERAL',top:'JUSTIÇA FEDERAL',sub:'SEÇÃO JUDICIÁRIA DO RIO DE JANEIRO',floors:6,wall:'#e6e8ec',glass:'#9cb4c8',base:'#2c3e5a',band:'#2c3e5a'}];
+for(const C of CIVIC){const t=TOWERS.find(t=>t.name===C.from);if(!t)continue;
+  Object.assign(t,{name:C.name,sign:C.sign,civic:C,style:'glass',wall:C.wall,glass:C.glass,base:C.base,roof:C.base,floors:C.floors,lobby:1,antenna:0,balcony:0,shops:null});t.H=1.9+(t.floors-1)*1.12;}
+/* fachada: faixa com o nome no alto, brasão e colunas na entrada */
+{const _dt=drawTower;drawTower=function(c,h){_dt(c,h);const C=h.civic;if(!C||FREE())return;const fy=vdir([0,1]);if(fy[0]<0||fy[1]<0)return;
+  const x0=h.x,x1=h.x+h.w,y1=h.y+h.d,H=h.H,cx=x0+h.w/2;
+  /* letreiro grande no topo da fachada */
+  gbox(c,x0+.4,y1,H-1.0,x1-.4,y1+.1,H-.15,C.band);gbox(c,x0+.45,y1+.1,H-.95,x1-.45,y1+.12,H-.2,shade(C.band,1.15));
+  planeText(c,'N',cx,y1+.13,H-.42,C.top,C.top.length>10?13:16,'#ffffff');planeText(c,'N',cx,y1+.13,H-.8,C.sub,7,'#f0e6c8');
+  /* brasão dourado */
+  const b=P(cx,y1+.14,H+.35);c.save();c.fillStyle='#d9b45a';c.beginPath();c.moveTo(b[0],b[1]-9);c.lineTo(b[0]+7,b[1]-5);c.lineTo(b[0]+6,b[1]+4);c.lineTo(b[0],b[1]+9);c.lineTo(b[0]-6,b[1]+4);c.lineTo(b[0]-7,b[1]-5);c.closePath();c.fill();
+  c.fillStyle=C.band;c.font='bold 8px sans-serif';c.textAlign='center';c.fillText('⚖',b[0],b[1]+3);c.restore();
+  /* pórtico com colunas e escadaria */
+  gbox(c,cx-2.4,y1,0,cx+2.4,y1+1.5,.12,'#d9d2c4');gbox(c,cx-2.2,y1,.12,cx+2.2,y1+1.1,.24,'#e6dfd2');
+  for(let i=0;i<5;i++){const u=cx-2+i;gbox(c,u-.12,y1+.85,.24,u+.12,y1+1.05,1.75,'#f4efe6');}
+  gbox(c,cx-2.4,y1,1.75,cx+2.4,y1+1.2,1.95,'#efe8dc');
+  planeText(c,'N',cx,y1+1.21,1.84,C.name.toUpperCase(),8,C.band);};}
+/* mastros com bandeiras na frente */
+function drawFlags(c,h){const cx=h.x+h.w/2-3.1,cols=[['#2f9e44','#f2c230','#2c5aa0'],['#ffffff','#2c5aa0','#d64545'],['#ffffff','#43be86','#ee5d7c']];
+  for(let i=0;i<3;i++){const x=cx,y=h.y+h.d+.6+i*.85;gbox(c,x-.04,y-.04,0,x+.04,y+.04,3.4,'#c9ced6');const p=P(x,y,3.3);const w=Math.sin(TT*3+i)*2;const k=cols[i];
+    c.fillStyle=k[0];c.beginPath();c.moveTo(p[0],p[1]);c.quadraticCurveTo(p[0]+9,p[1]-3+w,p[0]+18,p[1]+w*.5);c.lineTo(p[0]+18,p[1]+12+w*.5);c.quadraticCurveTo(p[0]+9,p[1]+9+w,p[0],p[1]+12);c.closePath();c.fill();
+    if(i===0){c.fillStyle=k[1];c.beginPath();c.moveTo(p[0]+9,p[1]+.5+w*.7);c.lineTo(p[0]+16,p[1]+5.5+w*.6);c.lineTo(p[0]+9,p[1]+10+w*.7);c.lineTo(p[0]+2,p[1]+5.5+w*.6);c.closePath();c.fill();c.fillStyle=k[2];c.beginPath();c.arc(p[0]+9,p[1]+5.5+w*.65,2.6,0,7);c.fill();}
+    else{c.fillStyle=k[1];c.fillRect(p[0]+6,p[1]+2+w*.6,6,7);}}}
+{const _bi=beachItems;beachItems=function(items){_bi(items);for(const t of TOWERS)if(t.civic){const x=t.x+t.w/2-3.1;items.push({b:[x-.1,t.y+t.d+.5,0,x+.1,t.y+t.d+2.4,3.5],pk:'cust',cust:c=>drawFlags(c,t)});}};}
+for(let i=TREES.length-1;i>=0;i--){const [x,y]=TREES[i];if(TOWERS.some(t=>t.civic&&x>t.x+t.w/2-3&&x<t.x+t.w/2+3&&y>t.y+t.d-.5&&y<t.y+t.d+3))TREES.splice(i,1);}
+try{NBC.clear();}catch(_){}
+MAP_PLACES.push(['⚖️','Fórum da Comarca',()=>{const t=TOWERS.find(t=>t.name==='Fórum da Comarca');return[t.x+t.w/2,t.y+t.d+2];}],['🏛️','Justiça Federal',()=>{const t=TOWERS.find(t=>t.name==='Justiça Federal');return[t.x+t.w/2,t.y+t.d+2];}]);
+try{$('#mapaL').innerHTML=MAP_PLACES.map((p,i)=>`<button data-i="${i}"><span>${p[0]}</span>${p[1]}</button>`).join('');}catch(e){}
 /* ================= v39: edição — o jogo da Isabel continua pessoal; jogos novos são para todo mundo ================= */
 var ED_PERSONAL=true;
 function PET_NAME(){return ED_PERSONAL===false?'Biscoito':'Luck';}

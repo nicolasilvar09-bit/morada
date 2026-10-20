@@ -1809,7 +1809,7 @@ const workday=()=>weekday()<5;
 function dayStartMin(){return Math.floor((G.min/60+8)/24)*1440-480;}
 const commuting=(s,trip)=>(s.cur&&s.cur.kind==='commute'&&s.cur.req.trip===trip)||s.queue.some(q=>q.kind==='commute'&&q.trip===trip)||(trip==='work'&&atWork(s));
 function checkCommute(s){if(!s.job||s.visitor||s.away||G.demo)return;const h=hourF();
-  if(workday()&&s.workedDay!==dayN()&&h>=8&&h<9.75){s.workedDay=dayN();s.workPending=true;if(s.auto){sendTrip(s,'work');toast(`${s.name} (automático) foi pegar a carona do trabalho.`);}else toast(`Hora do trabalho de ${s.name}! Toque em ${s.name} → "Ir trabalhar" até 9h45. O escritório fica no Centro Empresarial, na avenida.`);hudSig='';}
+  if(workday()&&s.workedDay!==dayN()&&h>=8&&h<9.75){s.workedDay=dayN();s.workPending=true;if(s.auto){sendTrip(s,'work');toast(`${s.name} (automático) foi pegar a carona do trabalho.`);}else toast(`Hora do trabalho de ${s.name}! Toque em ${s.name} → "Ir trabalhar" até 9h45. ${s.job&&s.job.id==='advocacia'?'O trabalho é no Fórum da Comarca.':s.job&&s.job.id==='justica'?'O trabalho é na Justiça Federal.':'O escritório fica no Centro Empresarial, na avenida.'}`);hudSig='';}
   if(s.workPending&&h>=9.75&&!commuting(s,'work')){s.workPending=false;s.job.perf=Math.max(0,s.job.perf-15);addMoodlet(s,'Faltou ao trabalho',-8,240);toast(`${s.name} faltou ao trabalho hoje. Desempenho caiu.`,'bad');hudSig='';}}
 function checkClass(s){if(!s.study||s.visitor||s.away||G.demo)return;const h=hourF();
   if(workday()&&s.classDay!==dayN()&&h>=18&&h<19.5){s.classDay=dayN();s.classPending=true;if(s.auto){sendTrip(s,'aula');toast(`${s.name} (automático) foi para a aula.`);}else toast(`A aula de ${s.name} começa às 19h. Toque em ${s.name} → "Ir para a aula".`);hudSig='';}
@@ -4934,7 +4934,7 @@ function showSyncBanner(r){let b=$('#syncBanner');if(!b){b=document.createElemen
   b.textContent='☁️ Mudou no outro aparelho · tocar para carregar';b.hidden=false;b.onclick=()=>{b.hidden=true;startFromSave(r,'☁️ Jogo atualizado da nuvem!');};}
 setInterval(()=>{if(!document.hidden)cloudCheck();},20000);
 /* ---- aviso de versão nova do jogo ---- */
-const APPV='v61';
+const APPV='v62';
 async function checkAppVersion(){try{const t=await fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'');const m=t.match(/const APPV='([^']+)'/);
   if(m&&m[1]!==APPV){let b=$('#verBanner');if(!b){b=document.createElement('button');b.id='verBanner';b.className='glass';document.body.appendChild(b);}
     b.textContent=`✨ Versão nova (${m[1]}) · tocar para atualizar`;b.hidden=false;b.onclick=()=>{try{if(G&&!G.demo)save();}catch(_){}const go=()=>location.replace(location.pathname+'?v='+m[1]+'-'+Date.now());if(cloudCode&&G&&!G.demo)cloudPush(true).finally(go);else go();};}}catch(_){}}
@@ -6545,6 +6545,36 @@ function hairStrands(c,s,hx,hy,st,hc,back){if(!['longo','franja','ondulado','tra
   c.globalAlpha=1;c.lineCap='butt';}
 /* abraço e beijo: os dois se inclinam um para o outro */
 {const _ds=drawSim;drawSim=function(c,s,X,Y,opt){const a=s.anim;if(a==='kiss'||a==='hug'){const fi=faceInfo(s.face||[1,0]);if(!fi.back){const k=(a==='kiss'?.09:.06)*fi.flip;c.save();c.translate(X,Y);c.rotate(k);c.translate(-X,-Y);try{return _ds(c,s,X,Y,opt);}finally{c.restore();}}}return _ds(c,s,X,Y,opt);};}
+/* ================= v62: mais vida — cachorro acompanha o dono, risadas na conversa e na TV, "oi!" quando alguém chega ================= */
+/* cachorro segue quem está andando pela casa */
+{const _up=updatePet;updatePet=function(p,dt,mv){const r=_up(p,dt,mv);try{if(!G||G.demo||p.kind!=='cachorro'||p.hold||p.holdPending||p.state!=='idle'||p.needs.energia<25)return r;
+  p._fT=(p._fT||rand(1,3))-dt;if(p._fT>0)return r;p._fT=rand(1.5,4);
+  const owners=household().filter(s=>!s.outside&&!s.away&&(s.l||0)===0&&walking0(s));if(!owners.length)return r;
+  const s=owners.reduce((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)<Math.hypot(b.x-p.x,b.y-p.y)?a:b);if(Math.hypot(s.x-p.x,s.y-p.y)<2.5||Math.random()<.35)return r;
+  const route=s.cur&&s.cur.path,dest=route&&route.length?route[route.length-1]:[s.x,s.y];const tx=Math.floor(Array.isArray(dest)?dest[0]:s.x),ty=Math.floor(Array.isArray(dest)?dest[1]:s.y);
+  for(const [dx,dy] of DIRS)if(walkable(tx+dx,ty+dy)&&petGo(p,tx+dx,ty+dy,{kind:'sim',s}))break;}catch(_){}return r;};}
+/* risadas espontâneas: conversando, vendo TV, jogando */
+{const _us=updateSim;updateSim=function(s,dtG,mv,dtR){const r=_us(s,dtG,mv,dtR);try{if(!G||G.demo||s.react||!s.cur||s.cur.stage!=='act')return r;const c=s.cur,id=c.act&&c.act.id||'',dt=dtR||.016;
+  const fun=c.kind==='soc'&&/conversar|piada|historia|fofoca|brincar|cocegas|elogiar|flertar/.test(id),tv=/tv|filme|video|novela|jogar|videogame|game/.test(id);
+  if((fun&&Math.random()<dt*.05)||(tv&&Math.random()<dt*.025))react(s,'laugh',{dur:1.8});}catch(_){}return r;};}
+/* quem está em casa diz "oi!" quando alguém chega */
+setInterval(()=>{if(!G||G.demo)return;for(const s of household()){const out=!!s.outside||!!s.away;if(s._wasOut&&!out){for(const o of household()){if(o===s||o.outside||o.away||o.react||(o.cur&&o.cur.act&&o.cur.act.sleep))continue;if(Math.hypot(o.x-s.x,o.y-s.y)<9&&Math.random()<.85)setTimeout(()=>{try{react(o,'hi',{dur:1.8});}catch(_){}},rand(200,900));}}s._wasOut=out;}},700);
+/* ================= v62: Fórum e Justiça Federal viram local de trabalho ================= */
+CAREERS.justica={n:'Justiça Federal',sk:'logica',deg:'direito',mult:1.55,lv:['Estagiário(a) da Justiça Federal','Técnico(a) judiciário(a)','Analista judiciário(a)','Assessor(a) de juiz(a)','Juiz(a) federal substituto(a)','Juiz(a) federal']};
+const WORKPLACE={advocacia:'forum',justica:'jf'};
+{const T=n=>TOWERS.find(t=>t.name===n);const mk=(key,t,icon,extra)=>{if(!t)return;const cx=t.x+t.w/2,y1=t.y+t.d,base=VENUES.escritorio.acts.find(a=>a.id==='trabalhar');
+  defVenue(key,{name:t.name,icon,indoor:false,ox:0,oy:0,door:[97,-16.4],aisle:y1+1.75,rect:[t.x-1,y1+.2,t.x+t.w+1,y1+3.2],hint:'trabalho na área do Direito e audiências',
+    spots:[{k:'entrada',u:cx-.7,w:y1+1.75,pose:'stand',z:0,face:[0,-1]},{k:'entrada',u:cx,w:y1+1.75,pose:'stand',z:0,face:[0,-1]},{k:'entrada',u:cx+.7,w:y1+1.75,pose:'stand',z:0,face:[0,-1]},
+      {k:'publico',u:cx-1.5,w:y1+2.4,pose:'stand',z:0,face:[0,-1]},{k:'publico',u:cx+1.5,w:y1+2.4,pose:'stand',z:0,face:[0,-1]}],
+    acts:[Object.assign({},base,{spot:['entrada'],anim:null,inside:1,label:`Trabalhar (expediente no ${t.name})`}),...extra],staff:[]});};
+  mk('forum',T('Fórum da Comarca'),'⚖️',[{id:'audiencia',label:'Assistir a uma audiência pública',icon:'🧑‍⚖️',price:0,dur:45,spot:['publico'],rates:{diversao:20,social:10},inside:1,skill:'logica',skillRate:.8,mood:['Aprendi muito na audiência',6,240,'focado']}]);
+  mk('jf',T('Justiça Federal'),'🏛️',[{id:'balcao_jf',label:'Consultar um processo no balcão',icon:'📂',price:0,dur:25,spot:['publico'],rates:{social:8},inside:1,skill:'logica',skillRate:.5}]);
+  venueInit();}
+/* quem é da advocacia vai ao Fórum; quem é da Justiça Federal vai para o prédio dela */
+{const _qv=queueVenue;queueVenue=function(s,key,actId,extra){if(key==='escritorio'&&actId==='trabalhar'&&s&&s.job&&WORKPLACE[s.job.id]&&VENUES[WORKPLACE[s.job.id]])key=WORKPLACE[s.job.id];return _qv(s,key,actId,extra);};}
+/* lá dentro do prédio ninguém vê: a pessoa some enquanto trabalha ou assiste à audiência */
+{const _dsa=drawSimAt;drawSimAt=function(c,s){const k=s.cur;if(k&&k.kind==='out_venue'&&k.stage==='act'&&k.act&&k.act.inside)return;return _dsa(c,s);};}
+{const _oc=openCareer;openCareer=function(s){_oc(s);const h=$('#crHint');if(h&&!/Fórum/.test(h.textContent))h.textContent+=' Advocacia trabalha no Fórum da Comarca; Justiça Federal, no prédio da Justiça Federal (as duas exigem diploma de Direito para subir).';};}
 /* ================= v39: edição — o jogo da Isabel continua pessoal; jogos novos são para todo mundo ================= */
 var ED_PERSONAL=true;
 function PET_NAME(){return ED_PERSONAL===false?'Biscoito':'Luck';}

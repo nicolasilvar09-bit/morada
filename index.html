@@ -4937,7 +4937,7 @@ function showSyncBanner(r){let b=$('#syncBanner');if(!b){b=document.createElemen
   b.textContent='☁️ Mudou no outro aparelho · tocar para carregar';b.hidden=false;b.onclick=()=>{b.hidden=true;startFromSave(r,'☁️ Jogo atualizado da nuvem!');};}
 setInterval(()=>{if(!document.hidden)cloudCheck();},20000);
 /* ---- aviso de versão nova do jogo ---- */
-const APPV='v48';
+const APPV='v49';
 async function checkAppVersion(){try{const t=await fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'');const m=t.match(/const APPV='([^']+)'/);
   if(m&&m[1]!==APPV){let b=$('#verBanner');if(!b){b=document.createElement('button');b.id='verBanner';b.className='glass';document.body.appendChild(b);}
     b.textContent=`✨ Versão nova (${m[1]}) · tocar para atualizar`;b.hidden=false;b.onclick=()=>{try{if(G&&!G.demo)save();}catch(_){}const go=()=>location.replace(location.pathname+'?v='+m[1]+'-'+Date.now());if(cloudCode&&G&&!G.demo)cloudPush(true).finally(go);else go();};}}catch(_){}}
@@ -5665,6 +5665,29 @@ function ambientTick(){if(!soundOn()||AC.state!=='running'||!G||G.demo)return;co
   const wv=nearBeach?.012+.01*Math.max(0,Math.sin(t*.7)):0;AMB.waveG.gain.setTargetAtTime(wv,t,.4);
   /* trovão na chuva forte */
   AMB.thunder-=dt;if(AMB.thunder<0){AMB.thunder=rand(18,40);if(rain>.7){noiseHit(t,2.2,.05,'lowpass',180,.5);noiseHit(t+.15,1.4,.03,'lowpass',320);}}}
+/* ================= v49: tela mais limpa no celular deitado (landscape) ================= */
+/* Em telas baixas tudo fica menor; o painel do morador começa recolhido (só nome e humor) e abre ao tocar. */
+(function(){const st=document.createElement('style');st.textContent=`
+@media (max-height:520px){
+  #topL,#topR,#simPanel,#catalog,#buildPanel,#placeBar,#toasts,#tut{zoom:.66}
+  #pie{zoom:.8}
+  #simPanel{width:min(370px,calc(150vw - 24px))}
+  #simPanel.col #spTrait,#simPanel.col .sp-acts{display:none}
+  #simPanel.col{padding:8px 12px}
+  #simPanel:not(.col) #spBody{max-height:calc((100vh - 40px) / .66 - 190px);overflow:auto}
+  #toasts{top:calc(130px + env(safe-area-inset-top,0px))}
+  #catalog .cat-items{max-height:150px}
+}
+@media (max-height:380px){#topL,#topR,#simPanel,#catalog,#buildPanel,#placeBar,#toasts,#tut{zoom:.6}}
+#simPanel .sp-head{cursor:pointer}`;document.head.appendChild(st);
+  const sp=$('#simPanel'),body=$('#spBody');const sync=()=>sp.classList.toggle('col',body.hidden);new MutationObserver(sync).observe(body,{attributes:true,attributeFilter:['hidden']});sync();
+  /* tocar no nome também abre/fecha */
+  const nm=$('#spName');if(nm)nm.addEventListener('click',()=>$('#spToggle').click());
+  /* começa recolhido em tela baixa */
+  const compact=()=>matchMedia('(max-height:520px)').matches;let done=false;
+  setInterval(()=>{if(done||!G||G.demo)return;done=true;if(compact()&&panelOpen&&!(typeof TUT!=='undefined'&&TUT.on))$('#spToggle').click();},800);
+  /* ao girar o celular para deitado, recolhe */
+  matchMedia('(max-height:520px)').addEventListener('change',e=>{if(e.matches&&panelOpen&&G&&!G.demo&&!(typeof TUT!=='undefined'&&TUT.on))$('#spToggle').click();});})();
 /* ================= v39: edição — o jogo da Isabel continua pessoal; jogos novos são para todo mundo ================= */
 var ED_PERSONAL=true;
 function PET_NAME(){return ED_PERSONAL===false?'Biscoito':'Luck';}

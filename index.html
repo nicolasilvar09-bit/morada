@@ -992,11 +992,11 @@ function drawHead(c,s,hx,hy,back,closed,mood,K,part){
 function armAngle(s,side,T){
   {const r=extraArm(s,side,T);if(r!=null)return r;}
   const a=s.anim,ph=s.walkPh;
-  if(s.pose==='walk'||s.pose==='run')return side*Math.sin(ph)*(s.pose==="run"?.9:.4);
+  if(s.pose==='walk'||s.pose==='run')return side*Math.sin(ph)*(s.pose==="run"?.9:s.age==='crianca'?.62:.4);
   switch(a){
     case 'dance':return side>0?-2.5-Math.sin(T*6)*.5:2.4+Math.sin(T*6+1)*.5;
-    case 'hug':return side>0?-1.35:-1.1;
-    case 'kiss':return side>0?-.9:.1;
+    case 'hug':if(faceInfo(s.face||[1,0]).back)return side>0?-.5:-.35;return side>0?-.5:-1.0;
+    case 'kiss':if(faceInfo(s.face||[1,0]).back)return side>0?-.3:-.2;return side>0?-.6:-.35;
     case 'talk':return side>0?-.3-Math.abs(Math.sin(T*3.2))*.8:.1;
     case 'cook':return side>0?-1.0+Math.sin(T*7)*.25:.1;
     case 'type':return side>0?-1.0+Math.sin(T*14)*.08:-.9+Math.sin(T*13)*.08;
@@ -1049,12 +1049,12 @@ function drawSim(c,s,X,Y,opt){
   if(sit){if(!back){for(const [dx,far] of [[-2,true],[2.4,false]]){const tc=far?shade(thighC,.86):thighC,sc=far?shade(pantC,.86):pantC;limbT(c,dx+11,0,dx+11,14,5.1,3.7,o==='shorts'?(far?dskin:skin):sc);limbT(c,dx,-1,dx+11,0,6.6,5.0,o==='shorts'?(far?dskin:skin):tc);if(o==='shorts')limb(c,dx,-1,dx+6,-.5,6.4,tc);drawShoe(c,dx+11,14.6,far?shade(shoe,.85):shoe);}}}
   else if(kneel){const tc=thighC,sc=pantC;limb(c,9,-14,9,-1.5,4.6,shade(sc,.86));limb(c,-1,-17,9,-14,5.8,shade(tc,.86));c.fillStyle=shade(shoe,.85);c.beginPath();c.ellipse(11,-.3,4,1.9,0,0,7);c.fill();
     limb(c,5,-1.5,-7,-1.5,4.6,sc);limb(c,2,-17,5,-1.5,5.8,tc);c.fillStyle=shoe;c.beginPath();c.ellipse(-9,-1,3.6,1.8,0,0,7);c.fill();}
-  else{const sw=walking?Math.sin(s.walkPh)*(run?.62:.38):0;const thN=sw,thF=-sw;leg(-2.2,thF,walking?Math.max(0,-thF)*1.3+.05:0,true);leg(2.4,thN,walking?Math.max(0,-thN)*1.3+.05:0,false);}
+  else{const sw=walking?Math.sin(s.walkPh)*(run?.62:s.age==='crianca'?.52:.38):0;const thN=sw,thF=-sw;leg(-2.2,thF,walking?Math.max(0,-thF)*1.3+.05:0,true);leg(2.4,thN,walking?Math.max(0,-thN)*1.3+.05:0,false);}
   // skirts & dress lower part
   const skirtEnd=sit?hipY+3:kneel?hipY+12:hipY+15;
   const drawSkirt=(col,y0,len,flare)=>{c.fillStyle=col;c.beginPath();c.moveTo(-6.4,y0);c.lineTo(6.4,y0);if(sit){c.lineTo(14,hipY+1);c.lineTo(14,hipY+5);c.lineTo(-7,hipY+4);}else{const sk=(s._hx||0)*len*.55;c.lineTo(6.4+flare+sk,y0+len);c.quadraticCurveTo(sk,y0+len+2,-6.4-flare+sk,y0+len);}c.closePath();c.fill();c.save();c.clip();{const g=c.createLinearGradient(-10,0,10,0);g.addColorStop(0,'rgba(0,0,0,.12)');g.addColorStop(.5,'rgba(0,0,0,0)');g.addColorStop(.8,'rgba(255,255,255,.08)');c.fillStyle=g;c.fillRect(-12,y0,26,(sit?8:len)+3);}if(!sit){c.strokeStyle='rgba(0,0,0,.08)';c.lineWidth=.6;c.beginPath();c.moveTo(-2,y0+3);c.lineTo(-3.5,y0+len);c.moveTo(3,y0+3);c.lineTo(4.4,y0+len);c.stroke();}c.restore();};
   // arms
-  const drawArm=(x,side,far)=>{const a=armAngle(s,side,T),eb=.22+(['eat','read','game','type','cook','use','rock','pet'].includes(s.anim)?.35:0)+(s.anim==='scratch'&&side>0?1.9:0)+(s.anim==='cross'?(side>0?-1.85:1.2):0)+(s.anim==='phone'&&side>0?1.55:0)+(s.react?reactEb(s,side):0)+(walking?(run?.85:-.08+Math.max(0,-side*Math.sin(s.walkPh))*.24):0);
+  const drawArm=(x,side,far)=>{const a=armAngle(s,side,T),eb=.22+(['eat','read','game','type','cook','use','rock','pet'].includes(s.anim)?.35:0)+(s.anim==='scratch'&&side>0?1.9:0)+(s.anim==='cross'?(side>0?-1.85:1.2):0)+(s.anim==='phone'&&side>0?1.55:0)+(s.anim==='hug'?(back?.9:side>0?2.4:1.5):0)+(s.anim==='kiss'?(back?.5:side>0?2.3:.2):0)+(s.react?reactEb(s,side):0)+(walking?(run?.85:-.08+Math.max(0,-side*Math.sin(s.walkPh))*.24):0);
     const sh=[x,ty+3.5],u=dirV(a,11.5),el=[sh[0]+u[0],sh[1]+u[1]],f=dirV(a-eb*(side>0?1:1),10.5),wr=[el[0]+f[0],el[1]+f[1]];
     const sk=far?dskin:skin,tc=far?shade(top,.86):top,longS=o==='social'||o==='moletom'||outLong(o0),noSl=outSleeveless(o0);
     const upC=noSl||o==='vestido'&&!s.wed?sk:o==='cropped'?sk:tc;c.fillStyle=(o==='vestido'||o==='cropped')&&!noSl?tc:upC;c.beginPath();c.ellipse(sh[0],sh[1]+.6,3.1,3.4,0,0,7);c.fill();
@@ -1107,8 +1107,8 @@ function drawSim(c,s,X,Y,opt){
 function simOffset(s){
   const c=s.cur;let ox=0,oy=0;
   const close=a=>a&&['abracar','beijar','dancar'].includes(a.id);
-  if(c&&c.kind==='soc'&&c.stage==='act'&&close(c.act)){const t=c.target;const dx=t.x-s.x,dy=t.y-s.y,l=Math.hypot(dx,dy)||1,k=c.act.id==='dancar'?.12:.26;ox=dx/l*k;oy=dy/l*k;}
-  if(s.socWith&&!s.cur){const f=simById(s.socWith.from);if(f&&close(s.socWith.act)){const dx=f.x-s.x,dy=f.y-s.y,l=Math.hypot(dx,dy)||1,k=s.socWith.act.id==='dancar'?.12:.26;ox=dx/l*k;oy=dy/l*k;}}
+  if(c&&c.kind==='soc'&&c.stage==='act'&&close(c.act)){const t=c.target;const dx=t.x-s.x,dy=t.y-s.y,l=Math.hypot(dx,dy)||1,k=c.act.id==='dancar'?.14:c.act.id==='beijar'?.34:.37;ox=dx/l*k;oy=dy/l*k;}
+  if(s.socWith&&!s.cur){const f=simById(s.socWith.from);if(f&&close(s.socWith.act)){const dx=f.x-s.x,dy=f.y-s.y,l=Math.hypot(dx,dy)||1,k=s.socWith.act.id==='dancar'?.14:s.socWith.act.id==='beijar'?.34:.37;ox=dx/l*k;oy=dy/l*k;}}
   if(s.avo){ox+=s.avo[0];oy+=s.avo[1];}
   return[ox,oy];
 }
@@ -4934,7 +4934,7 @@ function showSyncBanner(r){let b=$('#syncBanner');if(!b){b=document.createElemen
   b.textContent='☁️ Mudou no outro aparelho · tocar para carregar';b.hidden=false;b.onclick=()=>{b.hidden=true;startFromSave(r,'☁️ Jogo atualizado da nuvem!');};}
 setInterval(()=>{if(!document.hidden)cloudCheck();},20000);
 /* ---- aviso de versão nova do jogo ---- */
-const APPV='v60';
+const APPV='v61';
 async function checkAppVersion(){try{const t=await fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'');const m=t.match(/const APPV='([^']+)'/);
   if(m&&m[1]!==APPV){let b=$('#verBanner');if(!b){b=document.createElement('button');b.id='verBanner';b.className='glass';document.body.appendChild(b);}
     b.textContent=`✨ Versão nova (${m[1]}) · tocar para atualizar`;b.hidden=false;b.onclick=()=>{try{if(G&&!G.demo)save();}catch(_){}const go=()=>location.replace(location.pathname+'?v='+m[1]+'-'+Date.now());if(cloudCode&&G&&!G.demo)cloudPush(true).finally(go);else go();};}}catch(_){}}
@@ -6543,6 +6543,8 @@ function hairStrands(c,s,hx,hy,st,hc,back){if(!['longo','franja','ondulado','tra
     c.strokeStyle=k%2?shade(hc,1.25):shade(hc,.72);c.globalAlpha=k%2?.55:.7;c.lineWidth=k%2?1.1:1.5;
     c.beginPath();c.moveTo(hx+x0*.8,hy-3);c.bezierCurveTo(hx+x0*1.15,hy+L*.3,hx+x0*1.1+sw,hy+L*.65,endX,endY);c.stroke();});
   c.globalAlpha=1;c.lineCap='butt';}
+/* abraço e beijo: os dois se inclinam um para o outro */
+{const _ds=drawSim;drawSim=function(c,s,X,Y,opt){const a=s.anim;if(a==='kiss'||a==='hug'){const fi=faceInfo(s.face||[1,0]);if(!fi.back){const k=(a==='kiss'?.09:.06)*fi.flip;c.save();c.translate(X,Y);c.rotate(k);c.translate(-X,-Y);try{return _ds(c,s,X,Y,opt);}finally{c.restore();}}}return _ds(c,s,X,Y,opt);};}
 /* ================= v39: edição — o jogo da Isabel continua pessoal; jogos novos são para todo mundo ================= */
 var ED_PERSONAL=true;
 function PET_NAME(){return ED_PERSONAL===false?'Biscoito':'Luck';}

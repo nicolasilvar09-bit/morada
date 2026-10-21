@@ -383,7 +383,7 @@ const ZS=34, HW=12, HH=10, HALL=2.4;
 /* lot: x from LX0 to LX1-1, y from LY0 to LY1-1; NL building levels (0 = térreo) */
 let LX0=-6;const AX0=-12,LY0=-4,GW=30,GH=16,LX1=18,LY1=LY0+GH,NT=GW*GH,NL=3;
 const TI=(x,y)=>(y-LY0)*GW+(x-AX0),TX=i=>i%GW+AX0,TY=i=>((i/GW)|0)+LY0;
-let viewL=0,ZO=0;
+let viewL=0,ZO=0,FLIFT=0;
 const DIRS=[[1,0],[-1,0],[0,1],[0,-1]];
 /* view rotation (camera turns in 90° steps around the house) */
 let VR=0,RAW=false;const VC=[6,4];
@@ -394,7 +394,7 @@ function rotD(d,r){const a=d[0],b=d[1];if(r%1!==0){const t=r*Math.PI/2,c=Math.co
 const vdir=d=>rotD(d,VR),wdir=d=>rotD(d,4-VR);
 function vbox(b){if(!VR)return b;if(FREE()){const ps=[toV(b[0],b[1]),toV(b[3],b[1]),toV(b[3],b[4]),toV(b[0],b[4])];const xs=ps.map(p=>p[0]),ys=ps.map(p=>p[1]);return[Math.min(...xs),Math.min(...ys),b[2],Math.max(...xs),Math.max(...ys),b[5]];}const p=toV(b[0],b[1]),q=toV(b[3],b[4]);return[Math.min(p[0],q[0]),Math.min(p[1],q[1]),b[2],Math.max(p[0],q[0]),Math.max(p[1],q[1]),b[5]];}
 function P0(x,y,z){return[(x-y)*32,(x+y)*16-(z||0)*ZS];}
-function P(x,y,z){if(VR&&!RAW){const v=toV(x,y);x=v[0];y=v[1];}return[(x-y)*32,(x+y)*16-((z||0)+ZO)*ZS];}
+function P(x,y,z){if(VR&&!RAW){const v=toV(x,y);x=v[0];y=v[1];}return[(x-y)*32,(x+y)*16-((z||0)+ZO+FLIFT)*ZS];}
 function poly(c,pts,fill,stroke){c.beginPath();for(let i=0;i<pts.length;i++){const p=P(pts[i][0],pts[i][1],pts[i][2]);i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]);}c.closePath();c.fillStyle=fill;c.fill();if(stroke!==false){c.strokeStyle=stroke||'rgba(40,30,50,.16)';c.lineWidth=.7;c.stroke();}}
 function line(c,a,b){const p=P(a[0],a[1],a[2]),q=P(b[0],b[1],b[2]);c.beginPath();c.moveTo(p[0],p[1]);c.lineTo(q[0],q[1]);c.stroke();}
 function gbox(c,x0,y0,z0,x1,y1,z1,col,al){
@@ -2969,7 +2969,7 @@ function drawShadows(c){if(!G||G.demo&&!G.sims)return;const S=sunInfo(),IN={sx:.
       const h=wv.fence?.9:HALL*(dl>0&&WL(1).has(k)?2:1);if(p[0]==='W')boxShadow(c,x-.05,y,x+.05,y+1,h,S,.011);else boxShadow(c,x,y-.05,x+1,y+.05,h,S,.011);}
     c.fillStyle=`rgba(28,38,60,${S.a})`;c.fill();}
   /* soft contact shadows indoors + ambient occlusion along walls */
-  for(let l=0;l<=dl;l++){const z=l*HALL+.012;c.beginPath();
+  for(let l=0;l<=dl;l++){const z=l*HALL+.012+(G.found||0);c.beginPath();
     for(const o of G.objects){if((o.l||0)!==l||DEF[o.type].flat)continue;const b=objBox(o);if(S&&!l&&!indoorAt((b[0]+b[3])/2,(b[1]+b[4])/2,0))continue;boxShadow(c,b[0]+.06,b[1]+.06,b[3]-.06,b[4]-.06,Math.min(DEF[o.type].h,1.4),IN,z);}
     for(const s of G.sims)if(!s.away&&!s.outside&&(s.l||0)===l&&(!S||l||indoorAt(s.x,s.y,0)))blobShadow(c,s.x,s.y,.16,.8,IN,z);
     if(!l)for(const q of petsAll())if(!(q.bed&&q.state==='sleep'&&DEF[q.bed.type]&&DEF[q.bed.type].petHouse))blobShadow(c,q.x,q.y,.16,.3,IN,z);
@@ -3088,7 +3088,7 @@ function render(){
   if(!G.demo&&!window._tipZ&&G.wallMode===2&&roofA()<1&&mode==='live'){window._tipZ=1;toast('Chegando perto, o telhado some e dá para ver dentro da casa. Afaste para ver o telhado de novo.','good');}
   ctx.setTransform(cam.z*DPR,0,0,cam.z*DPR,cam.x*DPR,cam.y*DPR);INWORLD=true;
   ensureLayer(ptrs.size>0||!!camGoal);ctx.drawImage(LAYER.cv,LAYER.x0,LAYER.y0,LAYER.w,LAYER.h);drawWindowLight(ctx);try{drawShadows(ctx);}catch(e){}
-  for(const o of G.objects)if(DEF[o.type].flat&&!(o.l||0)&&o!==(ghost&&ghost.moving))drawObject(ctx,o);
+  for(const o of G.objects)if(DEF[o.type].flat&&!(o.l||0)&&o!==(ghost&&ghost.moving)){FLIFT=G.found?objLift(o):0;drawObject(ctx,o);FLIFT=0;}
   ZO=LZ();
   if(mode==='buy'&&selObj){const [fw,fd]=fp(selObj);poly(ctx,[[selObj.x,selObj.y,.02],[selObj.x+fw,selObj.y,.02],[selObj.x+fw,selObj.y+fd,.02],[selObj.x,selObj.y+fd,.02]],'rgba(21,156,147,.25)','rgba(21,156,147,.9)');}
   if(mode==='build'&&buildTool&&hoverTile&&(buildTool.kind==='floor'||buildTool.kind==='paint')){
@@ -3111,8 +3111,8 @@ function render(){
   if(roofOn())roofItems(items);
   for(const [x,y,s] of TREES)items.push({b:[x-.3,y-.3,0,x+.3,y+.3,3],tree:[x,y,s]});
   const sorted=topo(items);lastList=sorted;
-  for(const it of sorted){if(it.o)drawObject(ctx,it.o);else if(it.s)drawSimAt(ctx,it.s);else if(it.nb){if(it.venue)drawVenueInside(ctx,it.venue);else drawNBCached(ctx,it.nb,ptrs.size>0||!!camGoal);}else if(it.staff){const p=P(it.staff.x,it.staff.y,0);drawSim(ctx,it.staff,p[0],p[1]);}else if(it.umbrella||it.bchair||it.kiosk||it.palm||it.castle||it.pk)drawBeachItem(ctx,it);else if(it.cafe)drawCafeTables(ctx,it.cafe);else if(it.lamp)drawLamp(ctx,...it.lamp);else if(it.car)drawCar(ctx,it.car);else if(it.walker){const p=P(it.walker.s.x,it.walker.s.y,0);drawSim(ctx,it.walker.s,p[0],p[1]);}else if(it.dog){const w=it.dog,p=P(w.s.x+.4,w.s.y+w.dir*.3,0);drawPet(ctx,w.dog,p[0],p[1]);}else if(it.pet)drawPetAt(ctx,it.pet);else if(it.wall)drawSeg(ctx,it.wall,it.w,it.l);else if(it.roof){ctx.globalAlpha=roofA();drawRoof(ctx,it.roof);ctx.globalAlpha=1;}else if(it.upf){const [x,y,l,f]=it.upf;ZO=l*HALL;try{floorTile(ctx,x,y,f,l);floorFinish(ctx,x,y,f);}finally{ZO=0;}}else if(it.fence)drawFence(ctx,...it.fence);else drawTree(ctx,...it.tree);}
-  ZO=LZ();
+  for(const it of sorted){FLIFT=G.found?itemLift(it):0;if(it.o)drawObject(ctx,it.o);else if(it.s)drawSimAt(ctx,it.s);else if(it.nb){if(it.venue)drawVenueInside(ctx,it.venue);else drawNBCached(ctx,it.nb,ptrs.size>0||!!camGoal);}else if(it.staff){const p=P(it.staff.x,it.staff.y,0);drawSim(ctx,it.staff,p[0],p[1]);}else if(it.umbrella||it.bchair||it.kiosk||it.palm||it.castle||it.pk)drawBeachItem(ctx,it);else if(it.cafe)drawCafeTables(ctx,it.cafe);else if(it.lamp)drawLamp(ctx,...it.lamp);else if(it.car)drawCar(ctx,it.car);else if(it.walker){const p=P(it.walker.s.x,it.walker.s.y,0);drawSim(ctx,it.walker.s,p[0],p[1]);}else if(it.dog){const w=it.dog,p=P(w.s.x+.4,w.s.y+w.dir*.3,0);drawPet(ctx,w.dog,p[0],p[1]);}else if(it.pet)drawPetAt(ctx,it.pet);else if(it.wall)drawSeg(ctx,it.wall,it.w,it.l);else if(it.roof){ctx.globalAlpha=roofA();drawRoof(ctx,it.roof);ctx.globalAlpha=1;}else if(it.upf){const [x,y,l,f]=it.upf;ZO=l*HALL;try{floorTile(ctx,x,y,f,l);floorFinish(ctx,x,y,f);}finally{ZO=0;}}else if(it.fence)drawFence(ctx,...it.fence);else drawTree(ctx,...it.tree);}
+  FLIFT=0;ZO=LZ();
   if(mode==='build'&&buildTool&&hoverEdge&&['door','window','remove','art'].includes(buildTool.kind)){const ok=edgeToolOk(hoverEdge,buildTool.kind);const p=hoverEdge.split(','),x=+p[1],y=+p[2],col=ok?'rgba(21,156,147,.45)':'rgba(236,95,92,.45)';
     if(p[0]==='W')poly(ctx,[[x,y,0],[x,y+1,0],[x,y+1,1],[x,y,1]],col,ok?'#159c93':'#ec5f5c');else poly(ctx,[[x,y,0],[x+1,y,0],[x+1,y,1],[x,y,1]],col,ok?'#159c93':'#ec5f5c');}
   drawBuildPreview(ctx);
@@ -3244,7 +3244,7 @@ function hitObj(wx,wy){
   const wy2=wy+LZ()*ZS;let gx=(wx/32+wy2/16)/2,gy=(wy2/16-wx/32)/2;if(VR)[gx,gy]=fromV(gx,gy);const tx=Math.floor(gx),ty=Math.floor(gy);
   return G.objects.find(o=>DEF[o.type].flat&&(o.l||0)===viewL&&tilesOf(o).some(t=>t[0]===tx&&t[1]===ty))||null;
 }
-function hitSim(wx,wy){for(const s of [...G.sims].reverse()){if(s.away||(!s.outside&&(s.l||0)>viewL))continue;const o=simOffset(s),p=P(s.x+o[0],s.y+o[1],s.z+(s.l||0)*HALL);const h=(s.pose==='lie'||s.pose==='bath'?24:s.pose==='swim'?36:s.pose==='sit'?50:74)*simScale(s);if(wx>p[0]-14&&wx<p[0]+14&&wy>p[1]-h&&wy<p[1]+6)return s;}return null;}
+function hitSim(wx,wy){for(const s of [...G.sims].reverse()){if(s.away||(!s.outside&&(s.l||0)>viewL))continue;const o=simOffset(s),p=P(s.x+o[0],s.y+o[1],s.z+(s.l||0)*HALL+(s._fl||0));const h=(s.pose==='lie'||s.pose==='bath'?24:s.pose==='swim'?36:s.pose==='sit'?50:74)*simScale(s);if(wx>p[0]-14&&wx<p[0]+14&&wy>p[1]-h&&wy<p[1]+6)return s;}return null;}
 function hitPet(wx,wy){for(const p of petsAll()){if(p.bed&&p.state==='sleep'&&DEF[p.bed.type]&&DEF[p.bed.type].petHouse)continue;const q=P(p.x,p.y,p.z||0);if(wx>q[0]-16&&wx<q[0]+18&&wy>q[1]-28&&wy<q[1]+6){window.PET_FOCUS=p;return true;}}return false;}
 function click(x,y,ptype){
   if(!G||G.demo)return;if(!$('#pie').hidden){closePie();return;}
@@ -4935,7 +4935,7 @@ function showSyncBanner(r){let b=$('#syncBanner');if(!b){b=document.createElemen
   b.textContent='☁️ Mudou no outro aparelho · tocar para carregar';b.hidden=false;b.onclick=()=>{b.hidden=true;startFromSave(r,'☁️ Jogo atualizado da nuvem!');};}
 setInterval(()=>{if(!document.hidden)cloudCheck();},20000);
 /* ---- aviso de versão nova do jogo ---- */
-const APPV='v66';
+const APPV='v67';
 async function checkAppVersion(){try{const t=await fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'');const m=t.match(/const APPV='([^']+)'/);
   if(m&&m[1]!==APPV){let b=$('#verBanner');if(!b){b=document.createElement('button');b.id='verBanner';b.className='glass';document.body.appendChild(b);}
     b.textContent=`✨ Versão nova (${m[1]}) · tocar para atualizar`;b.hidden=false;b.onclick=()=>{try{if(G&&!G.demo)save();}catch(_){}const go=()=>location.replace(location.pathname+'?v='+m[1]+'-'+Date.now());if(cloudCode&&G&&!G.demo)cloudPush(true).finally(go);else go();};}}catch(_){}}
@@ -6719,6 +6719,68 @@ DEF.escada_caracol=Object.assign({},base,{n:'Escada caracol',price:1900,colorabl
     /* chegada lá em cima */
     B(.05,0,2.34,.95,.5,2.4,'#b07a4f');}});
 }
+/* ================= v67: fundação (casa elevada) + varanda/deck elevado + degraus ================= */
+const FOUND_OPTS=[[0,'Sem fundação'],[.3,'Baixa (2 degraus)'],[.6,'Alta (4 degraus)']];
+const FOUND_COST=20;
+let FREG=null,FREGK='';
+function fRegion(){const k=layerVer+'|'+roofVer+'|'+(G.found||0)+'|'+LX0;if(FREG&&FREGK===k)return FREG;
+  const R=new Uint8Array(NT);for(let i=0;i<NT;i++){const f=G.floor[i];if(f&&(!FLOORS[f].outdoor||f==='deck'))R[i]=1;}FREG=R;FREGK=k;return R;}
+function inReg(x,y){return inLot(x,y)&&!!fRegion()[TI(x,y)];}
+function liftAt(px,py){const e=.02;return(inReg(Math.floor(px-e),Math.floor(py-e))||inReg(Math.floor(px+e),Math.floor(py-e))||inReg(Math.floor(px-e),Math.floor(py+e))||inReg(Math.floor(px+e),Math.floor(py+e)))?G.found:0;}
+/* sims e bichos: sobem suave no ladrilho em frente (degraus) */
+function rampLift(px,py){const h=G.found,tx=Math.floor(px),ty=Math.floor(py);if(inReg(tx,ty))return h;const fx=px-tx,fy=py-ty;let m=0;
+  if(inReg(tx+1,ty))m=Math.max(m,fx);if(inReg(tx-1,ty))m=Math.max(m,1-fx);if(inReg(tx,ty+1))m=Math.max(m,fy);if(inReg(tx,ty-1))m=Math.max(m,1-fy);
+  m=clamp((m-.15)/.85,0,1);return h*m;}
+function objLift(o){const b=objBox(o);return liftAt((b[0]+b[3])/2,(b[1]+b[4])/2);}
+function itemLift(it){const b=it.b;if(!b)return 0;const cx=(b[0]+b[3])/2,cy=(b[1]+b[4])/2;
+  if(cx<LX0-1||cx>LX1+1||cy<LY0-1||cy>LY1+1)return 0;
+  let v;if(it.s||it.pet){v=it.s&&it.s.outside&&it.s.vin?0:rampLift(cx,cy);if(it.s)it.s._fl=v;}else v=liftAt(cx,cy);
+  if(v&&!it._fl){it._fl=1;b[2]+=v;b[5]+=v;}return v;}
+{const _r=render;render=function(){FLIFT=0;try{return _r.apply(this,arguments);}finally{FLIFT=0;}};}
+/* pisos do térreo (camada fixa) sobem junto */
+{const _ft=floorTile;floorTile=function(c,x,y,f,l){if(!l&&G&&G.found){const o=FLIFT;FLIFT=inReg(x,y)?G.found:0;try{return _ft(c,x,y,f,l);}finally{FLIFT=o;}}return _ft(c,x,y,f,l);};}
+{const _ff=floorFinish;floorFinish=function(c,x,y,f){if(G&&G.found){const o=FLIFT;FLIFT=inReg(x,y)?G.found:0;try{return _ff(c,x,y,f);}finally{FLIFT=o;}}return _ff(c,x,y,f);};}
+function foundSides(c){const h=G.found,R=fRegion(),stone='#b9b1a4',stone2='#a49b8d';
+  for(let i=0;i<NT;i++){if(!R[i])continue;const x=TX(i),y=TY(i),deck=G.floor[i]==='deck';
+    for(const [vd,col] of [[[0,1],deck?'#7d5838':stone],[[1,0],deck?'#6b4a2f':stone2]]){const d=wdir(vd);if(inReg(x+d[0],y+d[1]))continue;
+      const e=d[1]===1?[[x,y+1],[x+1,y+1]]:d[1]===-1?[[x,y],[x+1,y]]:d[0]===1?[[x+1,y],[x+1,y+1]]:[[x,y],[x,y+1]];
+      poly(c,[[e[0][0],e[0][1],h],[e[1][0],e[1][1],h],[e[1][0],e[1][1],0],[e[0][0],e[0][1],0]],col,false);
+      if(deck){for(const t of [.15,.85]){const px=e[0][0]+(e[1][0]-e[0][0])*t,py=e[0][1]+(e[1][1]-e[0][1])*t;poly(c,[[px-.03*(e[1][0]-e[0][0]),py-.03*(e[1][1]-e[0][1]),h],[px+.03*(e[1][0]-e[0][0]),py+.03*(e[1][1]-e[0][1]),h],[px+.03*(e[1][0]-e[0][0]),py+.03*(e[1][1]-e[0][1]),0],[px-.03*(e[1][0]-e[0][0]),py-.03*(e[1][1]-e[0][1]),0]],'#5a3d25',false);}}
+      else{c.strokeStyle='rgba(80,70,60,.25)';c.lineWidth=.6;line(c,[e[0][0],e[0][1],h*.5],[e[1][0],e[1][1],h*.5]);}
+      poly(c,[[e[0][0],e[0][1],h],[e[1][0],e[1][1],h],[e[1][0],e[1][1],h-.04],[e[0][0],e[0][1],h-.04]],deck?'#9a6c45':'#d8d1c6',false);}}}
+/* degraus em frente às portas que dão para fora */
+function foundSteps(c){const h=G.found,n=Math.max(2,Math.round(h/.15)),out=[];
+  for(const [k,w] of WL(0)){if(!w.door)continue;const [a,b]=edgeSides(k);const ia=inReg(a[0],a[1]),ib=inReg(b[0],b[1]);if(ia===ib)continue;const o=ia?b:a,i=ia?a:b;if(!inLot(o[0],o[1]))continue;out.push([o,[i[0]-o[0],i[1]-o[1]]]);}
+  /* deck: degraus no meio de cada lado do deck que dá para a grama */
+  const R=fRegion(),seen=new Set();
+  for(let ii=0;ii<NT;ii++){if(!R[ii]||G.floor[ii]!=='deck')continue;const x=TX(ii),y=TY(ii);for(const [dx,dy] of [[0,1],[1,0],[0,-1],[-1,0]]){const ox=x+dx,oy=y+dy;if(!inLot(ox,oy)||inReg(ox,oy)||occAt(ox,oy,0))continue;
+    /* só no ladrilho do meio de cada borda contínua */
+    const tx=-dy,ty=dx;let a=0,b=0;while(R[TI(x+tx*(a+1),y+ty*(a+1))]&&inLot(x+tx*(a+1),y+ty*(a+1))&&!inReg(ox+tx*(a+1),oy+ty*(a+1))&&G.floor[TI(x+tx*(a+1),y+ty*(a+1))]==='deck')a++;
+    while(R[TI(x-tx*(b+1),y-ty*(b+1))]&&inLot(x-tx*(b+1),y-ty*(b+1))&&!inReg(ox-tx*(b+1),oy-ty*(b+1))&&G.floor[TI(x-tx*(b+1),y-ty*(b+1))]==='deck')b++;
+    if(Math.abs(a-b)>1||(a<b))continue;const key=ox+','+oy;if(seen.has(key))continue;seen.add(key);out.push([[ox,oy],[-dx,-dy]]);}}
+  for(const [[ox,oy],[dx,dy]] of out){const deck=G.floor[TI(ox+dx,oy+dy)]==='deck',col=deck?'#a8774c':'#cfc7ba';
+    for(let s=0;s<n;s++){const top=h*(n-s)/(n+1),d0=s/n*.9,d1=(s+1)/n*.9;
+      /* faixa do degrau: começa encostado na casa (lado dx,dy) e vai para fora */
+      let x0,x1,y0,y1;if(dx){const e=dx>0?ox+1:ox,sg=dx>0?-1:1;x0=Math.min(e+sg*d0,e+sg*d1);x1=Math.max(e+sg*d0,e+sg*d1);y0=oy+.1;y1=oy+.9;}
+      else{const e=dy>0?oy+1:oy,sg=dy>0?-1:1;y0=Math.min(e+sg*d0,e+sg*d1);y1=Math.max(e+sg*d0,e+sg*d1);x0=ox+.1;x1=ox+.9;}
+      gbox(c,x0,y0,0,x1,y1,top,shade(col,1-s*.03));}}}
+{const _df=drawFloors;drawFloors=function(c){if(G&&G.found){const o=FLIFT;FLIFT=0;try{foundSides(c);}catch(e){}FLIFT=o;}_df(c);if(G&&G.found){const o=FLIFT;FLIFT=0;try{foundSteps(c);}catch(e){}FLIFT=o;}};}
+/* toques e cliques acertam o piso elevado */
+{const _s=s2g;s2g=function(sx,sy,z){const r=_s(sx,sy,z);if(!(G&&G.found))return r;const r2=_s(sx,sy,(z||0)+G.found);if(inReg(Math.floor(r2[0]),Math.floor(r2[1])))return r2;return r;};}
+{const _w=wallScreenPoly;wallScreenPoly=function(k,l,h){if(!(G&&G.found))return _w(k,l,h);const p=k.split(','),x=+p[1],y=+p[2],o=FLIFT;FLIFT=p[0]==='W'?liftAt(x,y+.5):liftAt(x+.5,y);try{return _w(k,l,h);}finally{FLIFT=o;}};}
+/* ferramenta */
+TOOLS.splice(TOOLS.findIndex(t=>t[0]==='expand')+1,0,['found','🏛️','Fundação']);
+TOOL_HINT.found=`Levanta a casa inteira do chão, com degraus nas portas. O piso Deck sobe junto e vira varanda elevada. Custa ${fmt(FOUND_COST)}/m².`;
+{const _bb=buildBuildPanel;buildBuildPanel=function(){_bb();const t=buildTool;if(!(t&&t.kind==='found'))return;const cur=G.found||0;
+  $('#bpOpts').innerHTML=`<div class="bp-opts chips" id="bpFound">${FOUND_OPTS.map(([v,n])=>`<button data-v="${v}" class="${Math.abs(cur-v)<.01?'on':''}">${n}</button>`).join('')}</div>`;
+  $('#bpFound').onclick=e=>{const b=e.target.closest('button');if(!b)return;const v=+b.dataset.v;if(Math.abs(v-(G.found||0))<.01)return;
+    const R=fRegion();let m=0;for(let i=0;i<NT;i++)if(R[i])m++;if(!m){toast('Construa a casa primeiro.','bad');return;}
+    const cost=v>(G.found||0)?Math.round(m*FOUND_COST*(v-(G.found||0))/.3):0;if(cost&&!spend(cost))return;
+    G.found=v;FREG=null;dirtyLayer();roofVer++;SFX.build();save();buildBuildPanel();
+    toast(v?`Casa elevada! Fundação ${v>.4?'alta':'baixa'}${cost?' · '+fmt(cost):''}.`:'A casa voltou para o chão.','good');};};}
+{const _sa=strokeApply;strokeApply=function(x,y){if(buildTool&&buildTool.kind==='found')return;return _sa(x,y);};}
+{const _ser=serialize;serialize=function(){const s=_ser();return G&&G.found?s.slice(0,-1)+',"found":'+G.found+'}':s;};}
+{const _fs=fromSave;fromSave=function(d){const g=_fs(d);g.found=d&&d.found?+d.found:0;return g;};}
 /* ================= v39: edição — o jogo da Isabel continua pessoal; jogos novos são para todo mundo ================= */
 var ED_PERSONAL=true;
 function PET_NAME(){return ED_PERSONAL===false?'Biscoito':'Luck';}

@@ -4935,7 +4935,7 @@ function showSyncBanner(r){let b=$('#syncBanner');if(!b){b=document.createElemen
   b.textContent='☁️ Mudou no outro aparelho · tocar para carregar';b.hidden=false;b.onclick=()=>{b.hidden=true;startFromSave(r,'☁️ Jogo atualizado da nuvem!');};}
 setInterval(()=>{if(!document.hidden)cloudCheck();},20000);
 /* ---- aviso de versão nova do jogo ---- */
-const APPV='v64';
+const APPV='v65';
 async function checkAppVersion(){try{const t=await fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'');const m=t.match(/const APPV='([^']+)'/);
   if(m&&m[1]!==APPV){let b=$('#verBanner');if(!b){b=document.createElement('button');b.id='verBanner';b.className='glass';document.body.appendChild(b);}
     b.textContent=`✨ Versão nova (${m[1]}) · tocar para atualizar`;b.hidden=false;b.onclick=()=>{try{if(G&&!G.demo)save();}catch(_){}const go=()=>location.replace(location.pathname+'?v='+m[1]+'-'+Date.now());if(cloudCode&&G&&!G.demo)cloudPush(true).finally(go);else go();};}}catch(_){}}
@@ -6642,6 +6642,42 @@ function curShapeTiles(a,b){const r=rectOf(a,b);if(!r)return null;return shapeTi
   if(sh!=='rect'&&!bAnchor)$('#bpHint').textContent=`Formato ${sh==='cruz'?'cruz':sh}: toque num canto e depois no canto oposto. O tamanho que você arrastar vira o cômodo inteiro, já com as paredes. Use ↻ Girar para virar.`;};}
 /* preservar a forma escolhida ao trocar de ferramenta e voltar */
 {const _f=buildBuildPanel;let lastShape='rect',lastRot=0;buildBuildPanel=function(){if(buildTool&&buildTool.kind==='room'){if(buildTool.shape==null){buildTool.shape=lastShape;buildTool.rot=lastRot;}else{lastShape=buildTool.shape;lastRot=buildTool.rot||0;}}return _f();};}
+/* ================= v65: setas para esticar cômodos (estilo Sims) ================= */
+let PUSH_H=null,PUSH_HK='';
+function pushHandles(){const l=viewL,WM=WL(l),key=l+'|'+roofVer+'|'+WM.size;if(PUSH_H&&PUSH_HK===key)return PUSH_H;
+  const seen=new Set(),out=[];
+  for(const [k,w] of WM){if(w.fence)continue;let R;try{R=pushRun(k);}catch(_){continue;}if(!R||!R.c0)continue;
+    const id=R.o+'|'+R.X+'|'+R.t0+'|'+R.t1;if(seen.has(id))continue;seen.add(id);
+    const tm=(R.t0+R.t1+1)/2,mx=R.o==='W'?R.X:tm,my=R.o==='W'?tm:R.X;
+    /* normal para fora do cômodo (c0: 1 = cômodo do lado +, 2 = lado -, 3 = os dois) */
+    const sgn=R.c0===1?-1:1,nx=R.o==='W'?sgn:0,ny=R.o==='W'?0:sgn;
+    out.push({k:R.key(R.X,R.t0),mx,my,nx,ny,len:R.t1-R.t0+1,both:R.c0===3});}
+  PUSH_HK=key;PUSH_H=out;return out;}
+const HZ=.12;
+function handleScreen(h){const oz=ZO;ZO=0;const s=P(h.mx,h.my,viewL*HALL+HZ);ZO=oz;return[s[0]*cam.z+cam.x,s[1]*cam.z+cam.y];}
+function handleAt(sx,sy){if(!(mode==='build'&&buildTool&&buildTool.kind==='push'&&!bAnchor))return null;let best=null,bd=1e9;const rad=Math.max(16,22*Math.min(1.4,cam.z));
+  for(const h of pushHandles()){const q=handleScreen(h),d=Math.hypot(q[0]-sx,q[1]-sy);if(d<rad&&d<bd){bd=d;best=h;}}return best;}
+{const _pg=pickGround;pickGround=function(sx,sy){const h=handleAt(sx,sy);if(h)return{g:[h.mx,h.my],wall:h.k};return _pg(sx,sy);};}
+{const _bg=bGround;bGround=function(sx,sy){const h=handleAt(sx,sy);if(h)return[h.mx,h.my];return _bg(sx,sy);};}
+function drawArrowHandle(ctx,h,hot){const z=HZ,c=P(h.mx,h.my,z),a=P(h.mx+h.nx*.55,h.my+h.ny*.55,z),b=P(h.mx-h.nx*.55,h.my-h.ny*.55,z);
+  const k=1/Math.max(.5,Math.min(1.6,cam.z));
+  ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
+  ctx.fillStyle=hot?'#159c93':'rgba(255,255,255,.95)';ctx.strokeStyle=hot?'#fff':'#159c93';ctx.lineWidth=2*k;
+  ctx.beginPath();ctx.arc(c[0],c[1],7*k,0,7);ctx.fill();ctx.stroke();
+  const arr=(p)=>{const dx=p[0]-c[0],dy=p[1]-c[1],L=Math.hypot(dx,dy)||1,ux=dx/L,uy=dy/L,tip=[c[0]+ux*(L+3*k),c[1]+uy*(L+3*k)],base=[c[0]+ux*(9*k),c[1]+uy*(9*k)];
+    ctx.strokeStyle=hot?'#159c93':'#fff';ctx.lineWidth=5*k;ctx.beginPath();ctx.moveTo(base[0],base[1]);ctx.lineTo(tip[0],tip[1]);ctx.stroke();
+    ctx.strokeStyle=hot?'#fff':'#159c93';ctx.lineWidth=2.6*k;ctx.beginPath();ctx.moveTo(base[0],base[1]);ctx.lineTo(tip[0],tip[1]);ctx.stroke();
+    const hx=-uy,hy=ux,s=5*k;ctx.fillStyle=hot?'#fff':'#159c93';ctx.beginPath();ctx.moveTo(tip[0]+ux*s,tip[1]+uy*s);ctx.lineTo(tip[0]+hx*s,tip[1]+hy*s);ctx.lineTo(tip[0]-hx*s,tip[1]-hy*s);ctx.closePath();ctx.fill();};
+  arr(a);arr(b);ctx.restore();}
+{const _dp=drawPushPreview;drawPushPreview=function(ctx){_dp(ctx);
+  if(!bAnchor){for(const h of pushHandles())drawArrowHandle(ctx,h,!!hoverPt&&Math.hypot(hoverPt[0]-h.mx,hoverPt[1]-h.my)<.45);return;}
+  /* durante o arrasto: etiqueta com quanto a parede andou */
+  const plan=planPush(bAnchor,bEnd||bAnchor);if(!plan.run||!plan.d)return;const R=plan.run,tm=(R.t0+R.t1+1)/2,X2=R.X+plan.d,q=R.o==='W'?P(X2,tm,.9):P(tm,X2,.9);
+  const k=1/Math.max(.5,Math.min(1.6,cam.z)),txt=(plan.err?'✕ ':'')+(plan.d>0?'+':'')+plan.d+' m';
+  ctx.save();ctx.font=`800 ${13*k}px system-ui,sans-serif`;const w=ctx.measureText(txt).width+12*k;ctx.fillStyle=plan.err?'#ec5f5c':'#159c93';
+  ctx.beginPath();ctx.roundRect?ctx.roundRect(q[0]-w/2,q[1]-11*k,w,22*k,11*k):ctx.rect(q[0]-w/2,q[1]-11*k,w,22*k);ctx.fill();ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(txt,q[0],q[1]+1);ctx.restore();};}
+TOOL_HINT.push='Toque numa das setas ↔ de uma parede e arraste (ou toque) até onde ela vai: o cômodo estica ou encolhe, levando portas e janelas junto.';
+{const _i=TOOLS.findIndex(t=>t[0]==='push');if(_i>=0)TOOLS[_i]=['push','↔️','Esticar'];}
 /* ================= v39: edição — o jogo da Isabel continua pessoal; jogos novos são para todo mundo ================= */
 var ED_PERSONAL=true;
 function PET_NAME(){return ED_PERSONAL===false?'Biscoito':'Luck';}

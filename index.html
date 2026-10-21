@@ -4935,7 +4935,7 @@ function showSyncBanner(r){let b=$('#syncBanner');if(!b){b=document.createElemen
   b.textContent='☁️ Mudou no outro aparelho · tocar para carregar';b.hidden=false;b.onclick=()=>{b.hidden=true;startFromSave(r,'☁️ Jogo atualizado da nuvem!');};}
 setInterval(()=>{if(!document.hidden)cloudCheck();},20000);
 /* ---- aviso de versão nova do jogo ---- */
-const APPV='v63';
+const APPV='v64';
 async function checkAppVersion(){try{const t=await fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'');const m=t.match(/const APPV='([^']+)'/);
   if(m&&m[1]!==APPV){let b=$('#verBanner');if(!b){b=document.createElement('button');b.id='verBanner';b.className='glass';document.body.appendChild(b);}
     b.textContent=`✨ Versão nova (${m[1]}) · tocar para atualizar`;b.hidden=false;b.onclick=()=>{try{if(G&&!G.demo)save();}catch(_){}const go=()=>location.replace(location.pathname+'?v='+m[1]+'-'+Date.now());if(cloudCode&&G&&!G.demo)cloudPush(true).finally(go);else go();};}}catch(_){}}
@@ -6582,6 +6582,66 @@ const WORKPLACE={advocacia:'forum',justica:'jf'};
 (function(){const st=document.createElement('style');st.textContent=`
 @media (max-height:520px){#title .tcard{zoom:.62}#title .tcard p{margin:6px auto 12px}.screen{overflow-y:auto}#mapa .card,#agenda .card,#landDlg .card{zoom:.8}#mapa .card{max-width:min(860px,94vw)!important;width:94vw}#mapaL{grid-template-columns:repeat(4,1fr)!important;gap:6px!important}#mapaL button{font-size:12.5px!important;padding:7px 8px!important}}
 @media (max-height:380px){#title .tcard{zoom:.55}}`;document.head.appendChild(st);})();
+/* ================= v64: cômodos em formatos prontos (L, T, U, cruz) ================= */
+const ROOM_SHAPES=[['rect','▭ Retângulo'],['L','L'],['T','T'],['U','U'],['cruz','✚ Cruz']];
+function roomShape(){return (buildTool&&buildTool.kind==='room'&&buildTool.shape)||'rect';}
+function shapeLocal(sh,u,v,W,H){
+  if(sh==='L'){const a=Math.max(1,Math.floor(W/2)),b=Math.max(1,Math.floor(H/2));return u<a||v>=H-b;}
+  if(sh==='T'){const b=Math.max(1,Math.floor(H/2)),s=Math.max(1,Math.round(W/3)),s0=Math.floor((W-s)/2);return v<b||(u>=s0&&u<s0+s);}
+  if(sh==='U'){const a=Math.max(1,Math.floor(W/3)),b=Math.max(1,Math.floor(H/2));return u<a||u>=W-a||v>=H-b;}
+  if(sh==='cruz'){const s=Math.max(1,Math.round(W/3)),s0=Math.floor((W-s)/2),t=Math.max(1,Math.round(H/3)),t0=Math.floor((H-t)/2);return(u>=s0&&u<s0+s)||(v>=t0&&v<t0+t);}
+  return true;}
+function shapeTiles(r,sh,o){const W=r.x1-r.x0+1,H=r.y1-r.y0+1,out=[];
+  for(let y=r.y0;y<=r.y1;y++)for(let x=r.x0;x<=r.x1;x++){const lx=x-r.x0,ly=y-r.y0;let u,v,Wl,Hl;
+    if(o===1){u=ly;v=W-1-lx;Wl=H;Hl=W;}else if(o===2){u=W-1-lx;v=H-1-ly;Wl=W;Hl=H;}else if(o===3){u=H-1-ly;v=lx;Wl=H;Hl=W;}else{u=lx;v=ly;Wl=W;Hl=H;}
+    if(shapeLocal(sh,u,v,Wl,Hl))out.push([x,y]);}
+  return out;}
+/* bordas entre a forma e o lado de fora: [edgeKey, dentro, fora] */
+function maskBoundary(tiles){const S=new Set(tiles.map(t=>t[0]+','+t[1])),has=(x,y)=>S.has(x+','+y),out=[];
+  for(const [x,y] of tiles){
+    if(!has(x,y-1))out.push(['N,'+x+','+y,[x,y],[x,y-1]]);
+    if(!has(x,y+1))out.push(['N,'+x+','+(y+1),[x,y],[x,y+1]]);
+    if(!has(x-1,y))out.push(['W,'+x+','+y,[x,y],[x-1,y]]);
+    if(!has(x+1,y))out.push(['W,'+(x+1)+','+y,[x,y],[x+1,y]]);}
+  return out;}
+function maskInner(tiles){const S=new Set(tiles.map(t=>t[0]+','+t[1])),out=[];
+  for(const [x,y] of tiles){if(S.has((x+1)+','+y))out.push('W,'+(x+1)+','+y);if(S.has(x+','+(y+1)))out.push('N,'+x+','+(y+1));}return out;}
+function curShapeTiles(a,b){const r=rectOf(a,b);if(!r)return null;return shapeTiles(r,roomShape(),(buildTool&&buildTool.rot)||0);}
+{const _pb=planBuild;planBuild=function(kind,a,b){
+  if(kind!=='room'||roomShape()==='rect')return _pb(kind,a,b);
+  const l=viewL,WM=WL(l),plan={floors:[],addW:[],delW:[],delF:[],cost:0,err:''};
+  const tiles=curShapeTiles(a,b);if(!tiles||!tiles.length){plan.err='Fora do terreno.';return plan;}
+  if(l>0&&tiles.some(([x,y])=>!FL(l-1)[TI(x,y)])){plan.err='No andar de cima precisa ter piso embaixo. Faça a área no térreo primeiro.';return plan;}
+  const indoor=(x,y)=>isIndoor(x,y,l);
+  for(const [x,y] of tiles)if(!indoor(x,y))plan.floors.push([x,y]);
+  for(const [k,i,o] of maskBoundary(tiles)){const w=WM.get(k);
+    if(w&&w.fence&&!(inLot(o[0],o[1])&&indoor(o[0],o[1]))){plan.addW.push(k);continue;}
+    if(!WM.has(k)&&!edgeBlocked(k)&&edgeInLotRaw(k))plan.addW.push(k);}
+  for(const k of maskInner(tiles)){const w=WM.get(k);if(w&&w.fence)plan.delW.push(k);}
+  plan.cost=plan.floors.length*COST.floor+plan.addW.length*COST.wall;
+  if(!plan.floors.length&&!plan.addW.length)plan.err='Já tem um cômodo aqui.';
+  return plan;};}
+{const _ap=applyPlan;applyPlan=function(kind,plan){
+  if(kind==='room'&&roomShape()!=='rect'&&!plan.err){for(const k of plan.addW){const w=WL(viewL).get(k);if(w&&w.fence)WL(viewL).delete(k);}}
+  return _ap(kind,plan);};}
+{const _d=drawBuildPreview;drawBuildPreview=function(ctx){
+  if(!(mode==='build'&&buildTool&&buildTool.kind==='room'&&roomShape()!=='rect'))return _d(ctx);
+  const a=bAnchor||hoverPt;if(!a)return;
+  if(!bAnchor){const t=[Math.floor(a[0]),Math.floor(a[1])];poly(ctx,[[t[0],t[1],.03],[t[0]+1,t[1],.03],[t[0]+1,t[1]+1,.03],[t[0],t[1]+1,.03]],'rgba(21,156,147,.22)','#159c93');return;}
+  const tiles=curShapeTiles(bAnchor,bEnd||bAnchor);if(!tiles)return;
+  /* contorno fantasma do retângulo inteiro + forma preenchida */
+  const r=rectOf(bAnchor,bEnd||bAnchor);
+  ctx.save();ctx.setLineDash([5,5]);poly(ctx,[[r.x0,r.y0,.02],[r.x1+1,r.y0,.02],[r.x1+1,r.y1+1,.02],[r.x0,r.y1+1,.02]],'rgba(0,0,0,0)','rgba(21,156,147,.6)');ctx.restore();
+  for(const [x,y] of tiles)poly(ctx,[[x,y,.03],[x+1,y,.03],[x+1,y+1,.03],[x,y+1,.03]],'rgba(21,156,147,.25)',false);
+  const plan=planBuild('room',bAnchor,bEnd||bAnchor);
+  for(const ek of plan.addW){const p=ek.split(','),x=+p[1],y=+p[2];if(p[0]==='W')poly(ctx,[[x,y,0],[x,y+1,0],[x,y+1,.8],[x,y,.8]],'rgba(21,156,147,.35)','#159c93');else poly(ctx,[[x,y,0],[x+1,y,0],[x+1,y,.8],[x,y,.8]],'rgba(21,156,147,.35)','#159c93');}};}
+{const _bb=buildBuildPanel;buildBuildPanel=function(){_bb();const t=buildTool;if(!(t&&t.kind==='room'))return;
+  const o=$('#bpOpts');if(!o)return;const sh=t.shape||'rect';
+  o.insertAdjacentHTML('beforeend',`<div class="bp-opts chips" id="bpShape" style="margin-top:6px">${ROOM_SHAPES.map(([k,n])=>`<button data-s="${k}" class="${sh===k?'on':''}">${n}</button>`).join('')}${sh!=='rect'?`<button data-r="1">↻ Girar</button>`:''}</div>`);
+  $('#bpShape').onclick=e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.r){t.rot=((t.rot||0)+1)%4;}else{t.shape=b.dataset.s;}lastHintKey='';SFX.click();buildBuildPanel();};
+  if(sh!=='rect'&&!bAnchor)$('#bpHint').textContent=`Formato ${sh==='cruz'?'cruz':sh}: toque num canto e depois no canto oposto. O tamanho que você arrastar vira o cômodo inteiro, já com as paredes. Use ↻ Girar para virar.`;};}
+/* preservar a forma escolhida ao trocar de ferramenta e voltar */
+{const _f=buildBuildPanel;let lastShape='rect',lastRot=0;buildBuildPanel=function(){if(buildTool&&buildTool.kind==='room'){if(buildTool.shape==null){buildTool.shape=lastShape;buildTool.rot=lastRot;}else{lastShape=buildTool.shape;lastRot=buildTool.rot||0;}}return _f();};}
 /* ================= v39: edição — o jogo da Isabel continua pessoal; jogos novos são para todo mundo ================= */
 var ED_PERSONAL=true;
 function PET_NAME(){return ED_PERSONAL===false?'Biscoito':'Luck';}

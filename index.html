@@ -539,7 +539,7 @@ planta_grande:{n:'Palmeira de interior',cat:'decor',price:220,w:1,d:1,h:1.8,deco
 luminaria:{n:'Luminária de chão',cat:'decor',price:240,w:1,d:1,h:1.75,decor:1,light:{z:1.5,r:160},
   draw(B){B(.38,.38,0,.62,.62,.05,'#3a3a46');B(.47,.47,.05,.53,.53,1.42,'#3a3a46');B(.3,.3,1.4,.7,.7,1.72,'#f6e7c8');}},
 tapete:{n:'Tapete felpudo',cat:'decor',price:280,w:2,d:2,h:.02,decor:2,flat:true,colorable:true,defColor:'#d98e73'},
-piscina:{n:'Piscina',cat:'quintal',price:4800,w:3,d:4,h:.05,decor:4,flat:true,block:true,
+piscina:{n:'Piscina',cat:'quintal',price:4800,w:3,d:4,h:.05,decor:4,flat:true,block:true,pool:true,
   seats:[{i:0,j:1,pose:'swim',z:-.08,p:[.9,1.3]},{i:2,j:2,pose:'swim',z:-.08,p:[2.1,2.7]}],
   actions:[A('nadar','Nadar','🏊','seat',45,{diversao:75,energia:-14,higiene:-6},{skill:'fitness',fx:'splash',outdoor:1}),A('boiar','Boiar e relaxar','🛟','seat',40,{diversao:45,energia:6},{fx:'splash',outdoor:1})]},
 churrasqueira:{n:'Churrasqueira',cat:'quintal',price:600,w:1,d:1,h:1.6,
@@ -885,7 +885,7 @@ const simScale=s=>{const d=G&&s.born!=null?(G.min-s.born)/1440:2.5;return s.age=
 function simBox(s){const b=simBox0(s),e=(s.l||0)*HALL;b[2]+=e;b[5]+=e;return b;}
 function simBox0(s){const p=s.pose,k=simScale(s);if(p==='lie'||p==='bath')return[s.x-.15,s.y-.15,s.z,s.x+.15,s.y+.15,s.z+.3];if(p==='swim')return[s.x-.2,s.y-.2,s.z,s.x+.2,s.y+.2,s.z+.8*k];const r=p==='sit'?.18:.2;return[s.x-r,s.y-r,s.z,s.x+r,s.y+r,s.z+(p==='sit'?1.2:1.7)*k];}
 function drawObject(c,o,ghost){
-  const d=DEF[o.type];if(d.flat){ZO=(o.l||0)*HALL;try{if(o.type==='piscina')drawPool(c,o);else drawTapete(c,o);}finally{ZO=0;}return;}
+  const d=DEF[o.type];if(d.flat){ZO=(o.l||0)*HALL;try{if(DEF[o.type].pool)drawPool(c,o);else drawTapete(c,o);}finally{ZO=0;}return;}
   const on=!ghost&&objActive(o),items=[];
   const zo=(o.l||0)*HALL,B=(u0,v0,z0,u1,v1,z1,col,al)=>{const p=xf(o,u0,v0),q=xf(o,u1,v1);items.push({b:[Math.min(p[0],q[0]),Math.min(p[1],q[1]),z0+zo,Math.max(p[0],q[0]),Math.max(p[1],q[1]),z1+zo],col,al});};
   d.draw.call(d,B,o,on,TT);
@@ -3143,7 +3143,7 @@ function render(){
     for(const [x,y] of LAMPS)glow(x,y-.3,2.4,170,'255,214,140',.5*k);
     for(const car of CARS)glow(car.x,car.y+car.dir*1.6,.3,90,'255,240,190',.35*k);
     for(const h of NB)glow(h.x+h.w/2,h.y+h.d,1.2,110,'255,200,120',.25*k);
-    if(G.objects.some(o=>o.type==='piscina')){const o=G.objects.find(o=>o.type==='piscina');const c=objCenter(o);glow(c[0],c[1],0,140,'80,200,255',.35*k);}
+    if(G.objects.some(o=>DEF[o.type].pool)){const o=G.objects.find(o=>DEF[o.type].pool);const c=objCenter(o);glow(c[0],c[1],0,140,'80,200,255',.35*k);}
     ctx.globalCompositeOperation='source-over';}
   drawFireflies();drawRain();INWORLD=false;drawGrade();
 }
@@ -3151,7 +3151,7 @@ function render(){
 /* ================= placement ================= */
 function canPlace(type,x,y,rot,ignore,l){
   l=l==null?viewL:l;const d=DEF[type],o={type,x,y,rot,l},[fw,fd]=fp(o),O=OCCL[l]||[];
-  if(l>0&&(type==='piscina'))return false;if(d.stairs&&l+1>=NL)return false;
+  if(l>0&&DEF[type].pool)return false;if(d.stairs&&l+1>=NL)return false;
   for(let i=0;i<fw;i++)for(let j=0;j<fd;j++){const tx=x+i,ty=y+j;if(!inLot(tx,ty))return false;const ti=TI(tx,ty);
     if(l>0&&(!FL(l)[ti]||HOLE[l][ti]))return false;
     if(d.flat){if(G.objects.some(q=>q!==ignore&&(q.l||0)===l&&DEF[q.type].flat&&tilesOf(q).some(t=>t[0]===tx&&t[1]===ty)))return false;if(d.block&&O[ti]&&O[ti]!==ignore)return false;}
@@ -3374,7 +3374,7 @@ $('#mMenu').onclick=()=>openMenu();
 const THUMBS={};
 function thumb(type){if(THUMBS[type])return THUMBS[type];const vr=VR;VR=0;try{return thumbRaw(type);}finally{VR=vr;}}
 function thumbRaw(type){const d=DEF[type];const c=document.createElement('canvas');c.width=200;c.height=152;const x=c.getContext('2d');
-  const o={id:7,type,x:0,y:0,rot:0,color:null};const minX=-d.d*32,maxX=d.w*32,minY=-d.h*ZS-(d.afterAll?30:0)-(type==='piscina'?20:0),maxY=(d.w+d.d)*16+(type==='piscina'?20:0);
+  const o={id:7,type,x:0,y:0,rot:0,color:null};const minX=-d.d*32,maxX=d.w*32,minY=-d.h*ZS-(d.afterAll?30:0)-(d.pool?20:0),maxY=(d.w+d.d)*16+(d.pool?20:0);
   const s=Math.min(180/(maxX-minX),136/(maxY-minY),1.6);x.translate(100-(minX+maxX)/2*s,76-(minY+maxY)/2*s);x.scale(s,s);
   drawObject(x,o,true);THUMBS[type]=c.toDataURL();return THUMBS[type];}
 function petThumb(kind){const k='pet_'+kind;if(THUMBS[k])return THUMBS[k];const c=document.createElement('canvas');c.width=200;c.height=152;const x=c.getContext('2d');drawPet(x,{kind,color:PETC[kind][0],face:[1,0],state:'idle',needs:{}},100,120,3.2);THUMBS[k]=c.toDataURL();return THUMBS[k];}
@@ -4935,7 +4935,7 @@ function showSyncBanner(r){let b=$('#syncBanner');if(!b){b=document.createElemen
   b.textContent='☁️ Mudou no outro aparelho · tocar para carregar';b.hidden=false;b.onclick=()=>{b.hidden=true;startFromSave(r,'☁️ Jogo atualizado da nuvem!');};}
 setInterval(()=>{if(!document.hidden)cloudCheck();},20000);
 /* ---- aviso de versão nova do jogo ---- */
-const APPV='v67';
+const APPV='v69';
 async function checkAppVersion(){try{const t=await fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'');const m=t.match(/const APPV='([^']+)'/);
   if(m&&m[1]!==APPV){let b=$('#verBanner');if(!b){b=document.createElement('button');b.id='verBanner';b.className='glass';document.body.appendChild(b);}
     b.textContent=`✨ Versão nova (${m[1]}) · tocar para atualizar`;b.hidden=false;b.onclick=()=>{try{if(G&&!G.demo)save();}catch(_){}const go=()=>location.replace(location.pathname+'?v='+m[1]+'-'+Date.now());if(cloudCode&&G&&!G.demo)cloudPush(true).finally(go);else go();};}}catch(_){}}
@@ -6781,6 +6781,56 @@ TOOL_HINT.found=`Levanta a casa inteira do chão, com degraus nas portas. O piso
 {const _sa=strokeApply;strokeApply=function(x,y){if(buildTool&&buildTool.kind==='found')return;return _sa(x,y);};}
 {const _ser=serialize;serialize=function(){const s=_ser();return G&&G.found?s.slice(0,-1)+',"found":'+G.found+'}':s;};}
 {const _fs=fromSave;fromSave=function(d){const g=_fs(d);g.found=d&&d.found?+d.found:0;return g;};}
+/* ================= v68: piscinas novas, pergolado, coluna, sombras no deck ================= */
+{const P0=DEF.piscina;
+DEF.piscina_peq=Object.assign({},P0,{n:'Piscina pequena',price:2800,w:2,d:3,decor:3,
+  seats:[{i:0,j:1,pose:'swim',z:-.08,p:[.7,1.1]},{i:1,j:1,pose:'swim',z:-.08,p:[1.3,1.9]}]});
+DEF.piscina_grande=Object.assign({},P0,{n:'Piscina grande',price:7900,w:4,d:6,decor:6,
+  seats:[{i:0,j:1,pose:'swim',z:-.08,p:[1,1.4]},{i:2,j:3,pose:'swim',z:-.08,p:[2.6,3.4]},{i:1,j:4,pose:'swim',z:-.08,p:[1.6,4.6]},{i:3,j:2,pose:'swim',z:-.08,p:[3.1,2.4]}]});
+}
+/* pergolado: varanda coberta onde dá para passar por baixo */
+DEF.pergolado=Object.assign({n:'Pergolado (varanda coberta)',cat:'quintal',price:2200,w:3,d:3,h:.02,decor:5,flat:true,pergola:true,colorable:true,defColor:'#a0703f'});
+DEF.pergolado_flor=Object.assign({},DEF.pergolado,{n:'Pergolado com trepadeira',price:2900,decor:7,vine:true});
+DEF.coluna=Object.assign({n:'Coluna clássica',cat:'quintal',price:350,w:1,d:1,h:2.4,decor:2,colorable:true,defColor:'#efe9df',
+  draw(B,o){const c=o.color||this.defColor;B(.22,.22,0,.78,.78,.14,shade(c,.9));B(.27,.27,.14,.73,.73,.22,c);
+    for(let i=0;i<8;i++){const z=.22+i*.24;B(.32,.32,z,.68,.68,z+.24,shade(c,i%2?1:1.04));}B(.27,.27,2.14,.73,.73,2.24,c);B(.2,.2,2.24,.8,.8,2.36,shade(c,.92));}});
+DEF.vaso_alto=Object.assign({n:'Vaso alto com palmeirinha',cat:'quintal',price:260,w:1,d:1,h:1.7,decor:2,afterAll:true,
+  draw(B){B(.28,.28,0,.72,.72,.55,'#d8cfc2');B(.25,.25,.5,.75,.75,.58,'#c9bfb1');B(.47,.47,.58,.53,.53,1.2,'#7a5a3a');},
+  after(c,o,fq,L){blobs(c,L(.5,.5,1.35),[[-8,2,7,'#2f8247'],[8,2,7,'#3f9a55'],[0,-5,7,'#4fae62'],[-3,4,5,'#2a7a40']]);}});
+function pergolaItems(items,o){const d=DEF[o.type],c=o.color||d.defColor,x0=o.x,y0=o.y,x1=o.x+3,y1=o.y+3,z=(o.l||0)*HALL,H=2.35,pw=.14;
+  for(const [px,py] of [[x0+.05,y0+.05],[x1-.05-pw,y0+.05],[x0+.05,y1-.05-pw],[x1-.05-pw,y1-.05-pw]])
+    items.push({b:[px,py,z,px+pw,py+pw,z+H],pk:'cust',cust:ctx=>{gbox(ctx,px,py,z,px+pw,py+pw,z+H,c);gbox(ctx,px-.03,py-.03,z,px+pw+.03,py+pw+.03,z+.12,shade(c,.8));}});
+  items.push({b:[x0,y0,z+H,x1,y1,z+H+.22],pk:'cust',cust:ctx=>{
+    gbox(ctx,x0,y0+.05,z+H,x1,y0+.19,z+H+.1,shade(c,.9));gbox(ctx,x0,y1-.19,z+H,x1,y1-.05,z+H+.1,shade(c,.9));
+    for(let i=0;i<9;i++){const u=x0+.1+i*(2.8/8);gbox(ctx,u-.04,y0-.08,z+H+.1,u+.04,y1+.08,z+H+.2,i%2?c:shade(c,1.08));}
+    if(d.vine){for(let i=0;i<14;i++){const u=x0+.3+((i*1.37)%2.4),v=y0+.3+((i*.83)%2.4);blobs(ctx,[u,v,z+H+.22],[[-5,0,5,'#3f8a46'],[4,1,4,'#4fae62'],[0,-2,2.4,['#ee5d7c','#c77dd8','#ffffff'][i%3]]]);}
+      for(const [px,py] of [[x0+.12,y0+.12],[x1-.12,y1-.12]])for(let k=0;k<5;k++)blobs(ctx,[px,py,z+.4+k*.4],[[-3,0,3.2,'#3f8a46'],[3,1,2.8,'#4fae62']]);}}});}
+{const _bi=beachItems;beachItems=function(items){_bi(items);if(!G||!G.objects)return;for(const o of G.objects)if(DEF[o.type]&&DEF[o.type].pergola&&(o.l||0)<=DLV()&&o!==(ghost&&ghost.moving))pergolaItems(items,o);};}
+{const _do=drawObject;drawObject=function(c,o,ghostDraw){const d=DEF[o.type];
+  if(d&&d.pergola){if(!ghostDraw&&G&&G.objects.includes(o))return;const it=[];pergolaItems(it,o);for(const i of it)i.cust(c);return;}
+  return _do.apply(this,arguments);};}
+/* sombras de móveis e sims em cima do deck elevado */
+{const _bs=boxShadow;boxShadow=function(c,x0,y0,x1,y1,h,S,z){if(G&&G.found&&z<.02&&z>.0115)z+=liftAt((x0+x1)/2,(y0+y1)/2);return _bs(c,x0,y0,x1,y1,h,S,z);};}
+{const _bl=blobShadow;blobShadow=function(c,x,y,r,h,S,z){if(G&&G.found&&z<.02&&z>.0115)z+=rampLift(x,y);return _bl(c,x,y,r,h,S,z);};}
+/* ================= v69: novas interações a dois ================= */
+SOC.cafune={id:'cafune',label:'Fazer cafuné',icon:'🫶',dur:14,soc:20,rel:3,fun:8,min:35,anim:'hug',love:1};
+SOC.massagem={id:'massagem',label:'Fazer massagem',icon:'💆',dur:22,soc:22,rel:3.5,fun:14,min:45,anim:'hug',love:1,rom:1,relax:1};
+SOC.segredo={id:'segredo',label:'Contar um segredo',icon:'🤫',dur:16,soc:22,rel:3,fun:10,min:30,anim:'talk'};
+SOC.planos={id:'planos',label:'Sonhar com o futuro',icon:'🌈',dur:24,soc:26,rel:4,fun:12,min:55,anim:'talk',love:1,rom:1};
+SOC.desculpas={id:'desculpas',label:'Pedir desculpas',icon:'🙏',dur:12,soc:14,rel:8,fun:2,min:-100,anim:'hug',noAuto:1,sorry:1};
+SOC.chuva={id:'chuva',label:'Dançar na chuva',icon:'🌧️',dur:30,soc:30,rel:5,fun:50,min:40,anim:'dance',love:1,stand:1,noAuto:1,rain:1};
+ACT_EMO.cafune=['tranquilo','Cafuné gostoso',6,180];ACT_EMO.massagem=['tranquilo','Massagem relaxante',8,240];
+ACT_EMO.segredo=['feliz','Confidências',5,150];ACT_EMO.planos=['inspirado','Planos a dois',7,240];
+ACT_EMO.desculpas=['tranquilo','Fizeram as pazes',6,180];ACT_EMO.chuva=['brincalhao','Dançou na chuva!',10,300];
+WISH_POOL.push({k:'soc:cafune',t:'Fazer cafuné em {o}',r:70},{k:'soc:planos',t:'Sonhar com o futuro com {o}',r:110},{k:'soc:massagem',t:'Fazer massagem em {o}',r:90});
+const outdoorsAt=s=>s.outside||!isIndoor(Math.floor(s.x),Math.floor(s.y),s.l||0);
+{const _sa=socAllowed;socAllowed=function(me,t,S){
+  if(S.rain&&!(G.weather&&G.weather.rain>.25&&outdoorsAt(me)&&outdoorsAt(t)))return false;
+  if(S.sorry&&rel(me,t)>=45&&!(emoOf(me)==='irritado'||emoOf(t)==='irritado'||(me._fightAt&&G.min-me._fightAt<720)))return false;
+  if((S.id==='massagem'||S.id==='planos')&&(isKid(me)||isKid(t)))return false;
+  return _sa(me,t,S);};}
+/* marca briga para liberar o pedido de desculpas */
+{const _ae=typeof emotionAfterAct==='function'?emotionAfterAct:null;if(_ae)emotionAfterAct=function(s,S){if(S&&S.id==='discutir')s._fightAt=G.min;if(S&&S.rain&&s.moodlets)s.moodlets=s.moodlets.filter(m=>!/Molhad/.test(m.n));if(S&&S.relax&&s.needs)s.needs.energia=Math.min(100,s.needs.energia+6);return _ae(s,S);};}
 /* ================= v39: edição — o jogo da Isabel continua pessoal; jogos novos são para todo mundo ================= */
 var ED_PERSONAL=true;
 function PET_NAME(){return ED_PERSONAL===false?'Biscoito':'Luck';}

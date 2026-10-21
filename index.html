@@ -4935,7 +4935,7 @@ function showSyncBanner(r){let b=$('#syncBanner');if(!b){b=document.createElemen
   b.textContent='☁️ Mudou no outro aparelho · tocar para carregar';b.hidden=false;b.onclick=()=>{b.hidden=true;startFromSave(r,'☁️ Jogo atualizado da nuvem!');};}
 setInterval(()=>{if(!document.hidden)cloudCheck();},20000);
 /* ---- aviso de versão nova do jogo ---- */
-const APPV='v69';
+const APPV='v71';
 async function checkAppVersion(){try{const t=await fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'');const m=t.match(/const APPV='([^']+)'/);
   if(m&&m[1]!==APPV){let b=$('#verBanner');if(!b){b=document.createElement('button');b.id='verBanner';b.className='glass';document.body.appendChild(b);}
     b.textContent=`✨ Versão nova (${m[1]}) · tocar para atualizar`;b.hidden=false;b.onclick=()=>{try{if(G&&!G.demo)save();}catch(_){}const go=()=>location.replace(location.pathname+'?v='+m[1]+'-'+Date.now());if(cloudCode&&G&&!G.demo)cloudPush(true).finally(go);else go();};}}catch(_){}}
@@ -6813,16 +6813,13 @@ function pergolaItems(items,o){const d=DEF[o.type],c=o.color||d.defColor,x0=o.x,
 {const _bs=boxShadow;boxShadow=function(c,x0,y0,x1,y1,h,S,z){if(G&&G.found&&z<.02&&z>.0115)z+=liftAt((x0+x1)/2,(y0+y1)/2);return _bs(c,x0,y0,x1,y1,h,S,z);};}
 {const _bl=blobShadow;blobShadow=function(c,x,y,r,h,S,z){if(G&&G.found&&z<.02&&z>.0115)z+=rampLift(x,y);return _bl(c,x,y,r,h,S,z);};}
 /* ================= v69: novas interações a dois ================= */
-SOC.cafune={id:'cafune',label:'Fazer cafuné',icon:'🫶',dur:14,soc:20,rel:3,fun:8,min:35,anim:'hug',love:1};
-SOC.massagem={id:'massagem',label:'Fazer massagem',icon:'💆',dur:22,soc:22,rel:3.5,fun:14,min:45,anim:'hug',love:1,rom:1,relax:1};
 SOC.segredo={id:'segredo',label:'Contar um segredo',icon:'🤫',dur:16,soc:22,rel:3,fun:10,min:30,anim:'talk'};
 SOC.planos={id:'planos',label:'Sonhar com o futuro',icon:'🌈',dur:24,soc:26,rel:4,fun:12,min:55,anim:'talk',love:1,rom:1};
 SOC.desculpas={id:'desculpas',label:'Pedir desculpas',icon:'🙏',dur:12,soc:14,rel:8,fun:2,min:-100,anim:'hug',noAuto:1,sorry:1};
 SOC.chuva={id:'chuva',label:'Dançar na chuva',icon:'🌧️',dur:30,soc:30,rel:5,fun:50,min:40,anim:'dance',love:1,stand:1,noAuto:1,rain:1};
-ACT_EMO.cafune=['tranquilo','Cafuné gostoso',6,180];ACT_EMO.massagem=['tranquilo','Massagem relaxante',8,240];
 ACT_EMO.segredo=['feliz','Confidências',5,150];ACT_EMO.planos=['inspirado','Planos a dois',7,240];
 ACT_EMO.desculpas=['tranquilo','Fizeram as pazes',6,180];ACT_EMO.chuva=['brincalhao','Dançou na chuva!',10,300];
-WISH_POOL.push({k:'soc:cafune',t:'Fazer cafuné em {o}',r:70},{k:'soc:planos',t:'Sonhar com o futuro com {o}',r:110},{k:'soc:massagem',t:'Fazer massagem em {o}',r:90});
+WISH_POOL.push({k:'soc:planos',t:'Sonhar com o futuro com {o}',r:110});
 const outdoorsAt=s=>s.outside||!isIndoor(Math.floor(s.x),Math.floor(s.y),s.l||0);
 {const _sa=socAllowed;socAllowed=function(me,t,S){
   if(S.rain&&!(G.weather&&G.weather.rain>.25&&outdoorsAt(me)&&outdoorsAt(t)))return false;
@@ -6831,6 +6828,90 @@ const outdoorsAt=s=>s.outside||!isIndoor(Math.floor(s.x),Math.floor(s.y),s.l||0)
   return _sa(me,t,S);};}
 /* marca briga para liberar o pedido de desculpas */
 {const _ae=typeof emotionAfterAct==='function'?emotionAfterAct:null;if(_ae)emotionAfterAct=function(s,S){if(S&&S.id==='discutir')s._fightAt=G.min;if(S&&S.rain&&s.moodlets)s.moodlets=s.moodlets.filter(m=>!/Molhad/.test(m.n));if(S&&S.relax&&s.needs)s.needs.energia=Math.min(100,s.needs.energia+6);return _ae(s,S);};}
+/* ================= v70: Shopping Costa Verde + surfe na praia ================= */
+{const t=TOWERS.find(t=>t.name==='Residencial Lagoa');if(t){Object.assign(t,{name:'Shopping Costa Verde',sign:'SHOPPING COSTA VERDE',mall:1,style:'glass',wall:'#f1ece4',glass:'#9fd0e0',base:'#3a4a5c',roof:'#3a4a5c',floors:3,lobby:1,antenna:0,balcony:0,shops:null});t.H=1.9+(t.floors-1)*1.12;}}
+{const _dt=drawTower;drawTower=function(c,h){_dt(c,h);if(!h.mall||FREE())return;const fy=vdir([0,1]);if(fy[0]<0||fy[1]<0)return;
+  const x0=h.x,x1=h.x+h.w,y1=h.y+h.d,H=h.H,cx=x0+h.w/2;
+  /* faixa colorida com o nome */
+  gbox(c,x0+.2,y1,H-.9,x1-.2,y1+.12,H-.1,'#e8505b');gbox(c,x0+.25,y1+.12,H-.85,x1-.25,y1+.14,H-.15,'#f06a73');
+  planeText(c,'N',cx,y1+.15,H-.38,'SHOPPING',15,'#ffffff');planeText(c,'N',cx,y1+.15,H-.72,'COSTA VERDE',9,'#ffe6a8');
+  /* entrada de vidro com marquise */
+  gbox(c,cx-1.8,y1,0,cx+1.8,y1+.06,1.7,'#bfe6f2',.75);
+  for(let i=0;i<=4;i++)gbox(c,cx-1.8+i*.9-.03,y1,0,cx-1.8+i*.9+.03,y1+.08,1.7,'#5f6b78');
+  gbox(c,cx-2.4,y1,1.7,cx+2.4,y1+1.4,1.84,'#3a4a5c');gbox(c,cx-2.4,y1+1.3,1.6,cx+2.4,y1+1.42,1.84,'#e8505b');
+  /* vitrines das lojas nas laterais */
+  const shops=[['#f2c230','MODA'],['#43be86','SORVETE'],['#8e6bbf','GAMES'],['#3d7fd1','LIVROS']];
+  for(let i=0;i<2;i++){const u=x0+.35+i*1.15;gbox(c,u,y1,0,u+1,y1+.05,1.2,'#d7eef6',.85);gbox(c,u,y1,1.2,u+1,y1+.1,1.45,shops[i][0]);planeText(c,'N',u+.5,y1+.11,1.32,shops[i][1],5.5,'#fff');}
+  for(let i=0;i<2;i++){const u=x1-1.35-i*1.15;gbox(c,u,y1,0,u+1,y1+.05,1.2,'#d7eef6',.85);gbox(c,u,y1,1.2,u+1,y1+.1,1.45,shops[2+i][0]);planeText(c,'N',u+.5,y1+.11,1.32,shops[2+i][1],5.5,'#fff');}};}
+{const t=TOWERS.find(t=>t.mall);if(t){const cx=t.x+t.w/2,y1=t.y+t.d,sp=[];for(let i=0;i<6;i++)sp.push({k:'entrada',u:cx-1.5+i*.6,w:y1+1.9,pose:'stand',z:0,face:[0,-1]});
+  const A=(id,label,icon,price,dur,rates,mood,extra)=>Object.assign({id,label,icon,price,dur,spot:['entrada'],rates,inside:1,mood},extra||{});
+  defVenue('shopping',{name:'Shopping Costa Verde',icon:'🛍️',indoor:false,ox:0,oy:0,door:[cx,y1+1.9],aisle:y1+1.9,rect:[t.x-1,y1+.2,t.x+t.w+1,y1+3.2],hint:'lojas, praça de alimentação, fliperama e sorveteria',
+    spots:sp,acts:[
+      A('roupas','Comprar roupas novas','👗',180,40,{diversao:45},['Roupa nova!',8,360,'confiante']),
+      A('vitrines','Passear olhando vitrines','🛍️',0,35,{diversao:30,social:10},['Passeio no shopping',4,180,'feliz']),
+      A('praca_alim','Comer na praça de alimentação','🍔',40,30,{fome:75,diversao:12},null),
+      A('sorvete','Tomar sorvete','🍦',14,12,{fome:18,diversao:20},['Sorvete gostoso',4,120,'feliz']),
+      A('fliperama','Jogar no fliperama','🕹️',25,35,{diversao:70,energia:-6},['Recorde no fliperama!',6,180,'brincalhao']),
+      A('livraria','Folhear livros na livraria','📚',0,30,{diversao:25},['Livro novo na lista',4,180,'inspirado'],{skill:'escrita',skillRate:.5})],staff:[]});
+  venueInit();
+  MAP_PLACES.push(['🛍️','Shopping Costa Verde',()=>[cx,y1+2]]);try{$('#mapaL').innerHTML=MAP_PLACES.map((p,i)=>`<button data-i="${i}"><span>${p[0]}</span>${p[1]}</button>`).join('');}catch(e){}
+  for(let i=TREES.length-1;i>=0;i--){const [x,y]=TREES[i];if(x>cx-3&&x<cx+3&&y>y1-.5&&y<y1+3)TREES.splice(i,1);}try{NBC.clear();}catch(_){}}}
+/* ---- surfe ---- */
+{const V=VENUES.praia;if(V){for(const [u,w] of [[11.2,32.6],[7.6,32.9],[4.4,32.5]])V.spots.push({k:'surfe',u,w,pose:'stand',z:.06,face:[0,1]});
+  V.acts.push({id:'surfar',label:'Surfar (aluguel da prancha)',icon:'🏄',price:20,dur:40,spot:['surfe'],rates:{diversao:85,energia:-18,higiene:-4},skill:'fitness',fx:'splash',req:s=>isNight()?'só de dia':isKid(s)?'só para adultos':null,mood:['Pegou onda!',8,240,'energizado']});
+  venueInit();}}
+function drawBoard(c,s){const t=TT*2+s.id,bob=Math.sin(t)*2.2,ang=Math.sin(t*.7)*.12,shape=(rx,ry,z)=>{const pts=[];for(let i=0;i<24;i++){const a=i/24*Math.PI*2,lx=Math.cos(a)*rx*(Math.cos(a)>0?1:.85),ly=Math.sin(a)*ry*(1-.35*Math.max(0,Math.cos(a))**3);
+    pts.push(P(s.x+lx*Math.cos(ang)-ly*Math.sin(ang),s.y+lx*Math.sin(ang)+ly*Math.cos(ang),z));}return pts;};
+  const fill=(pts,col,dy)=>{c.beginPath();pts.forEach((q,i)=>i?c.lineTo(q[0],q[1]+dy):c.moveTo(q[0],q[1]+dy));c.closePath();c.fillStyle=col;c.fill();};
+  fill(shape(.85,.32,0),'rgba(255,255,255,.5)',bob*.4);
+  const col=['#ff6b4a','#f2c230','#ffffff'][s.id%3];fill(shape(.62,.17,.02),shade(col,.75),bob+1.5);fill(shape(.62,.17,.02),col,bob);
+  const a=P(s.x-.55*Math.cos(ang),s.y-.55*Math.sin(ang),.02),b=P(s.x+.55*Math.cos(ang),s.y+.55*Math.sin(ang),.02);c.strokeStyle=col==='#ffffff'?'#3d7fd1':'#ffffff';c.lineWidth=1.3;c.beginPath();c.moveTo(a[0],a[1]+bob);c.lineTo(b[0],b[1]+bob);c.stroke();}
+{const _dsa=drawSimAt;drawSimAt=function(c,s){const k=s.cur;if(k&&k.kind==='out_venue'&&k.stage==='act'&&k.act&&k.act.id==='surfar'){drawBoard(c,s);const oz=s.z;s.z=(s.z||0)+Math.sin(TT*2+s.id)*.06;try{return _dsa(c,s);}finally{s.z=oz;}}return _dsa(c,s);};}
+/* ================= v71: missões do dia + conquistas novas ================= */
+const MIS_POOL=[
+  {k:'soc:beijar',q:3,t:'Dar 3 beijos',i:'💋',r:150},{k:'soc:abracar',q:3,t:'Dar 3 abraços',i:'🤗',r:120},{k:'soc:elogiar',q:2,t:'Fazer 2 elogios',i:'🌷',r:120},
+  {k:'soc:dancar',q:1,t:'Dançar juntos',i:'💃',r:180},{k:'soc:cafune',q:1,t:'Fazer um cafuné',i:'🥰',r:150},{k:'soc:piada',q:2,t:'Contar 2 piadas',i:'😂',r:120},
+  {k:'soc:segredo',q:1,t:'Contar um segredo',i:'🤫',r:150},{k:'soc:planos',q:1,t:'Sonhar com o futuro a dois',i:'🌈',r:200},
+  {k:'act:cozinhar',q:1,t:'Cozinhar uma refeição',i:'🍳',r:180},{k:'act:ler',q:1,t:'Ler um livro',i:'📖',r:120},{k:'act:violao',q:1,t:'Tocar violão',i:'🎸',r:150},
+  {k:'venue:praia',q:1,t:'Ir à praia',i:'🏖️',r:250},{k:'venue:shopping',q:1,t:'Passear no shopping',i:'🛍️',r:250},{k:'venue:cafe',q:1,t:'Ir ao Café da Esquina',i:'☕',r:200},
+  {k:'venue:padaria',q:1,t:'Passar na padaria',i:'🥖',r:180},{k:'venue:parque',q:1,t:'Ir ao parque',i:'🌳',r:200},{k:'venue:cachoeira',q:1,t:'Banho de cachoeira',i:'💦',r:300},
+  {k:'pet:brincar',q:2,t:'Brincar com o pet 2 vezes',i:'🐶',r:150},{k:'foto',q:1,t:'Tirar uma foto para o álbum',i:'📸',r:150},{k:'buy',q:1,t:'Comprar algo novo para a casa',i:'🛋️',r:150}];
+function misAvail(m){if(m.k==='pet:brincar'&&!(G.pet||(G.pets&&G.pets.length)))return false;if(m.k==='act:violao'&&!G.objects.some(o=>o.type==='violao'))return false;
+  if(m.k.startsWith('venue:')&&!VENUES[m.k.slice(6)])return false;if(m.k.startsWith('soc:')&&!SOC[m.k.slice(4)])return false;return true;}
+function misNew(){const d=dayN(),pool=MIS_POOL.filter(misAvail),pick3=[];let seed=d*9301+(G.seed||7)*49297;const rnd=()=>{seed=(seed*9301+49297)%233280;return seed/233280;};
+  const kinds=['soc:','act:|pet:|foto|buy','venue:'];for(const kd of kinds){const opts=pool.filter(m=>new RegExp('^('+kd+')').test(m.k)&&!pick3.includes(m));if(opts.length)pick3.push(opts[Math.floor(rnd()*opts.length)]);}
+  G.mis={day:d,list:pick3.map(m=>({k:m.k,q:m.q,t:m.t,i:m.i,r:m.r,n:0,done:0})),bonus:0};save();}
+function misEnsure(){if(!G||G.demo||!G.sims)return;if(!G.mis||G.mis.day!==dayN())misNew();}
+const MISS=new Set();
+function misCount(k){if(!G||G.demo)return;misEnsure();if(MISS.has(k))return;MISS.add(k);setTimeout(()=>MISS.delete(k),400);
+  let ch=false;for(const m of G.mis.list){if(m.done||m.k!==k)continue;m.n++;ch=true;if(m.n>=m.q){m.done=1;addMoney(m.r);SFX.cash();toast(`🎯 Missão cumprida: ${m.i} ${m.t} · +${fmt(m.r)}`,'good');G.misTot=(G.misTot||0)+1;achCount('missao');}}
+  if(ch&&!G.mis.bonus&&G.mis.list.every(m=>m.done)){G.mis.bonus=1;addMoney(300);for(const s of household())if(!isKid(s))addMoodlet(s,'Dia perfeito',8,480,'feliz');
+    setTimeout(()=>toast('🌟 Dia perfeito! Vocês cumpriram as 3 missões de hoje · +'+fmt(300),'love'),1200);achCount('diaperfeito');}
+  if(ch){misBadge();save();}}
+{const _cw=checkWish;checkWish=function(s,k){try{if(!G.demo&&s&&!s.visitor&&household().includes(s))misCount(k);}catch(_){}return _cw(s,k);};}
+{const _ac=achCount;achCount=function(k){if(k==='foto')try{misCount('foto');}catch(_){}return _ac(k);};}
+/* conquistas novas */
+ACH.splice(ACH.length-1,0,
+  {k:'surf',i:'🏄',n:'Surfista',d:'Surfar 3 vezes na praia',c:'surf',q:3,m:'Você pega onda e eu pego no seu pé. Combinação perfeita.'},
+  {k:'shopping',i:'🛍️',n:'Rata de shopping',d:'Ir ao shopping 5 vezes',c:'venue:shopping',q:5,m:'Passear de mãos dadas olhando vitrine também é encontro.'},
+  {k:'chuva',i:'🌧️',n:'Dançando na chuva',d:'Dançar na chuva juntos',c:'soc:chuva',q:1,big:1,m:'Um dia a gente dança na chuva de verdade, sem guarda-chuva e sem pressa.'},
+  {k:'futuro',i:'🌈',n:'Sonhando junto',d:'Sonhar com o futuro 3 vezes',c:'soc:planos',q:3,m:'Todo plano que eu faço tem você no meio.'},
+  {k:'missoes',i:'🎯',n:'Missão dada',d:'Cumprir 15 missões do dia',c:'missao',q:15,m:'Missão dada é missão cumprida. Ainda mais quando é com você.'},
+  {k:'diaperfeito',i:'🌟',n:'Dia perfeito',d:'Cumprir as 3 missões de um dia',c:'diaperfeito',q:1,m:'Todo dia com você já é perfeito. Mas esse foi de nota mil.'},
+  {k:'casa_alta',i:'🏛️',n:'Casa de respeito',d:'Fazer uma fundação na casa',t:()=>!!G.found,m:'Alicerce firme é a gente: o resto a gente constrói em cima.'});
+{const _am=addMoodlet;addMoodlet=function(s,n,v,dur,em){if(n==='Pegou onda!')try{achCount('surf');}catch(_){}return _am.apply(this,arguments);};}
+/* ---- painel ---- */
+(function(){const mn=$('#mnAgenda')||$('#mnAch');if(!mn)return;mn.insertAdjacentHTML('beforebegin','<button class="btn" id="mnMis">Missões do dia <span>🎯</span></button>');
+  document.body.insertAdjacentHTML('beforeend','<div id="missoes" hidden><div class="card"><h2>🎯 Missões do dia</h2><div id="misL"></div><button class="btn" id="misX" style="margin-top:12px;width:100%">Fechar</button></div></div>');
+  const st=document.createElement('style');st.textContent='#missoes{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;background:rgba(20,30,50,.35)}#missoes[hidden]{display:none}#missoes .card{background:#fff;border-radius:20px;padding:16px;max-width:380px;width:calc(100% - 32px);max-height:85vh;overflow:auto;box-shadow:0 12px 40px rgba(0,0,0,.25)}#missoes h2{margin:0 0 10px;font-size:19px}.mis-it{display:flex;gap:10px;align-items:center;background:#f6f3ee;border-radius:14px;padding:10px;margin-bottom:8px}.mis-it span{font-size:24px}.mis-it div{text-align:left}.mis-it b{display:block}.mis-it small{color:#6b6f78}.mis-it.ok{background:#e3f6ec}.mis-bar{height:6px;border-radius:4px;background:#e6e1d8;margin-top:5px;overflow:hidden}.mis-bar i{display:block;height:100%;background:#159c93}#mnMis.new span::after{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:#ee5d7c;margin-left:4px;vertical-align:middle}';document.head.appendChild(st);
+  const render=()=>{misEnsure();const L=G.mis.list;$('#misL').innerHTML=L.map(m=>`<div class="mis-it ${m.done?'ok':''}"><span>${m.done?'✅':m.i}</span><div style="flex:1"><b>${m.t}</b><small>${m.done?'Cumprida!':`${m.n}/${m.q}`} · recompensa ${fmt(m.r)}</small><div class="mis-bar"><i style="width:${Math.min(100,m.n/m.q*100)}%"></i></div></div></div>`).join('')+
+    `<small style="color:#6b6f78">${G.mis.bonus?'🌟 Dia perfeito! Bônus de '+fmt(300)+' recebido.':'Cumpra as 3 para ganhar um bônus de '+fmt(300)+' e o humor "Dia perfeito".'} Novas missões todo dia às 8h.</small>`;};
+  $('#misX').onclick=()=>{$('#missoes').hidden=true;resumeFrom();};
+  $('#mnMis').onclick=()=>{$('#menu').hidden=true;pauseFor();render();$('#missoes').hidden=false;G.misSeen=G.mis&&G.mis.day;misBadge();};})();
+function misBadge(){const b=$('#mnMis');if(b&&G&&G.mis)b.classList.toggle('new',G.misSeen!==G.mis.day);}
+setInterval(()=>{try{if(G&&!G.demo&&$('#title').hidden){const d=G.mis&&G.mis.day;misEnsure();if(d&&d!==G.mis.day)toast('🎯 Novas missões do dia! Veja no menu ☰.','good');misBadge();}}catch(_){}},3000);
+{const _ser=serialize;serialize=function(){const s=_ser();if(!G||!G.mis)return s;return s.slice(0,-1)+',"mis":'+JSON.stringify(G.mis)+',"misTot":'+(G.misTot||0)+',"misSeen":'+(G.misSeen||0)+'}';};}
+{const _fs=fromSave;fromSave=function(d){const g=_fs(d);if(d&&d.mis)g.mis=d.mis;g.misTot=d&&d.misTot||0;g.misSeen=d&&d.misSeen||0;return g;};}
 /* ================= v39: edição — o jogo da Isabel continua pessoal; jogos novos são para todo mundo ================= */
 var ED_PERSONAL=true;
 function PET_NAME(){return ED_PERSONAL===false?'Biscoito':'Luck';}

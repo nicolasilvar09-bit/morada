@@ -3355,7 +3355,7 @@ function updHUD(){
       if(j){const C=CAREERS[j.id],nx=j.level<5?PROMO_SKILL[j.level+1]:0;jh=`<div class="job"><b>${C.lv[j.level]}</b><small>${C.n} · nível ${j.level+1}/6 · ${fmt(wageOf(s))}/hora · seg–sex 9h–17h</small>${j.level<5?`<div class="bar" style="margin-top:7px"><i style="width:${j.perf}%;background:linear-gradient(90deg,#6fd3a0,#159c93)"></i></div><small>Desempenho ${Math.round(j.perf)}% · próxima promoção pede ${SKILLS[C.sk][0]} nível ${nx}</small>`:'<small> · topo da carreira!</small>'}</div>`;}
       else jh=`<div class="job"><b>Sem emprego</b><small>Use o computador → "Procurar emprego". Enquanto isso, dá para fazer freelas.</small></div>`;
       jh+=`<div class="job" style="margin-top:6px"><b style="font-size:14px">🎓 ${s.degrees.length?s.degrees.map(d=>COURSES[d]?COURSES[d].n:d).join(' · '):'Sem diploma'}</b>${s.study?`<small>Cursando ${COURSES[s.study.course].n} · aulas seg–sex 19h–22h</small><div class="bar" style="margin-top:6px"><i style="width:${s.study.credits}%;background:linear-gradient(90deg,#9ab8f0,#3d7fd1)"></i></div><small>${Math.round(s.study.credits)}% do curso concluído</small>`:'<small>Faculdade: computador → "Faculdade (matrícula)".</small>'}</div>`;
-      $('#tab-car').innerHTML=jh+'<div class="skills">'+Object.entries(SKILLS).map(([k,[n,ic]])=>{const v=s.skills[k],L=Math.floor(v);return`<div class="sk"><span>${ic}</span><span>${n}</span><span>${L}</span><div class="dots">${Array.from({length:10},(_,i)=>`<i class="${i<L?'f':''}"></i>`).join('')}</div></div>`;}).join('')+'</div>';}
+      $('#tab-car').innerHTML=((isKid(s)||isTeen(s))&&typeof schoolHTML==='function'?schoolHTML(s):jh)+'<div class="skills">'+Object.entries(SKILLS).map(([k,[n,ic]])=>{const v=s.skills[k],L=Math.floor(v);return`<div class="sk"><span>${ic}</span><span>${n}</span><span>${L}</span><div class="dots">${Array.from({length:10},(_,i)=>`<i class="${i<L?'f':''}"></i>`).join('')}</div></div>`;}).join('')+'</div>';}
   }
 }
 $('#spTabs').onclick=e=>{const b=e.target.closest('button');if(b){setTab(b.dataset.t);SFX.click();}};
@@ -4935,7 +4935,7 @@ function showSyncBanner(r){let b=$('#syncBanner');if(!b){b=document.createElemen
   b.textContent='☁️ Mudou no outro aparelho · tocar para carregar';b.hidden=false;b.onclick=()=>{b.hidden=true;startFromSave(r,'☁️ Jogo atualizado da nuvem!');};}
 setInterval(()=>{if(!document.hidden)cloudCheck();},20000);
 /* ---- aviso de versão nova do jogo ---- */
-const APPV='v71';
+const APPV='v74';
 async function checkAppVersion(){try{const t=await fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'');const m=t.match(/const APPV='([^']+)'/);
   if(m&&m[1]!==APPV){let b=$('#verBanner');if(!b){b=document.createElement('button');b.id='verBanner';b.className='glass';document.body.appendChild(b);}
     b.textContent=`✨ Versão nova (${m[1]}) · tocar para atualizar`;b.hidden=false;b.onclick=()=>{try{if(G&&!G.demo)save();}catch(_){}const go=()=>location.replace(location.pathname+'?v='+m[1]+'-'+Date.now());if(cloudCode&&G&&!G.demo)cloudPush(true).finally(go);else go();};}}catch(_){}}
@@ -6912,6 +6912,197 @@ function misBadge(){const b=$('#mnMis');if(b&&G&&G.mis)b.classList.toggle('new',
 setInterval(()=>{try{if(G&&!G.demo&&$('#title').hidden){const d=G.mis&&G.mis.day;misEnsure();if(d&&d!==G.mis.day)toast('🎯 Novas missões do dia! Veja no menu ☰.','good');misBadge();}}catch(_){}},3000);
 {const _ser=serialize;serialize=function(){const s=_ser();if(!G||!G.mis)return s;return s.slice(0,-1)+',"mis":'+JSON.stringify(G.mis)+',"misTot":'+(G.misTot||0)+',"misSeen":'+(G.misSeen||0)+'}';};}
 {const _fs=fromSave;fromSave=function(d){const g=_fs(d);if(d&&d.mis)g.mis=d.mis;g.misTot=d&&d.misTot||0;g.misSeen=d&&d.misSeen||0;return g;};}
+/* ================= v72: escola de verdade para as crianças + boletim + ajudar na lição ================= */
+const isStudent=s=>s&&(isKid(s)||isTeen(s))&&!s.visitor;
+function sch(s){return s.school||(s.school={g:70,hw:dayN(),miss:0,days:0});}
+function gradeL(g){return g>=88?'A':g>=74?'B':g>=58?'C':g>=42?'D':'F';}
+const GRADE_C={A:'#159c93',B:'#43be86',C:'#f0bd45',D:'#f2a65a',F:'#ec5f5c'};
+function checkSchool(s){if(!isStudent(s)||s.away||G.demo||!household().includes(s))return;const h=hourF();
+  if(workday()&&s.schoolDay!==dayN()&&h>=6.5&&h<7.5){s.schoolDay=dayN();s.schoolPending=true;
+    sendSchool(s);toast(`🎒 ${s.name} foi pegar o ônibus da escola.`);hudSig='';}
+  if(s.schoolPending&&h>=8&&!commuting(s,'escola')){s.schoolPending=false;const S=sch(s);S.g=Math.max(0,S.g-6);S.miss++;toast(`${s.name} perdeu o ônibus e faltou à aula. A nota caiu.`,'bad');hudSig='';}}
+function sendSchool(s){if(s.cur&&s.cur.kind!=='self')cancelCur(s);s.queue=s.queue.filter(q=>q.kind!=='commute');s.queue.unshift({kind:'commute',trip:'escola',label:'Ir para a escola (7h–13h)',icon:'🎒'});s.schoolPending=false;}
+{const _cc=checkCommute;checkCommute=function(s){try{checkSchool(s);}catch(e){}return _cc(s);};}
+{const _ga=goAway;goAway=function(s){const trip=s.cur&&s.cur.req&&s.cur.req.trip;_ga(s);if(trip==='escola'&&s.away){s.away.until=Math.max(dayStartMin()+13*60,G.min+60);s.away.trip='escola';}};}
+{const _rw=returnFromWork;returnFromWork=function(s){const trip=s.away&&s.away.trip;_rw(s);if(trip!=='escola')return;
+  const S=sch(s),m=moodOf(s),hwOk=S.hw>=dayN()-1;let d=(hwOk?3.5:-4)+(m>20?1.5:m<-10?-2:0)+(Math.random()*3-1);S.g=clamp(S.g+d,0,100);S.days++;
+  gainSkill(s,'logica',.12);s.needs.energia=Math.max(10,s.needs.energia-10);
+  const L=gradeL(S.g);toast(`🎒 ${s.name} voltou da escola${hwOk?'':' (sem fazer a lição ontem 😬)'} · nota ${L}`,hwOk?'good':'bad');
+  if(weekday()===4){/* sexta: boletim */const prize={A:150,B:80,C:30}[L]||0;
+    setTimeout(()=>{toast(`📋 Boletim da semana de ${s.name}: ${L}!${prize?` Os avós mandaram ${fmt(prize)} de presente.`:' Precisa de mais lição de casa.'}`,prize?'love':'bad');if(prize)addMoney(prize);
+      if(L==='A'){addMoodlet(s,'Boletim nota A',10,720,'confiante');for(const p of household())if(!isStudent(p)&&p!==s)addMoodlet(p,'Orgulho do filho(a)',6,480,'feliz');try{achCount('boletimA');}catch(_){}}
+      else if(L==='D'||L==='F')addMoodlet(s,'Boletim ruim',-6,480,'triste');},1500);}
+  hudSig='';};}
+/* lição de casa conta para a nota */
+{const _cw=checkWish;checkWish=function(s,k){try{if(k==='act:licao'&&s){const S=sch(s);S.hw=dayN();S.g=Math.min(100,S.g+1);}}catch(_){}return _cw(s,k);};}
+SOC.ajudar_licao={id:'ajudar_licao',label:'Ajudar na lição de casa',icon:'✏️',dur:30,soc:18,rel:3,fun:-2,min:0,anim:'talk',noAuto:1,helpHw:1};
+SOC.perguntar_escola={id:'perguntar_escola',label:'Perguntar como foi a escola',icon:'🏫',dur:12,soc:16,rel:2.5,fun:6,min:0,anim:'talk',askSchool:1};
+ACT_EMO.ajudar_licao=['focado','Lição feita juntos',5,180];ACT_EMO.perguntar_escola=['feliz','Conversa sobre a escola',4,120];
+{const _sa=socAllowed;socAllowed=function(me,t,S){if((S.helpHw||S.askSchool)&&!(isStudent(t)&&!isStudent(me)))return false;return _sa(me,t,S);};}
+{const _ae=emotionAfterAct;emotionAfterAct=function(s,S){if(S&&S.helpHw&&isStudent(s)&&!s._hwDone){s._hwDone=1;setTimeout(()=>{s._hwDone=0;},50);const Sc=sch(s);Sc.hw=dayN();Sc.g=Math.min(100,Sc.g+2.5);toast(`✏️ Lição de ${s.name} feita com ajuda · nota atual ${gradeL(Sc.g)}`,'good');}
+  if(S&&S.askSchool&&isStudent(s)&&!s._askDone){s._askDone=1;setTimeout(()=>{s._askDone=0;},50);const L=gradeL(sch(s).g),said={A:'contou toda feliz que tirou nota máxima na prova!',B:'disse que a professora elogiou o trabalho.',C:'falou que matemática está difícil.',D:'confessou que está com dificuldade em várias matérias.',F:'ficou quieto(a)… a escola não vai bem.'}[L];toast(`🏫 ${s.name} ${said}`);}
+  return _ae(s,S);};}
+function schoolHTML(s){const S=sch(s),L=gradeL(S.g),hwToday=S.hw===dayN();
+  return`<div class="job"><b>🎒 ${isTeen(s)?'Ensino médio':'Escola'} · nota <span style="color:${GRADE_C[L]};font-size:17px">${L}</span></b><small>Aulas seg–sex 7h–13h (o ônibus passa às 7h)</small><div class="bar" style="margin-top:7px"><i style="width:${S.g}%;background:linear-gradient(90deg,${GRADE_C[L]},${GRADE_C[L]})"></i></div><small>${hwToday?'✅ Lição de hoje feita':'✏️ Falta a lição de hoje (escrivaninha, ou um adulto → "Ajudar na lição de casa")'}${S.miss?` · ${S.miss} falta(s)`:''}</small></div>`;}
+ACH.splice(ACH.length-1,0,{k:'boletimA',i:'📋',n:'Orgulho da família',d:'Tirar A no boletim',c:'boletimA',q:1,m:'Ensinar, cuidar e torcer junto: isso também é amor.'});
+/* adolescentes também fazem a lição na escrivaninha */
+{const _ab=actBlock;actBlock=function(s,o,a,...r){if(a&&a.id==='licao'&&a.req==='kid'){if(!isStudent(s))return'só para estudantes';return _ab(s,o,Object.assign({},a,{req:null}),...r);}return _ab(s,o,a,...r);};}
+/* ================= v73: Carnaval, Festa Junina e Dia das Crianças em casa ================= */
+function carnavalRange(y){const e=easterOf(y),a=new Date(e);a.setDate(a.getDate()-50);const b=new Date(e);b.setDate(b.getDate()-46);return[a,b];}
+{const _h=holidayNow;holidayNow=function(){const r=_h();if(r||(G&&G.forceHol))return r;const d=realD(),y=d.getFullYear(),m=d.getMonth()+1,day=d.getDate(),t=new Date(y,m-1,day);
+  const [ca,cb]=carnavalRange(y);if(t>=ca&&t<=cb)return'carnaval';
+  if((m===6&&day>=1)||(m===7&&day<=15))return'junina';
+  if(m===10&&day>=10&&day<=12)return'criancas';
+  return null;};}
+Object.assign(HOLS,{carnaval:{n:'Carnaval',i:'🎭'},junina:{n:'Festa Junina',i:'🌽'},criancas:{n:'Dia das Crianças',i:'🧸'}});
+const HOL_MSG={carnaval:'🎭 É Carnaval em Heartville! A cidade está enfeitada e o Kit Carnaval está de graça em Comprar → Decoração. Bora dançar marchinha!',
+  junina:'🌽 Chegou a Festa Junina! Bandeirinhas na casa, e a Fogueira de São João e a Barraca de Pescaria estão de graça em Comprar → Decoração. Arraiá!',
+  criancas:'🧸 Dia das Crianças! O Pula-pula está de graça em Comprar → Decoração e a criançada ganha presente.'};
+{const _sa=seasonAnnounce;seasonAnnounce=function(f){const h=HOL_CUR;if(G&&!G.demo&&h&&HOL_MSG[h]){G.seaSeen=G.seaSeen||{};const k=h+realD().getFullYear();if(G.seaSeen[k]!==1){G.seaSeen[k]=1;toast(HOL_MSG[h],'love');save();return;}}return _sa(f);};}
+{const _ud=upcomingDates;upcomingDates=function(){const L=_ud(),d=realD(),y=d.getFullYear(),today=new Date(y,d.getMonth(),d.getDate());
+  const add=(dt,i,n)=>{let x=new Date(dt);if(x<today)x=new Date(x.getFullYear()+1,x.getMonth(),x.getDate());L.push({d:x,i,n});};
+  {let [a]=carnavalRange(y);if(a<today)[a]=carnavalRange(y+1);L.push({d:a,i:'🎭',n:'Carnaval'});}
+  add(new Date(y,5,24),'🌽','São João (Festa Junina)');add(new Date(y,9,12),'🧸','Dia das Crianças');
+  return L.sort((a,b)=>a.d-b.d).map(x=>Object.assign(x,{left:Math.round((x.d-today)/864e5)}));};}
+{const _he=holidayEvents;holidayEvents=function(){_he();if(HOL_CUR!=='criancas')return;const y=realD().getFullYear(),k='criancas'+y;G.seaSeen=G.seaSeen||{};if(G.seaSeen[k])return;
+  const kids=household().filter(s=>isKid(s)||isTeen(s));if(!kids.length)return;G.seaSeen[k]=1;const P_=['um carrinho de controle remoto','uma boneca','um videogame portátil','uma bola de futebol','um kit de pintura','um patinete'];
+  for(const s of kids){addMoodlet(s,'Ganhei presente!',16,1440,'feliz');toast(`🧸 ${s.name} ganhou ${P_[(s.id*7)%P_.length]} de Dia das Crianças!`,'love');}SFX.wish();confetti();save();};}
+/* enfeites nas casas dos vizinhos */
+{const _hd=houseDetail;houseDetail=function(c,h){_hd(c,h);if(!(HOL_CUR==='junina'||HOL_CUR==='carnaval')||h.tower||VR||FREE())return;const x0=h.x,x1=h.x+h.w,y1=h.y+h.d;
+  const cols=['#ee5d7c','#f0bd45','#43be86','#3d7fd1','#8e6bbf','#ff8a3d'];
+  if(HOL_CUR==='junina'){const n=Math.round(h.w*3);let prev=null;for(let i=0;i<=n;i++){const t=i/n,u=x0-.2+(h.w+.4)*t,z=2.05-Math.sin(t*Math.PI)*.18,p=P(u,y1+.25,z);if(prev){c.strokeStyle='rgba(90,60,40,.55)';c.lineWidth=.6;c.beginPath();c.moveTo(prev[0],prev[1]);c.lineTo(p[0],p[1]);c.stroke();}
+      if(i<n){c.fillStyle=cols[i%6];c.beginPath();c.moveTo(p[0],p[1]);c.lineTo(p[0]+4.5,p[1]+2);c.lineTo(p[0]+2,p[1]+6.5);c.closePath();c.fill();}prev=p;}}
+  else{for(let i=0;i<Math.round(h.w*2);i++){const u=x0+.3+i*.5,p=P(u,y1+.03,1.9);c.strokeStyle=cols[i%6];c.lineWidth=1.1;c.beginPath();c.moveTo(p[0],p[1]);for(let k=1;k<6;k++)c.lineTo(p[0]+Math.sin(k*1.7+i)*2.2,p[1]+k*3.2);c.stroke();}
+    for(let i=0;i<14;i++){const p=P(x0+((i*1.37)%h.w),y1+.04,.4+((i*.71)%1.4));c.fillStyle=cols[i%6];c.fillRect(p[0],p[1],1.6,1.6);}}};}
+/* bandeirinhas na cerca da nossa casa */
+{const _deo=drawExtraOverlay;drawExtraOverlay=function(c){_deo(c);if(!G||HOL_CUR!=='junina'||FREE())return;const cols=['#ee5d7c','#f0bd45','#43be86','#3d7fd1','#8e6bbf','#ff8a3d'];ZO=0;
+  const lines=[[[LX0+.1,LY1-.05],[LX1-.1,LY1-.05]],[[LX1-.05,LY0+.1],[LX1-.05,LY1-.1]]];
+  for(const [a,b] of lines){const L=Math.hypot(b[0]-a[0],b[1]-a[1]),n=Math.round(L*2);let prev=null;
+    for(let i=0;i<=n;i++){const t=i/n,x=a[0]+(b[0]-a[0])*t,y=a[1]+(b[1]-a[1])*t,z=1.7-Math.abs(Math.sin(t*Math.PI*Math.max(1,Math.round(L/5))))*.25;const p=P(x,y,z);
+      if(prev){c.strokeStyle='rgba(90,60,40,.55)';c.lineWidth=.7;c.beginPath();c.moveTo(prev[0],prev[1]);c.lineTo(p[0],p[1]);c.stroke();}
+      if(i<n){c.fillStyle=cols[i%6];c.beginPath();c.moveTo(p[0],p[1]);c.lineTo(p[0]+5,p[1]+2.2);c.lineTo(p[0]+2.2,p[1]+7);c.closePath();c.fill();}prev=p;}}};}
+/* ---------- objetos sazonais de graça ---------- */
+function flame(c,p,k){const f=Math.sin(TT*13)*1.2+Math.sin(TT*7.3)*.8;c.fillStyle='rgba(255,140,40,.9)';c.beginPath();c.ellipse(p[0],p[1]-7*k,6*k,11*k+f,0,0,7);c.fill();
+  c.fillStyle='rgba(255,220,90,.95)';c.beginPath();c.ellipse(p[0],p[1]-5*k,3.4*k,7*k+f*.6,0,0,7);c.fill();c.fillStyle='rgba(255,170,60,.18)';c.beginPath();c.arc(p[0],p[1]-6*k,22*k,0,7);c.fill();}
+DEF.fogueira_junina={n:'Fogueira de São João',price:0,w:2,d:2,h:1.2,decor:4,afterAll:true,get cat(){return HOL_CUR==='junina'?'decor':null;},
+  draw(B){for(const [u0,v0,u1,v1] of [[.4,.9,1.6,1.1],[.9,.4,1.1,1.6],[.5,.5,1.5,.65],[.5,1.35,1.5,1.5]])B(u0,v0,0,u1,v1,.14,'#6b4226');B(.6,.6,.14,1.4,1.4,.3,'#8a5a32');
+    for(let i=0;i<8;i++){const a=i/8*Math.PI*2,u=1+Math.cos(a)*.85,v=1+Math.sin(a)*.85;B(u-.08,v-.08,0,u+.08,v+.08,.1,'#8a8a8a');}},
+  after(c,o,fq,L){const q=L(1,1,.35);flame(c,P(q[0],q[1],q[2]),2);},
+  actions:[A('milho','Assar milho na fogueira','🌽','near',20,{fome:40,diversao:30},{anim:'use',outdoor:1,fnDone:s=>{addMoodlet(s,'Arraiá!',10,360,'feliz');try{achCount('arraia');}catch(_){}}}),
+    A('pular_fogueira','Pular a fogueirinha','🔥','near',8,{diversao:45},{anim:'cheer',outdoor:1,kidBonus:1,fnDone:s=>{addMoodlet(s,'Pulei a fogueira!',8,240,'brincalhao');try{achCount('arraia');}catch(_){}}})]};
+DEF.barraca_pescaria={n:'Barraca de Pescaria',price:0,w:2,d:1,h:1.9,decor:3,get cat(){return HOL_CUR==='junina'?'decor':null;},
+  draw(B){B(0,0,0,2,1,.5,'#3d7fd1');B(.1,.1,.5,1.9,.9,.52,'#5ab0e8');for(const u of [.05,1.85])for(const v of [.05,.85])B(u,v,0,u+.1,v+.1,1.8,'#c9a27a');
+    for(let i=0;i<8;i++)B(i*.25,0,1.8,i*.25+.25,1,1.92,i%2?'#ee5d7c':'#fff6ef');for(const [u,v,col] of [[.4,.4,'#f0bd45'],[1,.6,'#ee5d7c'],[1.5,.3,'#43be86']])B(u,v,.52,u+.18,v+.08,.56,col);},
+  actions:[A('pescaria','Brincar de pescaria','🎣','front',20,{diversao:55},{anim:'use',kidBonus:1,outdoor:1,fnDone:s=>{const pr=['um ursinho','um apito','um anel de plástico','um pirulito','uma bolinha'][Math.floor(Math.random()*5)];toast(`🎣 ${s.name} pescou e ganhou ${pr}!`);addMoodlet(s,'Prenda da pescaria',6,240,'feliz');}})]};
+DEF.kit_carnaval={n:'Kit Carnaval (caixa de som e confete)',price:0,w:1,d:1,h:1,decor:3,get cat(){return HOL_CUR==='carnaval'?'decor':null;},
+  draw(B){B(.2,.2,0,.8,.8,.8,'#2b2b33');B(.3,.78,.2,.7,.82,.6,'#55555f');B(.25,.25,.8,.75,.75,.86,'#f0bd45');},
+  after(c,o,fq,L){const q=L(.5,.5,1.1),p=P(q[0],q[1],q[2]);const cols=['#ee5d7c','#f0bd45','#43be86','#3d7fd1'];for(let i=0;i<10;i++){const a=TT*1.5+i,r=8+(i%3)*4;c.fillStyle=cols[i%4];c.fillRect(p[0]+Math.cos(a)*r,p[1]-((TT*20+i*9)%26),2,2);}},
+  actions:[A('marchinha','Dançar marchinha de Carnaval','🎭','near',30,{diversao:70,energia:-10,social:10},{anim:'dance',fnDone:s=>{addMoodlet(s,'Folia de Carnaval',10,360,'brincalhao');try{achCount('folia');}catch(_){}}})]};
+DEF.pula_pula={n:'Pula-pula',price:0,w:2,d:2,h:1.2,decor:3,get cat(){return HOL_CUR==='criancas'?'decor':null;},
+  draw(B){for(let i=0;i<8;i++){const a=i/8*Math.PI*2;B(1+Math.cos(a)*.85-.04,1+Math.sin(a)*.85-.04,0,1+Math.cos(a)*.85+.04,1+Math.sin(a)*.85+.04,.5,'#3d7fd1');}
+    B(.15,.15,.45,1.85,1.85,.5,'#2b2b33');B(.1,.1,.5,1.9,.25,.56,'#ee5d7c');B(.1,1.75,.5,1.9,1.9,.56,'#ee5d7c');B(.1,.1,.5,.25,1.9,.56,'#43be86');B(1.75,.1,.5,1.9,1.9,.56,'#43be86');},
+  actions:[A('pular','Pular no pula-pula','🤸','seat',25,{diversao:70,energia:-10},{anim:'cheer',kidBonus:1,outdoor:1})],seats:[{i:0,j:0,pose:'stand',z:.5,p:[1,1]}]};
+ACH.splice(ACH.length-1,0,{k:'arraia',i:'🌽',n:'Arraiá do casal',d:'Curtir a fogueira de São João',c:'arraia',q:1,m:'Anarriê! Com você até quadrilha fica romântica.'},{k:'folia',i:'🎭',n:'Folia',d:'Dançar marchinha no Carnaval',c:'folia',q:1,m:'Meu bloco preferido é o nosso: só nós dois.'});
+Object.assign(CHEATS,{carnaval:['Modo Carnaval 🎭',()=>{G.forceHol='carnaval';}],junina:['Modo Festa Junina 🌽',()=>{G.forceHol='junina';}],criancas:['Modo Dia das Crianças 🧸',()=>{G.forceHol='criancas';}]});
+/* ================= v74: carreiras ativas — situações no trabalho com escolhas ================= */
+/* cada opção: t texto, sk habilidade, d dificuldade (nível), ok/bad resultado; safe = sem risco */
+const WORK_EV={
+ imoveis:[
+  {i:'🏖️',t:'Um casal de São Paulo quer ver uma casa pé na areia no Frade, mas acha o preço alto.',o:[
+    {t:'Mostrar a vista da varanda no pôr do sol',sk:'carisma',d:2,ok:'Eles se apaixonaram pela vista e fecharam negócio!',bad:'A vista estava nublada… eles vão "pensar".',$:900},
+    {t:'Preparar um comparativo de preços da região',sk:'logica',d:3,ok:'Os números convenceram: proposta assinada!',bad:'A planilha confundiu mais do que ajudou.',$:900},
+    {t:'Dar espaço e mandar as fotos depois',safe:1,ok:'Eles agradeceram a atenção.'}]},
+  {i:'⛵',t:'Um cliente quer alugar um iate para o fim de semana em Ilha Grande.',o:[
+    {t:'Montar um roteiro com praias escondidas',sk:'carisma',d:3,ok:'Roteiro perfeito! Aluguel fechado e cliente fiel.',bad:'O cliente achou o roteiro curto demais.',$:700},
+    {t:'Negociar o pacote com o marinheiro incluso',sk:'logica',d:2,ok:'Pacote fechado com ótima margem!',bad:'O marinheiro não estava disponível.',$:600},
+    {t:'Passar para um colega mais experiente',safe:1,ok:'O colega fechou, e você aprendeu observando.'}]},
+  {i:'📸',t:'O dono de uma mansão em Angra quer anunciar o imóvel.',o:[
+    {t:'Fazer fotos e um tour virtual caprichado',sk:'pintura',d:2,ok:'O anúncio bombou! Três visitas marcadas.',bad:'As fotos ficaram escuras.',$:500},
+    {t:'Convencer o dono a dar exclusividade',sk:'carisma',d:4,ok:'Exclusividade conquistada!',bad:'Ele preferiu anunciar com várias imobiliárias.',$:1200},
+    {t:'Fazer o anúncio padrão',safe:1,ok:'Anúncio publicado.'}]}],
+ gastronomia:[
+  {i:'🍽️',t:'Um crítico gastronômico sentou na mesa 7 sem avisar.',o:[
+    {t:'Criar um prato especial na hora',sk:'culinaria',d:3,ok:'O crítico elogiou no jornal!',bad:'O prato saiu salgado demais…',$:600},
+    {t:'Ir até a mesa conversar sobre o menu',sk:'carisma',d:2,ok:'Ele adorou a simpatia da casa.',bad:'Ele queria só comer em paz.',$:300},
+    {t:'Seguir o cardápio de sempre',safe:1,ok:'Tudo correu normal.'}]},
+  {i:'🔥',t:'O forno quebrou no meio do almoço lotado.',o:[
+    {t:'Consertar o forno rapidinho',sk:'mecanica',d:2,ok:'Forno de volta! A equipe te aplaudiu.',bad:'Só piorou. Tiveram que chamar o técnico.',$:200},
+    {t:'Adaptar o cardápio para pratos no fogão',sk:'culinaria',d:2,ok:'Ninguém percebeu a troca!',bad:'Alguns clientes reclamaram da demora.',$:250},
+    {t:'Avisar o gerente',safe:1,ok:'O gerente resolveu.'}]}],
+ musica:[
+  {i:'🎤',t:'O cantor principal ficou rouco antes do show.',o:[
+    {t:'Assumir o microfone',sk:'musica',d:3,ok:'Que voz! A plateia cantou junto.',bad:'Desafinou no refrão…',$:700},
+    {t:'Animar a plateia entre as músicas',sk:'carisma',d:2,ok:'Show inesquecível!',bad:'A plateia ficou meio fria.',$:400},
+    {t:'Tocar só instrumental',safe:1,ok:'Foi um show tranquilo.'}]}],
+ tecnologia:[
+  {i:'💻',t:'O site de um cliente caiu numa sexta à tarde.',o:[
+    {t:'Encontrar o bug sozinho(a)',sk:'logica',d:3,ok:'Bug resolvido em 20 minutos. Herói do time!',bad:'O bug era mais fundo do que parecia.',$:600},
+    {t:'Acalmar o cliente e organizar o time',sk:'carisma',d:2,ok:'Cliente tranquilo e problema resolvido em equipe.',bad:'O cliente ficou bravo mesmo assim.',$:300},
+    {t:'Abrir um chamado e esperar',safe:1,ok:'Outro time resolveu.'}]}],
+ artes:[
+  {i:'🖼️',t:'Uma galeria quer uma obra nova para a exposição de amanhã.',o:[
+    {t:'Pintar a noite toda',sk:'pintura',d:3,ok:'A obra foi a estrela da exposição!',bad:'A tinta não secou a tempo.',$:800},
+    {t:'Apresentar uma obra antiga com uma boa história',sk:'carisma',d:2,ok:'O curador adorou a história.',bad:'O curador queria algo inédito.',$:400},
+    {t:'Recusar com educação',safe:1,ok:'Ficou para a próxima.'}]}],
+ esporte:[
+  {i:'🏃',t:'Um aluno quer correr a maratona de Angra em um mês.',o:[
+    {t:'Montar um treino puxado',sk:'fitness',d:3,ok:'Ele completou a prova! Que orgulho.',bad:'Ele se machucou no treino…',$:500},
+    {t:'Motivar com conversas e metas',sk:'carisma',d:2,ok:'Ele nunca esteve tão motivado.',bad:'Ele desanimou na segunda semana.',$:300},
+    {t:'Sugerir uma prova menor',safe:1,ok:'Ele topou os 5 km.'}]}],
+ advocacia:[
+  {i:'⚖️',t:'Audiência importante no Fórum e a outra parte trouxe uma prova nova.',o:[
+    {t:'Contestar na hora com argumentos',sk:'carisma',d:3,ok:'O juiz acatou seu argumento!',bad:'O juiz não se convenceu.',$:900},
+    {t:'Pedir prazo e estudar o caso',sk:'logica',d:2,ok:'Na volta você desmontou a prova.',bad:'O prazo foi negado.',$:600},
+    {t:'Propor um acordo',safe:1,ok:'Acordo razoável para o cliente.'}]}],
+ justica:[
+  {i:'📂',t:'Um processo urgente chegou sem documentos.',o:[
+    {t:'Achar a solução no regimento',sk:'logica',d:3,ok:'Solução elegante! O juiz elogiou.',bad:'Faltou um detalhe na análise.',$:500},
+    {t:'Ligar para as partes e resolver',sk:'carisma',d:2,ok:'Documentos chegaram no mesmo dia.',bad:'Ninguém atendeu.',$:300},
+    {t:'Seguir o trâmite normal',safe:1,ok:'O processo andou devagar, mas andou.'}]}],
+ engenharia:[
+  {i:'🏭',t:'A linha de produção travou e o pedido vence hoje.',o:[
+    {t:'Reorganizar o fluxo da fábrica',sk:'logica',d:3,ok:'Pedido entregue no prazo!',bad:'O ajuste atrasou ainda mais.',$:800},
+    {t:'Consertar a máquina com a equipe',sk:'mecanica',d:2,ok:'Máquina de volta em uma hora.',bad:'Faltou uma peça.',$:500},
+    {t:'Pedir mais prazo ao cliente',safe:1,ok:'O cliente aceitou um dia a mais.'}]}],
+ medicina:[
+  {i:'🩺',t:'Um paciente chegou com sintomas confusos no plantão.',o:[
+    {t:'Investigar com exames e raciocínio clínico',sk:'logica',d:3,ok:'Diagnóstico certeiro. Paciente salvo!',bad:'Os exames não foram conclusivos.',$:900},
+    {t:'Conversar com calma com a família',sk:'carisma',d:2,ok:'A família confiou e ajudou com informações.',bad:'A família estava nervosa demais.',$:400},
+    {t:'Chamar o especialista',safe:1,ok:'O especialista assumiu o caso.'}]}],
+ arquitetura:[
+  {i:'📐',t:'O cliente quer mudar a fachada da casa de praia em cima da hora.',o:[
+    {t:'Redesenhar tudo na madrugada',sk:'pintura',d:3,ok:'O cliente se emocionou com o novo projeto!',bad:'O desenho ficou corrido.',$:800},
+    {t:'Convencer a manter o projeto original',sk:'carisma',d:3,ok:'Ele concordou e ficou ainda mais feliz.',bad:'Ele ficou chateado.',$:500},
+    {t:'Fazer um ajuste simples',safe:1,ok:'Ajuste aprovado.'}]}]};
+const WORK_EV_GEN=[{i:'☕',t:'O chefe pediu voluntários para apresentar o relatório do mês.',o:[
+  {t:'Se oferecer e apresentar',sk:'carisma',d:2,ok:'Apresentação impecável!',bad:'Travou na frente de todo mundo.',$:300},
+  {t:'Revisar os números antes',sk:'logica',d:2,ok:'Achou um erro que salvou a empresa!',bad:'Não achou nada demais.',$:300},
+  {t:'Deixar para outra pessoa',safe:1,ok:'Dia tranquilo.'}]}];
+let WEV=null;
+function workEvFor(s){const L=WORK_EV[s.job.id]||WORK_EV_GEN;return L[Math.floor(Math.random()*L.length)];}
+function skLv(s,k){return Math.floor((s.skills&&s.skills[k])||0);}
+function wevChance(s,o){return clamp(.42+(skLv(s,o.sk)-o.d)*.13+moodOf(s)/250,.12,.95);}
+function resolveWork(s,ev,o){const j=s.job;if(!j)return;let txt,good;
+  if(o.safe){j.perf=clamp(j.perf+3,0,100);txt=o.ok;good=true;}
+  else{const win=Math.random()<wevChance(s,o);good=win;const lv=(j.level||0)+1;
+    if(win){j.perf=clamp(j.perf+14,0,100);const m=Math.round(o.$*(1+lv*.25));addMoney(m);SFX.cash();addMoodlet(s,'Arrasou no trabalho',10,480,'confiante');gainSkill(s,o.sk,.25);txt=`${o.ok} +${fmt(m)} de bônus.`;try{achCount('wev');}catch(_){}}
+    else{j.perf=clamp(j.perf-6,0,100);addMoodlet(s,'Dia difícil no trabalho',-6,360,'tenso');gainSkill(s,o.sk,.1);txt=o.bad;}}
+  try{workPerf(s,0);}catch(_){}hudSig='';toast(`${ev.i} ${s.name}: ${txt}`,good?'good':'bad');save();}
+function openWorkEv(s,ev){WEV={s,ev};pauseFor();
+  $('#wevT').innerHTML=`<span style="font-size:30px">${ev.i}</span><div><b>${esc(s.name)} no trabalho</b><small>${esc(CAREERS[s.job.id].lv[s.job.level])}</small></div>`;
+  $('#wevQ').textContent=ev.t;
+  $('#wevO').innerHTML=ev.o.map((o,i)=>{const ch=o.safe?null:Math.round(wevChance(s,o)*100);return`<button data-i="${i}"><b>${esc(o.t)}</b><small>${o.safe?'Sem risco · pouco desempenho':`${SKILLS[o.sk]?SKILLS[o.sk][1]+' '+SKILLS[o.sk][0]:o.sk} · chance ${ch}%`}</small></button>`;}).join('');
+  $('#wev').hidden=false;}
+(function(){document.body.insertAdjacentHTML('beforeend','<div id="wev" hidden><div class="card"><div id="wevT" class="wev-t"></div><p id="wevQ"></p><div id="wevO"></div></div></div>');
+  const st=document.createElement('style');st.textContent='#wev{position:fixed;inset:0;z-index:45;display:flex;align-items:center;justify-content:center;background:rgba(20,30,50,.4)}#wev[hidden]{display:none}#wev .card{background:#fff;border-radius:20px;padding:16px;max-width:400px;width:calc(100% - 32px);max-height:88vh;overflow:auto;box-shadow:0 12px 40px rgba(0,0,0,.25)}.wev-t{display:flex;gap:10px;align-items:center}.wev-t b{display:block;font-size:17px}.wev-t small{color:#6b6f78}#wevQ{font-size:15px;line-height:1.4;margin:12px 0}#wevO button{display:block;width:100%;text-align:left;border:0;background:#f6f3ee;border-radius:14px;padding:11px 12px;margin-bottom:8px;font:inherit;color:#2b2b33;cursor:pointer}#wevO button:hover{background:#e3f6ec}#wevO b{display:block;font-size:14px}#wevO small{color:#6b6f78;font-size:12px}';document.head.appendChild(st);
+  $('#wevO').onclick=e=>{const b=e.target.closest('button');if(!b||!WEV)return;const {s,ev}=WEV;WEV=null;$('#wev').hidden=true;resumeFrom();SFX.click();resolveWork(s,ev,ev.o[+b.dataset.i]);};})();
+function atWorkAct(s){const c=s.cur;return!!(s.job&&c&&c.kind==='out_venue'&&c.stage==='act'&&c.act&&c.act.id==='trabalhar');}
+setInterval(()=>{try{if(!G||G.demo||!$('#title').hidden||WEV||!$('#wev').hidden)return;if(!$('#letter').hidden)return;
+  for(const s of household()){if(!atWorkAct(s)||s._wevDay===dayN())continue;const t=s.cur.t||0;if(t<50)continue;s._wevDay=dayN();
+    if(Math.random()>.75)continue;const ev=workEvFor(s);
+    if(s.auto){const opts=ev.o.filter(o=>!o.safe);const o=opts.sort((a,b)=>wevChance(s,b)-wevChance(s,a))[0];resolveWork(s,ev,o);}else openWorkEv(s,ev);break;}}catch(e){}},2000);
+ACH.splice(ACH.length-1,0,{k:'wev',i:'💼',n:'Resolve tudo',d:'Mandar bem em 10 situações no trabalho',c:'wev',q:10,m:'Você resolve qualquer coisa. Eu sou fã.'});
+{const _oc=openCareer;openCareer=function(s){_oc(s);const h=$('#crHint');if(h&&!/situaç/.test(h.textContent))h.textContent+=' No trabalho surgem situações com escolhas: a chance de dar certo depende das habilidades.';};}
 /* ================= v39: edição — o jogo da Isabel continua pessoal; jogos novos são para todo mundo ================= */
 var ED_PERSONAL=true;
 function PET_NAME(){return ED_PERSONAL===false?'Biscoito':'Luck';}

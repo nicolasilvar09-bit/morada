@@ -4935,7 +4935,7 @@ function showSyncBanner(r){let b=$('#syncBanner');if(!b){b=document.createElemen
   b.textContent='☁️ Mudou no outro aparelho · tocar para carregar';b.hidden=false;b.onclick=()=>{b.hidden=true;startFromSave(r,'☁️ Jogo atualizado da nuvem!');};}
 setInterval(()=>{if(!document.hidden)cloudCheck();},20000);
 /* ---- aviso de versão nova do jogo ---- */
-const APPV='v65';
+const APPV='v66';
 async function checkAppVersion(){try{const t=await fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'');const m=t.match(/const APPV='([^']+)'/);
   if(m&&m[1]!==APPV){let b=$('#verBanner');if(!b){b=document.createElement('button');b.id='verBanner';b.className='glass';document.body.appendChild(b);}
     b.textContent=`✨ Versão nova (${m[1]}) · tocar para atualizar`;b.hidden=false;b.onclick=()=>{try{if(G&&!G.demo)save();}catch(_){}const go=()=>location.replace(location.pathname+'?v='+m[1]+'-'+Date.now());if(cloudCode&&G&&!G.demo)cloudPush(true).finally(go);else go();};}}catch(_){}}
@@ -6678,6 +6678,47 @@ function drawArrowHandle(ctx,h,hot){const z=HZ,c=P(h.mx,h.my,z),a=P(h.mx+h.nx*.5
   ctx.beginPath();ctx.roundRect?ctx.roundRect(q[0]-w/2,q[1]-11*k,w,22*k,11*k):ctx.rect(q[0]-w/2,q[1]-11*k,w,22*k);ctx.fill();ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(txt,q[0],q[1]+1);ctx.restore();};}
 TOOL_HINT.push='Toque numa das setas ↔ de uma parede e arraste (ou toque) até onde ela vai: o cômodo estica ou encolhe, levando portas e janelas junto.';
 {const _i=TOOLS.findIndex(t=>t[0]==='push');if(_i>=0)TOOLS[_i]=['push','↔️','Esticar'];}
+/* ================= v66: catálogo de escadas ================= */
+{const base={cat:'construcao',w:1,d:2,h:2.4,stairs:true};
+const st=(k,z1)=>({v0:2-(k+1)*.25,z:(k+1)*.3});
+DEF.escada.n='Escada de madeira clássica';
+DEF.escada_moderna=Object.assign({},base,{n:'Escada moderna flutuante',price:1600,colorable:true,defColor:'#e9e4dc',
+  draw(B,o){const c=o.color||this.defColor;
+    /* parede lateral (viga) em degraus + degraus soltos + guarda-corpo de vidro */
+    for(let k=0;k<8;k++){const {v0,z}=st(k);B(.0,v0,0,.08,v0+.25,z,shade('#d9d4cc',k%2?1:.96));B(.1,v0+.01,z-.07,.94,v0+.25,z,k%2?c:shade(c,1.05));B(.1,v0+.01,z-.09,.94,v0+.25,z-.07,'#9a948c');}
+    for(let k=0;k<8;k++){const {v0,z}=st(k);B(.95,v0,z,.98,v0+.25,z+.82,'#bfe3ee',.38);}
+    for(let k=0;k<8;k++){const {v0,z}=st(k);B(.94,v0,z+.82,.99,v0+.25,z+.86,'#c9ced3');}}});
+DEF.escada_industrial=Object.assign({},base,{n:'Escada industrial de ferro',price:1300,colorable:true,defColor:'#3b3f46',
+  draw(B,o){const c=o.color||this.defColor;
+    for(let k=0;k<8;k++){const {v0,z}=st(k);
+      B(.12,v0+.02,z-.05,.88,v0+.25,z,shade(c,k%2?1.15:1.25));
+      for(const u of [.06,.88])B(u,v0,Math.max(0,z-.42),u+.06,v0+.25,z-.02,shade(c,.85));
+      if(k%2===0)for(const u of [.07,.89])B(u,v0+.1,z,u+.04,v0+.14,z+.86,c);
+      for(const u of [.05,.87])B(u,v0,z+.86,u+.08,v0+.25,z+.91,shade(c,.7));}
+    B(.08,1.92,0,.14,1.98,.4,shade(c,.8));B(.86,1.92,0,.92,1.98,.4,shade(c,.8));}});
+DEF.escada_tapete=Object.assign({},base,{n:'Escada branca com passadeira',price:1400,colorable:true,defColor:'#b8324a',
+  draw(B,o){const c=o.color||this.defColor;
+    for(let k=0;k<8;k++){const {v0,z}=st(k);B(.04,v0,0,.96,v0+.25,z-.04,shade('#f3f0ea',k%2?.94:.98));B(.04,v0,z-.04,.96,v0+.25,z,'#fbfaf7');
+      B(.24,v0,z,.76,v0+.25,z+.015,k%2?c:shade(c,1.08));B(.24,v0-.005,z-.3,.76,v0+.01,z+.015,shade(c,.82));
+      B(.235,v0+.02,z+.005,.245,v0+.03,z+.03,'#d4b15a');B(.755,v0+.02,z+.005,.765,v0+.03,z+.03,'#d4b15a');}
+    for(const u of [0,.9])for(let k=0;k<8;k++){const {v0,z}=st(k);if(k%2===0)B(u+.04,v0+.1,z,u+.06,v0+.12,z+.85,'#ffffff');B(u,v0,z+.85,u+.1,v0+.25,z+.92,'#efe9df');}}});
+DEF.escada_pedra=Object.assign({},base,{n:'Escada rústica de pedra',price:1100,colorable:true,defColor:'#9c958a',
+  draw(B,o){const c=o.color||this.defColor;
+    for(let k=0;k<8;k++){const {v0,z}=st(k);B(.02,v0,0,.98,v0+.25,z-.05,shade(c,.78+((k*37)%5)*.02));
+      B(.02,v0-.01,z-.05,.5,v0+.25,z,shade(c,1.04+(k%3)*.03));B(.5,v0-.01,z-.05,.98,v0+.25,z,shade(c,.98+(k%2)*.05));
+      if(k%3===1)B(.06,v0+.05,z,.18,v0+.18,z+.05,'#6d9a4c');}
+    for(let k=0;k<8;k+=2){const {v0,z}=st(k);B(.0,v0,z,.07,v0+.5,z+.55,'#7a6650');B(.93,v0,z,1,v0+.5,z+.55,'#7a6650');B(-.01,v0,z+.55,.08,v0+.5,z+.62,'#5f4e3c');B(.92,v0,z+.55,1.01,v0+.5,z+.62,'#5f4e3c');}}});
+DEF.escada_caracol=Object.assign({},base,{n:'Escada caracol',price:1900,colorable:true,defColor:'#2f3640',
+  draw(B,o){const c=o.color||this.defColor,cx=.5,cy=1.0,R=.44,N=12;
+    B(cx-.05,cy-.05,0,cx+.05,cy+.05,2.55,shade(c,.9));
+    for(let k=0;k<N;k++){const a=Math.PI*.5+k*(Math.PI/(N-1)),z=(k+1)*(2.4/N);
+      for(let j=1;j<=3;j++){const r=R*j/3,u=cx+Math.cos(a)*r,v=cy+Math.sin(a)*r*1.9,s=.07+.03*j;
+        B(clamp(u-s,0,1),clamp(v-s,0,2),z-.05,clamp(u+s,0,1),clamp(v+s,0,2),z,j===3?shade('#b07a4f',1.05):'#b07a4f');}
+      const u=cx+Math.cos(a)*R,v=cy+Math.sin(a)*R*1.9;B(clamp(u-.02,0,1),clamp(v-.02,0,2),z,clamp(u+.02,0,1),clamp(v+.02,0,2),z+.8,c);
+      B(clamp(u-.04,0,1),clamp(v-.04,0,2),z+.8,clamp(u+.04,0,1),clamp(v+.04,0,2),z+.85,shade(c,.75));}
+    /* chegada lá em cima */
+    B(.05,0,2.34,.95,.5,2.4,'#b07a4f');}});
+}
 /* ================= v39: edição — o jogo da Isabel continua pessoal; jogos novos são para todo mundo ================= */
 var ED_PERSONAL=true;
 function PET_NAME(){return ED_PERSONAL===false?'Biscoito':'Luck';}

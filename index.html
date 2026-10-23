@@ -4935,7 +4935,7 @@ function showSyncBanner(r){let b=$('#syncBanner');if(!b){b=document.createElemen
   b.textContent='☁️ Mudou no outro aparelho · tocar para carregar';b.hidden=false;b.onclick=()=>{b.hidden=true;startFromSave(r,'☁️ Jogo atualizado da nuvem!');};}
 setInterval(()=>{if(!document.hidden)cloudCheck();},20000);
 /* ---- aviso de versão nova do jogo ---- */
-const APPV='v74';
+const APPV='v75';
 async function checkAppVersion(){try{const t=await fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'');const m=t.match(/const APPV='([^']+)'/);
   if(m&&m[1]!==APPV){let b=$('#verBanner');if(!b){b=document.createElement('button');b.id='verBanner';b.className='glass';document.body.appendChild(b);}
     b.textContent=`✨ Versão nova (${m[1]}) · tocar para atualizar`;b.hidden=false;b.onclick=()=>{try{if(G&&!G.demo)save();}catch(_){}const go=()=>location.replace(location.pathname+'?v='+m[1]+'-'+Date.now());if(cloudCode&&G&&!G.demo)cloudPush(true).finally(go);else go();};}}catch(_){}}
@@ -7103,6 +7103,157 @@ setInterval(()=>{try{if(!G||G.demo||!$('#title').hidden||WEV||!$('#wev').hidden)
     if(s.auto){const opts=ev.o.filter(o=>!o.safe);const o=opts.sort((a,b)=>wevChance(s,b)-wevChance(s,a))[0];resolveWork(s,ev,o);}else openWorkEv(s,ev);break;}}catch(e){}},2000);
 ACH.splice(ACH.length-1,0,{k:'wev',i:'💼',n:'Resolve tudo',d:'Mandar bem em 10 situações no trabalho',c:'wev',q:10,m:'Você resolve qualquer coisa. Eu sou fã.'});
 {const _oc=openCareer;openCareer=function(s){_oc(s);const h=$('#crHint');if(h&&!/situaç/.test(h.textContent))h.textContent+=' No trabalho surgem situações com escolhas: a chance de dar certo depende das habilidades.';};}
+/* ================= v75: Fazenda Monte Horebe (café e milho) + Cafeteria Monte Horebe, o negócio do casal ================= */
+const FARM={x0:111,x1:147,y0:-15.6,y1:22,gx:129.3};
+const MH={green:'#2f5d3a',green2:'#3f7a4c',brown:'#6b4a2f',brown2:'#8a5e3a',cream:'#efe6d2'};
+{const _im=inMata;inMata=function(x,y){if(x>FARM.x0-1.5&&x<FARM.x1+1.5&&y>FARM.y0-3&&y<FARM.y1+1.5)return false;return _im(x,y);};}
+for(let k in MATA)delete MATA[k];for(let k in MATA_SORT)delete MATA_SORT[k];
+/* lavouras */
+const CAFE_ROWS=[],MILHO_ROWS=[];
+for(let y=-12;y<=7;y+=1.6)CAFE_ROWS.push(y);for(let y=-12;y<=5;y+=1.2)MILHO_ROWS.push(y);
+const CAFE_X=[113,127],MILHO_X=[131.5,146];
+function farmSeason(){const s=SEA_CUR||seasonNow();return s;}
+function drawCoffeeBush(c,x,y,h){const ripe=farmSeason()==='outono'||farmSeason()==='inverno';
+  blobs(c,[x,y,.5],[[-8,3,11,'#1b4f2c'],[8,3,11,'#1f5a32'],[0,-4,12,'#25693a'],[-4,-9,8,'#2f7d45'],[5,-7,7,'#2a7340']]);
+  const n=ripe?9:4;for(let i=0;i<n;i++){const p=P(x,y,.5);const dx=((i*37+h*100)%22)-11,dy=((i*53+h*70)%16)-12;c.fillStyle=ripe?(i%3?'#c0262d':'#8e1b22'):'#8fcf5a';c.beginPath();c.arc(p[0]+dx,p[1]+dy,1.8,0,7);c.fill();}}
+function drawCorn(c,x,y,h){const s=farmSeason(),tall=s==='verao'||s==='primavera'?1:s==='outono'?.85:.55,dry=s==='outono';
+  const b=P(x,y,0),t=P(x,y,1.7*tall);c.strokeStyle=dry?'#b49a4a':'#4f8a35';c.lineWidth=1.6;c.beginPath();c.moveTo(b[0],b[1]);c.lineTo(t[0],t[1]);c.stroke();
+  for(let k=0;k<4;k++){const q=P(x,y,(.35+k*.32)*tall),dir=k%2?1:-1;c.strokeStyle=dry?'#c9b25e':(k%2?'#5fa040':'#4a8a32');c.lineWidth=1.3;c.beginPath();c.moveTo(q[0],q[1]);c.quadraticCurveTo(q[0]+dir*6,q[1]-4,q[0]+dir*9,q[1]+1);c.stroke();}
+  if(tall>.8){const e=P(x,y,.9*tall);c.fillStyle=dry?'#d8b85a':'#9cc24a';c.beginPath();c.ellipse(e[0]+2,e[1],1.8,4,.3,0,7);c.fill();c.fillStyle='#e8c46a';c.beginPath();c.arc(t[0],t[1]-1,1.6,0,7);c.fill();}}
+{const _dg=drawGround;drawGround=function(c){_dg(c);const F=FARM,g=(SEASONS[SEA_CUR||seasonNow()]||SEASONS.verao).grass;
+  rectPoly(c,F.x0,F.y0,F.x1,F.y1,g[1],.0004);
+  /* estrada de terra até a sede */
+  rectPoly(c,F.gx-.9,-17.2,F.gx+.9,F.y1-2,'#b08a5a',.0008);rectPoly(c,F.gx-.9,8.3,F.x1-1,9.6,'#b08a5a',.0008);rectPoly(c,F.x0+2,8.3,F.gx,9.6,'#b08a5a',.0008);
+  /* terra arada */
+  rectPoly(c,CAFE_X[0]-.6,CAFE_ROWS[0]-.8,CAFE_X[1]+.6,CAFE_ROWS[CAFE_ROWS.length-1]+.8,'#8a6a45',.0006);
+  rectPoly(c,MILHO_X[0]-.6,MILHO_ROWS[0]-.8,MILHO_X[1]+.6,MILHO_ROWS[MILHO_ROWS.length-1]+.8,'#9a7a50',.0006);
+  c.strokeStyle='rgba(70,50,30,.25)';c.lineWidth=.8;for(const y of MILHO_ROWS)line(c,[MILHO_X[0]-.4,y,.001],[MILHO_X[1]+.4,y,.001]);
+  /* terreiro de secar café */
+  rectPoly(c,113,11,124,17.5,'#d8cbb2',.0008);for(let i=0;i<6;i++)rectPoly(c,113.8+i*1.7,11.8,115+i*1.7,16.6,i%2?'#6b3f22':'#7a4a28',.0009);
+  /* lavouras */
+  for(const y of CAFE_ROWS)for(let x=CAFE_X[0];x<=CAFE_X[1];x+=.8)drawCoffeeBush(c,x,y,(x*7.3+y*3.1)%1);
+  for(const y of MILHO_ROWS)for(let x=MILHO_X[0];x<=MILHO_X[1];x+=.62)drawCorn(c,x,y,(x*5.1+y)%1);
+  /* cerca de madeira */
+  c.strokeStyle='#7a5a3a';c.lineWidth=1.2;for(const [a,b] of [[[F.x0,F.y0],[F.gx-1.4,F.y0]],[[F.gx+1.4,F.y0],[F.x1,F.y0]],[[F.x0,F.y0],[F.x0,F.y1]],[[F.x1,F.y0],[F.x1,F.y1]],[[F.x0,F.y1],[F.x1,F.y1]]]){
+    for(const z of [.35,.7])line(c,[a[0],a[1],z],[b[0],b[1],z]);const L=Math.hypot(b[0]-a[0],b[1]-a[1]);for(let t=0;t<=L;t+=2){const x=a[0]+(b[0]-a[0])*t/L,y=a[1]+(b[1]-a[1])*t/L;line(c,[x,y,0],[x,y,.85]);}}};}
+/* construções: porteira, sede, celeiro, silo, trator, galinheiro */
+function drawGate(c){const x=FARM.gx,y=FARM.y0;for(const dx of [-1.4,1.4])gbox(c,x+dx-.12,y-.12,0,x+dx+.12,y+.12,3,MH.brown);gbox(c,x-1.7,y-.15,3,x+1.7,y+.15,3.6,MH.brown2);
+  gbox(c,x-1.55,y-.18,3.08,x+1.55,y-.16,3.52,MH.green);planeText(c,'N',x,y-.15,3.3,'FAZENDA MONTE HOREBE',7.5,'#f4ead2');}
+function drawSede(c){const x0=131,x1=137.5,y0=10.5,y1=15;gbox(c,x0,y0,0,x1,y1,.25,'#a08a70');gbox(c,x0,y0,.25,x1,y1,2.3,'#f4efe4');
+  for(const u of [x0+.8,x0+2.6,x1-2.4])gbox(c,u,y1,.9,u+1,y1+.04,1.8,'#7fb0c8');gbox(c,x0+4.3,y1,.25,x0+5.2,y1+.04,1.9,MH.brown);
+  for(const u of [x0+.8,x0+2.6,x1-2.4]){gbox(c,u-.22,y1,.9,u-.02,y1+.06,1.8,MH.green);gbox(c,u+1.02,y1,.9,u+1.22,y1+.06,1.8,MH.green);}
+  /* varanda */gbox(c,x0,y1,0,x1,y1+1.6,.25,'#b9a88e');for(let u=x0+.1;u<x1;u+=1.6)gbox(c,u,y1+1.45,.25,u+.14,y1+1.59,2.2,MH.brown);
+  /* telhado colonial */const z=2.3,H=1.5,o=.35,ex=[x0-o,x1+o],ey=[y0-o,y1+1.6+o],cy=(y0+y1+1.6)/2;
+  poly(c,[[ex[0],ey[0],z],[ex[1],ey[0],z],[ex[1],cy,z+H],[ex[0],cy,z+H]],shade('#a4492c',.85),false);
+  poly(c,[[ex[0],ey[1],z],[ex[1],ey[1],z],[ex[1],cy,z+H],[ex[0],cy,z+H]],'#b5532f',false);
+  poly(c,[[ex[1],ey[0],z],[ex[1],ey[1],z],[ex[1],cy,z+H]],shade('#a4492c',.75),false);
+  c.strokeStyle='rgba(80,30,15,.35)';c.lineWidth=.6;for(let u=ex[0]+.3;u<ex[1];u+=.35)line(c,[u,ey[1],z],[u,cy,z+H]);
+  gbox(c,x1-1.4,y0+1,z+.3,x1-.9,y0+1.5,z+H+.6,'#efe6d2');}
+function drawCeleiro(c){const x0=139.5,x1=145.5,y0=10,y1=15.5;gbox(c,x0,y0,0,x1,y1,2.4,'#8e2f25');
+  gbox(c,x0+1.8,y1,0,x1-1.8,y1+.04,2,'#6b2018');c.strokeStyle='#f4ead2';c.lineWidth=1.2;line(c,[x0+1.8,y1+.05,0],[x1-1.8,y1+.05,2]);line(c,[x0+1.8,y1+.05,2],[x1-1.8,y1+.05,0]);
+  const z=2.4,H=1.6,cx=(x0+x1)/2;poly(c,[[x0-.2,y1+.2,z],[cx,y1+.2,z+H],[cx,y0-.2,z+H],[x0-.2,y0-.2,z]],'#5a3a22',false);poly(c,[[x1+.2,y1+.2,z],[cx,y1+.2,z+H],[cx,y0-.2,z+H],[x1+.2,y0-.2,z]],'#6b4a2f',false);
+  poly(c,[[x0,y1,z],[x1,y1,z],[cx,y1,z+H]],'#8e2f25',false);planeText(c,'N',cx,y1+.05,2.95,'MONTE HOREBE',6,'#f4ead2');}
+function drawSilo(c){const x=146,y=12.6;for(let i=0;i<10;i++){const z=i*.4;gbox(c,x-.7,y-.7,z,x+.7,y+.7,z+.4,i%2?'#c9ced6':'#b9bec6');}const p=P(x,y,4.4);c.fillStyle='#9aa0a8';c.beginPath();c.ellipse(p[0],p[1],22,11,0,Math.PI,0);c.fill();}
+function drawTrator(c){const x=127,y=12.4;gbox(c,x-1,y-.5,.35,x+.8,y+.5,1,'#2f7a43');gbox(c,x-.9,y-.4,1,x-.1,y+.4,1.9,'#2f7a43');gbox(c,x-.85,y-.35,1.1,x-.15,y+.35,1.8,'#bfe0ea',.6);
+  for(const [dx,r] of [[-.6,.55],[.6,.35]])for(const dy of [-.55,.55]){const p=P(x+dx,y+dy,r);c.fillStyle='#2b2b33';c.beginPath();c.ellipse(p[0],p[1],r*14,r*16,0,0,7);c.fill();c.fillStyle='#f2c230';c.beginPath();c.arc(p[0],p[1],r*5,0,7);c.fill();}}
+function drawGalinheiro(c){const x0=140,x1=143,y0=17.5,y1=20;gbox(c,x0,y0,0,x1,y1,1.2,MH.brown2);gbox(c,x0-.1,y0-.1,1.2,x1+.1,y1+.1,1.35,MH.brown);
+  for(let i=0;i<5;i++){const t=TT*.8+i*1.7,x=x0+.3+((i*.9+Math.sin(t)*.3)%2.6),y=y1+.8+Math.cos(t*.7+i)*.4;const p=P(x,y,.15);c.fillStyle=i%2?'#fff':'#c9763a';c.beginPath();c.ellipse(p[0],p[1],3,2.4,0,0,7);c.fill();c.fillStyle='#e04040';c.beginPath();c.arc(p[0]+2,p[1]-2.4,1,0,7);c.fill();}}
+{const _bi=beachItems;beachItems=function(items){_bi(items);if(!G)return;const F=FARM;
+  items.push({b:[F.gx-1.8,F.y0-.2,0,F.gx+1.8,F.y0+.2,3.6],pk:'cust',cust:drawGate});
+  items.push({b:[131,10.5,0,137.5,16.6,3.8],pk:'cust',cust:drawSede});items.push({b:[139.5,10,0,145.5,15.5,4],pk:'cust',cust:drawCeleiro});
+  items.push({b:[145.3,11.9,0,146.7,13.3,4.6],pk:'cust',cust:drawSilo});items.push({b:[126,11.9,0,127.8,12.9,1.9],pk:'cust',cust:drawTrator});
+  items.push({b:[140,17.5,0,143,21,1.35],pk:'cust',cust:drawGalinheiro});};}
+for(let i=TREES.length-1;i>=0;i--){const [x,y]=TREES[i];if(x>FARM.x0-1&&x<FARM.x1+1&&y>FARM.y0-1&&y<FARM.y1+1)TREES.splice(i,1);}
+/* ---- a fazenda como lugar para ir ---- */
+{const sp=[];for(let i=0;i<5;i++)sp.push({k:'cafezal',u:114.5+i*2.6,w:-5.2,pose:'stand',z:0,face:[0,-1]});for(let i=0;i<5;i++)sp.push({k:'milharal',u:133+i*2.6,w:-5.8,pose:'stand',z:0,face:[0,-1]});
+  for(let i=0;i<3;i++)sp.push({k:'terreiro',u:115+i*3,w:17.9,pose:'stand',z:0,face:[0,-1]});
+  sp.push({k:'varanda',u:132.6,w:16.2,pose:'stand',z:.25,face:[0,1]},{k:'varanda',u:134.2,w:16.2,pose:'stand',z:.25,face:[0,1]});
+  for(let i=0;i<2;i++)sp.push({k:'galinhas',u:140.6+i*1.4,w:20.6,pose:'stand',z:0,face:[0,1]});
+  defVenue('fazenda',{name:'Fazenda Monte Horebe',icon:'🌾',indoor:false,ox:0,oy:0,door:[FARM.gx,FARM.y0+.6],aisle:FARM.y0+.6,rect:[FARM.x0,FARM.y0,FARM.x1,FARM.y1],hint:'nossa fazenda: café, milho, galinhas e a sede',
+    spots:sp,acts:[
+      {id:'colher_cafe',label:'Colher café no cafezal',icon:'☕',price:0,dur:60,spot:['cafezal'],rates:{diversao:18,energia:-16},anim:'use',skill:'jardinagem',skillRate:.9,mood:['Colheita de café',6,240,'focado'],done:s=>farmHarvest(s,'cafe')},
+      {id:'colher_milho',label:'Colher milho',icon:'🌽',price:0,dur:50,spot:['milharal'],rates:{diversao:18,energia:-14},anim:'use',skill:'jardinagem',skillRate:.8,mood:['Colheita de milho',6,240,'focado'],done:s=>farmHarvest(s,'milho')},
+      {id:'terreiro',label:'Mexer o café no terreiro',icon:'🟤',price:0,dur:35,spot:['terreiro'],rates:{diversao:10,energia:-8},anim:'use',done:s=>{bizS().qual=Math.min(100,bizS().qual+6);toast(`🟤 Café secando bonito no terreiro · qualidade ${Math.round(bizS().qual)}%`,'good');}},
+      {id:'varanda',label:'Tomar um café na varanda da sede',icon:'🪑',price:0,dur:40,spot:['varanda'],rates:{diversao:35,energia:12,social:8},anim:'eat',prop:'caneca',mood:['Fim de tarde na fazenda',10,360,'tranquilo']},
+      {id:'galinhas',label:'Dar milho às galinhas',icon:'🐔',price:0,dur:15,spot:['galinhas'],rates:{diversao:30},anim:'use',done:s=>{const B=bizS();if(Math.random()<.5){B.ovos=(B.ovos||0)+6;toast('🥚 As galinhas botaram! +6 ovos para a cafeteria.','good');}}}],staff:[]});
+  venueInit();
+  MAP_PLACES.push(['🌾','Fazenda Monte Horebe',()=>[FARM.gx,FARM.y0+3]]);}
+/* ================= v75: Cafeteria Monte Horebe — o negócio de Isabel e Nicolas ================= */
+const CMH={x0:68,y0:14,x1:75,y1:18.6};
+function bizS(){if(!G.biz)G.biz={lvl:1,cafe:12,milho:8,ovos:0,qual:60,fama:5,caixa:0,dias:0,lastAuto:0};return G.biz;}
+function farmHarvest(s,k){const B=bizS(),lv=Math.floor(s.skills.jardinagem||0),n=k==='cafe'?6+lv:8+lv;B[k]+=n;toast(k==='cafe'?`☕ ${s.name} colheu ${n} kg de café · estoque ${B.cafe} kg`:`🌽 ${s.name} colheu ${n} espigas · estoque ${B.milho}`,'good');try{achCount('colheita');}catch(_){}save();}
+const BIZ_LV=[null,{n:'Cafeteria simples',sale:1},{n:'Com máquina de espresso',sale:1.5,price:5000},{n:'Com barista contratado',sale:1.9,price:15000,auto:1}];
+function bizShift(s){const B=bizS(),L=BIZ_LV[B.lvl];let mult=L.sale,miss=[];
+  if(B.cafe>=3)B.cafe-=3;else{mult*=.45;miss.push('café');}
+  if(B.milho>=2){B.milho-=2;mult*=1.15;}else miss.push('milho');
+  if(B.ovos>=3){B.ovos-=3;mult*=1.08;}
+  const base=180+B.fama*4+(s.skills.culinaria||0)*15+(s.skills.carisma||0)*10,val=Math.round(base*mult*(.7+B.qual/200));
+  addMoney(val);B.caixa+=val;B.fama=Math.min(100,B.fama+2);B.dias++;SFX.cash();gainSkill(s,'culinaria',.2);gainSkill(s,'carisma',.15);
+  toast(`☕ Turno no Monte Horebe: +${fmt(val)}${miss.length?` · faltou ${miss.join(' e ')} (vá à fazenda colher)`:''}`,miss.length?'bad':'good');try{achCount('turnomh');}catch(_){}
+  if(B.caixa>=20000)try{achCount('mh20k');}catch(_){}save();}
+/* prédio */
+function drawCafeMH(c){const {x0,y0,x1,y1}=CMH,fy=vdir([0,1]),front=fy[0]>=0&&fy[1]>=0,night=daylight()<.45;
+  gbox(c,x0,y0,0,x1,y1,.3,MH.brown);gbox(c,x0,y0,.3,x1,y1,2.6,MH.green);
+  gbox(c,x0,y0,2.6,x1,y1,2.75,MH.brown);gbox(c,x0+.2,y0+.2,2.75,x1-.2,y1-.2,2.8,'#4a4f55');
+  if(!front)return;
+  /* vitrine e porta */
+  for(const [u0,u1] of [[x0+.4,x0+2.6],[x1-2.6,x1-.4]]){gbox(c,u0,y1,.45,u1,y1+.04,1.9,night?'#f6d98a':'#bfdde6',.85);gbox(c,u0-.06,y1,.4,u1+.06,y1+.06,.48,MH.brown2);for(let u=u0+.55;u<u1;u+=.55)gbox(c,u,y1,.45,u+.04,y1+.06,1.9,MH.brown);}
+  const cx=(x0+x1)/2;gbox(c,cx-.6,y1,.3,cx+.6,y1+.04,2.1,MH.brown);gbox(c,cx-.45,y1,.4,cx+.45,y1+.06,2,night?'#f6d98a':'#9fc6d2',.8);
+  /* toldo listrado verde e marrom */
+  for(let i=0;i<12;i++){const u=x0+i*(x1-x0)/12;poly(c,[[u,y1,2.25],[u+(x1-x0)/12,y1,2.25],[u+(x1-x0)/12,y1+.9,1.85],[u,y1+.9,1.85]],i%2?MH.green2:MH.brown2,false);}
+  /* letreiro */gbox(c,x0+.6,y1,2.85,x1-.6,y1+.12,3.75,MH.brown);gbox(c,x0+.7,y1+.12,2.92,x1-.7,y1+.14,3.68,MH.cream);
+  planeText(c,'N',cx,y1+.15,3.45,'MONTE HOREBE',13,MH.green);planeText(c,'N',cx,y1+.15,3.08,'☕  CAFÉ ESPECIAL · DESDE SEMPRE  ☕',5.5,MH.brown);
+  /* xícara no telhado */const p=P(x1-1,y0+1.4,3.2);c.fillStyle=MH.cream;c.beginPath();c.ellipse(p[0],p[1],12,5,0,0,7);c.fill();c.fillStyle=MH.brown;c.fillRect(p[0]-10,p[1]-14,20,14);c.beginPath();c.ellipse(p[0],p[1]-14,10,4,0,0,7);c.fillStyle='#3a2414';c.fill();
+  c.strokeStyle=MH.brown;c.lineWidth=2.4;c.beginPath();c.arc(p[0]+11,p[1]-8,4.5,-1.2,1.2);c.stroke();
+  c.strokeStyle='rgba(255,255,255,.7)';c.lineWidth=1.4;for(let i=0;i<3;i++){const t=TT*1.4+i;c.beginPath();c.moveTo(p[0]-5+i*5,p[1]-18);c.quadraticCurveTo(p[0]-8+i*5+Math.sin(t)*3,p[1]-24,p[0]-5+i*5,p[1]-30-(t%1)*4);c.stroke();}
+  if(night){c.fillStyle='rgba(255,215,140,.18)';const g=P(cx,y1+1.5,0);c.beginPath();c.ellipse(g[0],g[1],70,24,0,0,7);c.fill();}}
+function drawMesaMH(c,x,y){gbox(c,x-.04,y-.04,0,x+.04,y+.04,.72,MH.brown);gbox(c,x-.32,y-.32,.72,x+.32,y+.32,.78,MH.brown2);gbox(c,x-.03,y-.03,.78,x+.03,y+.03,2,'#d8d1c6');
+  const p=P(x,y,2);c.fillStyle=MH.green2;c.beginPath();c.ellipse(p[0],p[1]+2,30,12,0,Math.PI,0);c.fill();c.fillStyle=MH.green;c.beginPath();c.ellipse(p[0],p[1]+2,30,5,0,0,Math.PI);c.fill();
+  const q=P(x+.1,y,.8);c.fillStyle='#fff';c.fillRect(q[0]-2,q[1]-3,4,3);}
+const MH_MESAS=[[69.2,20.2],[71.5,20.6],[73.8,20.2]];
+{const _bi=beachItems;beachItems=function(items){_bi(items);if(!G)return;items.push({b:[CMH.x0,CMH.y0,0,CMH.x1,CMH.y1+1,3.8],pk:'cust',cust:drawCafeMH});
+  for(const [x,y] of MH_MESAS)items.push({b:[x-.35,y-.35,0,x+.35,y+.35,2],pk:'cust',cust:c=>drawMesaMH(c,x,y)});};}
+{const _dg=drawGround;drawGround=function(c){_dg(c);rectPoly(c,CMH.x0-1,CMH.y1,CMH.x1+1,CMH.y1+3.2,'#c9b597',.0009);for(let x=CMH.x0-1;x<CMH.x1+1;x+=.5)rectPoly(c,x,CMH.y1+.05,x+.25,CMH.y1+3.2,'rgba(255,255,255,.08)',.001);};}
+for(let i=TREES.length-1;i>=0;i--){const [x,y]=TREES[i];if(x>CMH.x0-1.5&&x<CMH.x1+1.5&&y>CMH.y0-1&&y<CMH.y1+3.5)TREES.splice(i,1);}
+{const sp=[];for(const [x,y] of MH_MESAS){sp.push({k:'mesa',u:x-.55,w:y,pose:'sit',z:.45,face:[1,0]},{k:'mesa',u:x+.55,w:y,pose:'sit',z:.45,face:[-1,0]});}
+  for(let i=0;i<3;i++)sp.push({k:'balcao',u:70.6+i*.6,w:CMH.y1+.5,pose:'stand',z:0,face:[0,-1]});
+  defVenue('montehorebe',{name:'Cafeteria Monte Horebe',icon:'☕',indoor:false,ox:0,oy:0,door:[71.5,CMH.y1+.5],aisle:CMH.y1+.5,rect:[CMH.x0-1,CMH.y1-.2,CMH.x1+1,CMH.y1+3.2],hint:'o nosso café! cafezinho, pão de queijo e turnos no balcão',
+    spots:sp,acts:[
+      {id:'cafe_mh',label:'Tomar um café coado Monte Horebe',icon:'☕',price:8,dur:20,spot:['mesa'],rates:{energia:25,diversao:15,social:8},anim:'eat',prop:'caneca',mood:['Café do nosso café',6,240,'energizado']},
+      {id:'bolo_milho',label:'Comer bolo de milho com café',icon:'🌽',price:14,dur:20,spot:['mesa'],rates:{fome:45,diversao:15},anim:'eat',prop:'prato',mood:['Bolo de milho da fazenda',5,180,'feliz']},
+      {id:'encontro_mh',label:'Encontro romântico no Monte Horebe',icon:'💕',price:30,dur:45,spot:['mesa'],rates:{social:40,diversao:35,fome:30},anim:'talk',date:1,mood:['Encontro no nosso café',12,480,'paquerador']},
+      {id:'turno_mh',label:'Trabalhar no balcão (turno de 3h)',icon:'🧑‍🍳',price:0,dur:180,spot:['balcao'],rates:{diversao:-4,energia:-14,social:20},inside:1,done:s=>bizShift(s)}],staff:[]});
+  venueInit();MAP_PLACES.push(['☕','Cafeteria Monte Horebe',()=>[71.5,CMH.y1+2]]);try{$('#mapaL').innerHTML=MAP_PLACES.map((p,i)=>`<button data-i="${i}"><span>${p[0]}</span>${p[1]}</button>`).join('');}catch(e){}}
+/* barista contratado: vende sozinho todo fim de tarde */
+setInterval(()=>{try{if(!G||G.demo||!G.biz||!$('#title').hidden)return;const B=G.biz;if(!BIZ_LV[B.lvl].auto||B.lastAuto===dayN()||hourF()<18)return;B.lastAuto=dayN();
+  const ok=B.cafe>=2;if(ok)B.cafe-=2;const v=Math.round((260+B.fama*3)*(ok?1:.4));addMoney(v);B.caixa+=v;toast(`☕ O barista fechou o caixa do Monte Horebe: +${fmt(v)}${ok?'':' (faltou café!)'}`,ok?'good':'bad');save();}catch(e){}},3000);
+/* painel do negócio */
+(function(){const mn=$('#mnMis')||$('#mnAgenda');if(!mn)return;mn.insertAdjacentHTML('beforebegin','<button class="btn" id="mnMH">Monte Horebe <span>☕</span></button>');
+  document.body.insertAdjacentHTML('beforeend','<div id="mhP" hidden><div class="card"><h2 style="color:#2f5d3a">☕ Monte Horebe</h2><div id="mhB"></div><button class="btn" id="mhX" style="margin-top:12px;width:100%">Fechar</button></div></div>');
+  const st=document.createElement('style');st.textContent='#mhP{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;background:rgba(20,30,20,.4)}#mhP[hidden]{display:none}#mhP .card{text-align:left;background:#fbf7ef;border-radius:20px;padding:16px;max-width:400px;width:calc(100% - 32px);max-height:88vh;overflow:auto;box-shadow:0 12px 40px rgba(0,0,0,.25);border:3px solid #6b4a2f}#mhP h2{margin:0 0 4px}.mh-g{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}.mh-g div{background:#fff;border-radius:12px;padding:8px;border:1px solid #e4d9c4}#mhP .mh-g b{display:block;font-size:19px;color:#2f5d3a}.mh-g small{color:#6b4a2f}.mh-act{display:block;width:100%;text-align:left;border:0;background:#2f5d3a;color:#fff;border-radius:12px;padding:10px;margin-top:8px;font:inherit;cursor:pointer}.mh-act.brown{background:#6b4a2f}.mh-act:disabled{opacity:.45}.mh-act small{display:block;opacity:.85}';document.head.appendChild(st);
+  const render=()=>{const B=bizS(),L=BIZ_LV[B.lvl],N=BIZ_LV[B.lvl+1];
+    $('#mhB').innerHTML=`<small style="color:#6b4a2f">O café de Isabel e Nicolas · ${L.n}</small><div class="mh-g"><div><b>${B.cafe} kg</b><small>☕ café em grão</small></div><div><b>${B.milho}</b><small>🌽 espigas de milho</small></div><div><b>${B.ovos||0}</b><small>🥚 ovos</small></div><div><b>${Math.round(B.qual)}%</b><small>🟤 qualidade do café</small></div><div><b>${Math.round(B.fama)}</b><small>⭐ fama</small></div><div><b>${fmt(B.caixa)}</b><small>💰 faturado até hoje</small></div></div>
+      <small style="color:#555">Cada turno no balcão usa 3 kg de café e 2 espigas. Colha na Fazenda Monte Horebe e mexa o café no terreiro para melhorar a qualidade.</small>
+      ${N?`<button class="mh-act" id="mhUp" ${G.money<N.price?'disabled':''}>⬆️ ${N.n}<small>${fmt(N.price)} · ${N.auto?'o barista vende sozinho todo dia às 18h':'turnos rendem 50% mais'}</small></button>`:'<p style="color:#2f5d3a"><b>🏆 Cafeteria completa!</b></p>'}
+      <button class="mh-act brown" id="mhSell" ${B.cafe<11?'disabled':''}>📦 Vender 10 kg de café para a cooperativa<small>${fmt(Math.round(10*(18+B.qual/5)))}</small></button>
+      <button class="mh-act brown" id="mhGo">🗺️ Ir até a cafeteria</button><button class="mh-act brown" id="mhFarm">🌾 Ir até a fazenda</button>`;
+    const up=$('#mhUp');if(up)up.onclick=()=>{if(!spend(N.price))return;B.lvl++;SFX.wish();confetti();toast(`☕ Monte Horebe agora: ${BIZ_LV[B.lvl].n}!`,'love');try{achCount('mhup');}catch(_){}save();render();};
+    $('#mhSell').onclick=()=>{if(B.cafe<11)return;B.cafe-=10;const v=Math.round(10*(18+B.qual/5));addMoney(v);SFX.cash();toast(`📦 10 kg de café vendidos · +${fmt(v)}`,'good');save();render();};
+    $('#mhGo').onclick=()=>{$('#mhP').hidden=true;resumeFrom();const s=sel();if(s)queueVenue(s,'montehorebe','cafe_mh');};
+    $('#mhFarm').onclick=()=>{$('#mhP').hidden=true;resumeFrom();const s=sel();if(s)queueVenue(s,'fazenda','colher_cafe');};};
+  $('#mhX').onclick=()=>{$('#mhP').hidden=true;resumeFrom();};
+  $('#mnMH').onclick=()=>{$('#menu').hidden=true;pauseFor();render();$('#mhP').hidden=false;};})();
+{const _ser=serialize;serialize=function(){const s=_ser();if(!G||!G.biz)return s;return s.slice(0,-1)+',"biz":'+JSON.stringify(G.biz)+'}';};}
+{const _fs=fromSave;fromSave=function(d){const g=_fs(d);if(d&&d.biz)g.biz=d.biz;return g;};}
+ACH.splice(ACH.length-1,0,
+  {k:'colheita',i:'🌾',n:'Mãos na terra',d:'Colher na fazenda 5 vezes',c:'colheita',q:5,m:'Plantar e colher junto com você: o melhor fruto é a nossa história.'},
+  {k:'turnomh',i:'☕',n:'Abrimos as portas!',d:'Trabalhar o primeiro turno no Monte Horebe',c:'turnomh',q:1,big:1,m:'Monte Horebe: um sonho que começou num cafezinho e virou nosso.'},
+  {k:'mhup',i:'⬆️',n:'O café cresceu',d:'Melhorar a cafeteria',c:'mhup',q:1,m:'Cada passo do nosso sonho vale a pena porque é com você.'},
+  {k:'mh20k',i:'💰',n:'Negócio de família',d:'Faturar R$ 20.000 no Monte Horebe',c:'mh20k',q:1,m:'Juntos a gente faz tudo prosperar.'});
+/* ================= v75: viagens pela cidade não comem horas do jogo em velocidade alta ================= */
+function travelK(){const sp=G&&G.speed||1;if(!SPEEDS[sp])return 1;return Math.max(1,(SPEEDS[sp]/SPEEDS[1])/Math.min(2.2,MOVE[sp]/2.3));}
+{const _ur=updateRides;updateRides=function(dt){return _ur(dt*travelK()*1.35);};}
+{const _sm=simMv;simMv=function(s,mv,dtR){const r=_sm(s,mv,dtR);const c=s.cur;if(s.outside&&c&&c.stage==='owalk'&&!(s.vin&&VENUES[s.vin]&&VENUES[s.vin].indoor))return r*travelK()*1.25;return r;};}
 /* ================= v39: edição — o jogo da Isabel continua pessoal; jogos novos são para todo mundo ================= */
 var ED_PERSONAL=true;
 function PET_NAME(){return ED_PERSONAL===false?'Biscoito':'Luck';}

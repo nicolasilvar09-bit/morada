@@ -4935,7 +4935,7 @@ function showSyncBanner(r){let b=$('#syncBanner');if(!b){b=document.createElemen
   b.textContent='☁️ Mudou no outro aparelho · tocar para carregar';b.hidden=false;b.onclick=()=>{b.hidden=true;startFromSave(r,'☁️ Jogo atualizado da nuvem!');};}
 setInterval(()=>{if(!document.hidden)cloudCheck();},20000);
 /* ---- aviso de versão nova do jogo ---- */
-const APPV='v75';
+const APPV='v76';
 async function checkAppVersion(){try{const t=await fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'');const m=t.match(/const APPV='([^']+)'/);
   if(m&&m[1]!==APPV){let b=$('#verBanner');if(!b){b=document.createElement('button');b.id='verBanner';b.className='glass';document.body.appendChild(b);}
     b.textContent=`✨ Versão nova (${m[1]}) · tocar para atualizar`;b.hidden=false;b.onclick=()=>{try{if(G&&!G.demo)save();}catch(_){}const go=()=>location.replace(location.pathname+'?v='+m[1]+'-'+Date.now());if(cloudCode&&G&&!G.demo)cloudPush(true).finally(go);else go();};}}catch(_){}}
@@ -7254,6 +7254,42 @@ ACH.splice(ACH.length-1,0,
 function travelK(){const sp=G&&G.speed||1;if(!SPEEDS[sp])return 1;return Math.max(1,(SPEEDS[sp]/SPEEDS[1])/Math.min(2.2,MOVE[sp]/2.3));}
 {const _ur=updateRides;updateRides=function(dt){return _ur(dt*travelK()*1.35);};}
 {const _sm=simMv;simMv=function(s,mv,dtR){const r=_sm(s,mv,dtR);const c=s.cur;if(s.outside&&c&&c.stage==='owalk'&&!(s.vin&&VENUES[s.vin]&&VENUES[s.vin].indoor))return r*travelK()*1.25;return r;};}
+/* ================= v76: desfazer (↶) no Comprar e no Reformar ================= */
+const UNDO=[];let undoLast=0;
+const mapDump=m=>JSON.stringify([...m].map(([k,v])=>[k,v]));
+function lotSnap(){return{objects:JSON.stringify(G.objects),walls:mapDump(G.walls),floor:JSON.stringify(G.floor),wcol:JSON.stringify(G.wcol),
+  up:JSON.stringify((G.up||[]).map(u=>({walls:[...u.walls],floor:u.floor,wcol:u.wcol}))),money:G.money,
+  misc:JSON.stringify({found:G.found||0,roofStyle:G.roofStyle,roofColor:G.roofColor,extCol:G.extCol,extPat:G.extPat})};}
+function snapKey(s){return s.objects+s.walls+s.floor+s.wcol+s.up+s.misc;}
+function pushUndo(){if(!G||G.demo||!(mode==='build'||mode==='buy'))return;const now=performance.now();if(now-undoLast<350)return;undoLast=now;
+  const s=lotSnap();const top=UNDO[UNDO.length-1];if(top&&snapKey(top)===snapKey(s)&&top.money===s.money)return;UNDO.push(s);if(UNDO.length>30)UNDO.shift();undoBtn();}
+function restoreSnap(s){const objs=JSON.parse(s.objects),byId=new Map(G.objects.map(o=>[o.id,o])),keep=new Set();
+  const next=objs.map(o=>{const cur=byId.get(o.id);if(cur){for(const k of Object.keys(cur))if(!(k in o))delete cur[k];Object.assign(cur,o);keep.add(cur);return cur;}return o;});
+  for(const o of G.objects)if(!keep.has(o))for(const sm of G.sims){const c=sm.cur;if(c&&(c.o===o||c.obj===o||(sm.seat&&sm.seat.o===o)))try{cancelCur(sm);}catch(_){}}
+  G.objects.length=0;G.objects.push(...next);
+  G.walls.clear();for(const [k,v] of JSON.parse(s.walls))G.walls.set(k,v);
+  const F=JSON.parse(s.floor),C=JSON.parse(s.wcol);for(let i=0;i<F.length;i++){G.floor[i]=F[i];G.wcol[i]=C[i];}
+  const U=JSON.parse(s.up);U.forEach((u,i)=>{const t=G.up[i];if(!t)return;t.walls.clear();for(const [k,v] of u.walls)t.walls.set(k,v);for(let j=0;j<u.floor.length;j++){t.floor[j]=u.floor[j];t.wcol[j]=u.wcol[j];}});
+  Object.assign(G,JSON.parse(s.misc));G.money=s.money;
+  ghost=null;selObj=null;try{$('#placeBar').hidden=true;}catch(_){}bAnchor=null;bEnd=null;
+  for(const sm of G.sims)if(sm.seat&&!G.objects.includes(sm.seat.o)){sm.seat=null;sm.pose='stand';}
+  try{FREG=null;}catch(_){}dirtyLayer();roofVer++;rebuildOcc();computeRegions();repathAll();for(const o of G.objects)if(DEF[o.type]&&DEF[o.type].stairs)try{stairPlaced(o);}catch(_){}
+  hudSig='';save();try{buildCatalog();}catch(_){}try{if(mode==='build')buildBuildPanel();}catch(_){}}
+function doUndo(){if(!UNDO.length){toast('Nada para desfazer.');return;}const cur=lotSnap(),ck=snapKey(cur);
+  let s=UNDO.pop();while(s&&snapKey(s)===ck&&s.money===cur.money)s=UNDO.pop();
+  if(!s){toast('Nada para desfazer.');undoBtn();return;}restoreSnap(s);SFX.click();toast('↶ Desfeito!','good');undoLast=performance.now();undoBtn();}
+/* tira a "foto" do terreno antes de cada toque que pode mudar algo */
+document.addEventListener('pointerdown',e=>{if(!G||!(mode==='build'||mode==='buy'))return;if(e.target.closest&&e.target.closest('#undoB'))return;
+  if(e.target===cv||(e.target.closest&&e.target.closest('#placeBar,#buildPanel,#bpOpts,#bpTools')))pushUndo();},true);
+/* botão */
+(function(){const mb=$('#mBuild');if(!mb)return;mb.insertAdjacentHTML('afterend','<button id="undoB" aria-label="Desfazer" title="Desfazer (Ctrl+Z)" hidden>↶ Desfazer</button>');
+  const st=document.createElement('style');st.textContent='#undoB{background:#fff6ef;color:#2b2b33;font-weight:800}#undoB:disabled{opacity:.4}#undoB[hidden]{display:none}';document.head.appendChild(st);
+  $('#undoB').onclick=e=>{e.stopPropagation();doUndo();};})();
+function undoBtn(){const b=$('#undoB');if(!b)return;const on=!!G&&!G.demo&&(mode==='build'||mode==='buy');b.hidden=!on;b.disabled=!UNDO.length;}
+setInterval(undoBtn,400);
+addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&(e.key==='z'||e.key==='Z')&&G&&(mode==='build'||mode==='buy')){e.preventDefault();doUndo();}});
+/* ao sair do modo de construção a lista recomeça */
+{const _sm=setMode;setMode=function(m){if(m==='live')UNDO.length=0;return _sm.apply(this,arguments);};}
 /* ================= v39: edição — o jogo da Isabel continua pessoal; jogos novos são para todo mundo ================= */
 var ED_PERSONAL=true;
 function PET_NAME(){return ED_PERSONAL===false?'Biscoito':'Luck';}

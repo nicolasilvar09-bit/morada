@@ -4935,7 +4935,7 @@ function showSyncBanner(r){let b=$('#syncBanner');if(!b){b=document.createElemen
   b.textContent='☁️ Mudou no outro aparelho · tocar para carregar';b.hidden=false;b.onclick=()=>{b.hidden=true;startFromSave(r,'☁️ Jogo atualizado da nuvem!');};}
 setInterval(()=>{if(!document.hidden)cloudCheck();},20000);
 /* ---- aviso de versão nova do jogo ---- */
-const APPV='v76';
+const APPV='v78';
 async function checkAppVersion(){try{const t=await fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'');const m=t.match(/const APPV='([^']+)'/);
   if(m&&m[1]!==APPV){let b=$('#verBanner');if(!b){b=document.createElement('button');b.id='verBanner';b.className='glass';document.body.appendChild(b);}
     b.textContent=`✨ Versão nova (${m[1]}) · tocar para atualizar`;b.hidden=false;b.onclick=()=>{try{if(G&&!G.demo)save();}catch(_){}const go=()=>location.replace(location.pathname+'?v='+m[1]+'-'+Date.now());if(cloudCode&&G&&!G.demo)cloudPush(true).finally(go);else go();};}}catch(_){}}
@@ -7290,6 +7290,23 @@ setInterval(undoBtn,400);
 addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&(e.key==='z'||e.key==='Z')&&G&&(mode==='build'||mode==='buy')){e.preventDefault();doUndo();}});
 /* ao sair do modo de construção a lista recomeça */
 {const _sm=setMode;setMode=function(m){if(m==='live')UNDO.length=0;return _sm.apply(this,arguments);};}
+/* ================= v77: janelas novas cabem no celular deitado ================= */
+(function(){const st=document.createElement('style');st.textContent=`@media (max-height:520px){
+#wev .card,#mhP .card,#missoes .card{max-height:94vh;padding:10px 12px;border-radius:16px}
+#wevQ{margin:6px 0;font-size:13px}#wevO button{padding:7px 10px;margin-bottom:5px}#wevO b{font-size:13px}.wev-t span{font-size:22px!important}
+#mhP h2{font-size:17px}.mh-g{grid-template-columns:repeat(3,1fr);gap:5px;margin:6px 0}.mh-g div{padding:5px 7px}#mhP .mh-g b{font-size:15px}.mh-act{padding:7px 10px;margin-top:5px}
+#mhB{display:block}#mhP .mh-acts{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.mis-it{padding:6px 8px;margin-bottom:5px}.mis-it span{font-size:20px}#missoes h2{font-size:17px;margin-bottom:6px}}`;document.head.appendChild(st);})();
+/* ================= v78: iPhone com Dynamic Island deitado — nada fica atrás da ilha nem das bordas arredondadas ================= */
+(function(){const st=document.createElement('style');st.textContent=`
+:root{--sal:env(safe-area-inset-left,0px);--sar:env(safe-area-inset-right,0px);--sab:env(safe-area-inset-bottom,0px)}
+#topL{left:calc(12px + var(--sal))!important;max-width:calc(100vw - 250px - var(--sal) - var(--sar))!important}
+#topR{right:calc(12px + var(--sar))!important}
+#simPanel{left:calc(12px + var(--sal))!important;width:min(370px,calc(100vw - 24px - var(--sal) - var(--sar)))!important}
+#catalog,#buildPanel{left:calc(12px + var(--sal))!important;right:calc(12px + var(--sar))!important}
+#placeBar{max-width:calc(100vw - 24px - var(--sal) - var(--sar))!important}
+#menu .card,#mapa .card,#agenda .card,#missoes .card,#mhP .card,#wev .card{max-width:min(var(--mw,420px),calc(100vw - 32px - var(--sal) - var(--sar)))}
+@media (orientation:landscape){#simPanel,#catalog,#buildPanel{bottom:calc(10px + var(--sab))!important}}`;document.head.appendChild(st);})();
 /* ================= v39: edição — o jogo da Isabel continua pessoal; jogos novos são para todo mundo ================= */
 var ED_PERSONAL=true;
 function PET_NAME(){return ED_PERSONAL===false?'Biscoito':'Luck';}

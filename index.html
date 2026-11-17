@@ -4935,7 +4935,7 @@ function showSyncBanner(r){let b=$('#syncBanner');if(!b){b=document.createElemen
   b.textContent='☁️ Mudou no outro aparelho · tocar para carregar';b.hidden=false;b.onclick=()=>{b.hidden=true;startFromSave(r,'☁️ Jogo atualizado da nuvem!');};}
 setInterval(()=>{if(!document.hidden)cloudCheck();},20000);
 /* ---- aviso de versão nova do jogo ---- */
-const APPV='v80';
+const APPV='v81';
 async function checkAppVersion(){try{const t=await fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'');const m=t.match(/const APPV='([^']+)'/);
   if(m&&m[1]!==APPV){let b=$('#verBanner');if(!b){b=document.createElement('button');b.id='verBanner';b.className='glass';document.body.appendChild(b);}
     b.textContent=`✨ Versão nova (${m[1]}) · tocar para atualizar`;b.hidden=false;b.onclick=()=>{try{if(G&&!G.demo)save();}catch(_){}const go=()=>location.replace(location.pathname+'?v='+m[1]+'-'+Date.now());if(cloudCode&&G&&!G.demo)cloudPush(true).finally(go);else go();};}}catch(_){}}
@@ -7407,6 +7407,68 @@ function frameHouse(){if(!G||G.demo||(mode!=='buy'&&mode!=='build'))return;
 /* ---------- 5. nuvem: conta anônima não fica tentando a cada 10 s quando falha; ao voltar ao app, reenvia o que não subiu ---------- */
 {const _a=authAnon;authAnon=function(){if(Date.now()<(AUTH.backoff||0))return Promise.reject(new Error('aguardando'));return _a().catch(e=>{AUTH.backoff=Date.now()+5*60000;throw e;});};}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&G&&!G.demo&&AUTH.S&&AUTH.err)setTimeout(()=>acctPut(false),1500);});
+/* ================= v81: medidor de desempenho, modo "só a casa" e primeiros passos guiados ================= */
+/* ---------- 1. medidor de desempenho (código "fps" no menu ☰ → Códigos) ---------- */
+const FPSM={on:false,el:null,rd:[],fr:[],last:0,acc:0};
+{const _r=render;render=function(){if(!FPSM.on)return _r.apply(this,arguments);const t=performance.now();try{return _r.apply(this,arguments);}finally{FPSM.rd.push(performance.now()-t);}};}
+function perfLoop(ts){if(!FPSM.on)return;if(FPSM.last){const d=ts-FPSM.last;FPSM.fr.push(d);FPSM.acc+=d;}FPSM.last=ts;
+  if(FPSM.acc>=1000&&FPSM.fr.length){const fr=FPSM.fr.slice().sort((a,b)=>a-b),rd=FPSM.rd.slice().sort((a,b)=>a-b),avg=FPSM.acc/fr.length,med=a=>a.length?a[Math.floor(a.length/2)]:0;
+    FPSM.el.textContent=`${Math.round(1000/avg)} FPS · quadro ${med(fr).toFixed(0)} ms (pior ${fr[fr.length-1].toFixed(0)}) · desenho ${med(rd).toFixed(1)} ms · ${W}×${H} @${DPR}x`;
+    FPSM.el.classList.toggle('bad',avg>34);FPSM.fr=[];FPSM.rd=[];FPSM.acc=0;}
+  requestAnimationFrame(perfLoop);}
+function perfSet(on){FPSM.on=on;try{localStorage.setItem('hv_fps',on?'1':'0');}catch(_){}
+  if(!FPSM.el){const st=document.createElement('style');st.textContent='#perfM{position:fixed;z-index:60;left:50%;transform:translateX(-50%);top:calc(2px + env(safe-area-inset-top,0px));background:rgba(22,34,70,.82);color:#fff;font:700 11px/1.2 ui-monospace,Menlo,monospace;padding:4px 9px;border-radius:9px;pointer-events:none;white-space:nowrap}#perfM.bad{background:rgba(200,60,60,.9)}';document.head.appendChild(st);
+    FPSM.el=document.createElement('div');FPSM.el.id='perfM';document.body.appendChild(FPSM.el);}
+  FPSM.el.hidden=!on;FPSM.el.textContent='medindo…';FPSM.last=0;FPSM.fr=[];FPSM.rd=[];FPSM.acc=0;if(on)requestAnimationFrame(perfLoop);}
+CHEATS.fps=['Medidor de desempenho ligado/desligado (digite de novo para desligar)',()=>perfSet(!FPSM.on)];
+try{if(localStorage.getItem('hv_fps')==='1')perfSet(true);}catch(_){}
+/* ---------- 2. modo "só a casa": em Comprar/Reformar, esconde a cidade em volta do terreno ---------- */
+let DECO=false;try{DECO=localStorage.getItem('hv_deco')==='1';}catch(_){}
+function decoHull(pts){pts=pts.slice().sort((a,b)=>a[0]-b[0]||a[1]-b[1]);const cr=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]);const lo=[],up=[];
+  for(const p of pts){while(lo.length>1&&cr(lo[lo.length-2],lo[lo.length-1],p)<=0)lo.pop();lo.push(p);}
+  for(let i=pts.length-1;i>=0;i--){const p=pts[i];while(up.length>1&&cr(up[up.length-2],up[up.length-1],p)<=0)up.pop();up.push(p);}
+  return lo.slice(0,-1).concat(up.slice(0,-1));}
+{const _deo=drawExtraOverlay;drawExtraOverlay=function(c){_deo(c);if(!DECO||!G||G.demo||(mode!=='buy'&&mode!=='build'))return;
+  const zt=(DLV()+1)*HALL+1.4,pts=[];for(const [x,y] of [[LX0,LY0],[LX1,LY0],[LX1,LY1],[LX0,LY1]])for(const z of [0,zt])pts.push(P(x,y,z));const h=decoHull(pts);
+  const path=()=>{c.moveTo(h[0][0],h[0][1]);for(let i=1;i<h.length;i++)c.lineTo(h[i][0],h[i][1]);c.closePath();};
+  c.save();c.beginPath();c.rect(-1e5,-1e5,2e5,2e5);path();c.fillStyle='rgba(236,242,240,.96)';c.fill('evenodd');
+  c.lineJoin='round';c.strokeStyle='rgba(236,242,240,.16)';for(let i=5;i>=1;i--){c.lineWidth=i*7/cam.z;c.beginPath();path();c.stroke();}
+  c.restore();};}
+function decoBtn(){const b=$('#mDeco');if(!b)return;b.hidden=!(mode==='buy'||mode==='build');b.classList.toggle('on',DECO);}
+{const mb=$('#mBuild');if(mb){mb.insertAdjacentHTML('afterend','<button id="mDeco" title="Só a casa: esconde a cidade em volta" aria-label="Só a casa" hidden>🏡</button>');
+  $('#mDeco').onclick=()=>{DECO=!DECO;try{localStorage.setItem('hv_deco',DECO?'1':'0');}catch(_){}decoBtn();SFX.click();toast(DECO?'🏡 Só a casa: a cidade fica escondida enquanto você decora.':'Cidade de volta.','good');if(DECO)setTimeout(()=>{try{frameHouse();}catch(_){}},30);};}
+  const _sm=setMode;setMode=function(){const r=_sm.apply(this,arguments);decoBtn();return r;};}
+/* ---------- 3. primeiros passos: lista curta que guia os primeiros dias (só em jogos novos) ---------- */
+const FP_STEPS=[
+  {k:'act:cozinhar',i:'🍳',t:'Cozinhar uma refeição',h:'Toque no fogão e escolha “Cozinhar uma refeição”.',r:150},
+  {k:'soc:',i:'💬',t:'Conversar ou dar carinho',h:'Toque no outro morador e escolha uma interação.',r:120},
+  {k:'buy',i:'🛋️',t:'Comprar um móvel novo',h:'Toque em Comprar, escolha um móvel e arraste até o lugar.',r:200},
+  {k:'fotoManual',i:'📸',t:'Tirar uma foto para o álbum',h:'Toque no botão 📷 lá em cima.',r:120},
+  {p:()=>household().some(s=>s.job),i:'💼',t:'Arrumar um emprego',h:'No painel do morador, abra a aba Carreira.',r:250},
+  {k:'venue:',i:'☕',t:'Sair para passear',h:'Toque em “Sair de casa” e escolha um lugar da cidade.',r:200},
+  {p:()=>(G.misTot||0)>=1,i:'🎯',t:'Cumprir uma missão do dia',h:'Veja as missões no menu ☰ → Missões do dia.',r:200},
+  {k:'pet:',i:'🐾',t:'Brincar com o bichinho',h:'Toque no bichinho e escolha brincar ou fazer carinho. Sem bichinho? Adote em Comprar → Pets.',r:150}];
+const FP_BONUS=500;let fpOpen=false,fpSig='';
+function fpDone(i){const F=G.fp;if(!F||F.d.includes(i))return;F.d.push(i);const S=FP_STEPS[i];addMoney(S.r);SFX.cash();toast(`🌱 Primeiro passo: ${S.i} ${S.t} · +${fmt(S.r)}`,'good');
+  if(F.d.length>=FP_STEPS.length&&!F.fin){F.fin=1;addMoney(FP_BONUS);setTimeout(()=>{SFX.wish();toast(`🌟 Primeiros passos completos! Vocês já sabem tudo de Heartville · +${fmt(FP_BONUS)}`,'love');},1300);}
+  save();fpSig='';fpRender();}
+function fpEvent(k){if(!G||G.demo||!G.fp||G.fp.fin)return;FP_STEPS.forEach((S,i)=>{if(S.k&&!G.fp.d.includes(i)&&(S.k.endsWith(':')?k.startsWith(S.k):k===S.k))fpDone(i);});}
+{const _cw=checkWish;checkWish=function(s,k){try{if(G&&!G.demo&&s&&!s.visitor&&typeof k==='string')fpEvent(k);}catch(_){}return _cw.apply(this,arguments);};}
+{const _st=snapTo;snapTo=function(f,cap,auto){const r=_st.apply(this,arguments);if(!auto)Promise.resolve(r).then(()=>{try{fpEvent('fotoManual');}catch(_){}}).catch(()=>{});return r;};}
+(function(){const st=document.createElement('style');st.textContent=`#fpCard{pointer-events:auto;background:rgba(255,255,255,.93);border-radius:14px;box-shadow:0 6px 18px rgba(22,34,70,.16);padding:6px 10px;max-width:250px;font:700 12px/1.3 var(--display);color:var(--ink);cursor:pointer;border:2px solid rgba(67,190,134,.35)}
+#fpCard .fp-h{display:flex;gap:6px;align-items:center;color:#2f8f62;font-weight:900}#fpCard .fp-h b{margin-left:auto;color:var(--ink2)}#fpCard .fp-c{margin-top:2px}#fpCard .fp-c small{color:#2f8f62;font-weight:900}
+#fpCard .fp-l{margin-top:6px;display:flex;flex-direction:column;gap:5px;max-height:46vh;overflow:auto}#fpCard .fp-l div{display:flex;gap:6px}#fpCard .fp-l div.ok{opacity:.5}#fpCard .fp-l small{display:block;color:var(--ink2);font-weight:700}
+#fpCard .fp-bar{height:4px;border-radius:3px;background:#e4ece8;margin-top:5px;overflow:hidden}#fpCard .fp-bar i{display:block;height:100%;background:#43be86}`;document.head.appendChild(st);
+  const tl=$('#topL');if(tl)tl.insertAdjacentHTML('beforeend','<div id="fpCard" hidden></div>');const c=$('#fpCard');if(c)c.onclick=()=>{fpOpen=!fpOpen;fpSig='';fpRender();SFX.click();};})();
+function fpRender(){const c=$('#fpCard');if(!c)return;const F=G&&!G.demo&&G.fp;const show=!!F&&!F.fin&&mode==='live'&&!(typeof TUT!=='undefined'&&TUT.on)&&$('#title').hidden;
+  c.hidden=!show;if(!show)return;const n=F.d.length,cur=FP_STEPS.findIndex((S,i)=>!F.d.includes(i)),S=FP_STEPS[cur];const sig=n+'|'+cur+'|'+fpOpen;if(sig===fpSig)return;fpSig=sig;
+  c.innerHTML=`<div class="fp-h">🌱 Primeiros passos <b>${n}/${FP_STEPS.length} ${fpOpen?'▴':'▾'}</b></div>`+(fpOpen?`<div class="fp-l">${FP_STEPS.map((T,i)=>`<div class="${F.d.includes(i)?'ok':''}"><span>${F.d.includes(i)?'✅':T.i}</span><span>${T.t} · +${fmt(T.r)}<small>${T.h}</small></span></div>`).join('')}<small style="color:var(--ink2)">Complete tudo e ganhe mais ${fmt(FP_BONUS)}.</small></div>`
+    :`<div class="fp-c">${S.i} ${S.t} <small>+${fmt(S.r)}</small></div>`)+`<div class="fp-bar"><i style="width:${n/FP_STEPS.length*100}%"></i></div>`;}
+setInterval(()=>{try{if(G&&!G.demo&&G.fp&&!G.fp.fin)FP_STEPS.forEach((S,i)=>{if(S.p&&!G.fp.d.includes(i)&&S.p())fpDone(i);});fpRender();}catch(_){}},1000);
+{const _sm=setMode;setMode=function(){const r=_sm.apply(this,arguments);fpSig='';try{fpRender();}catch(_){}return r;};}
+{const g=$('#casGo'),_go=g.onclick;g.onclick=function(e){const isNew=casMode==='new';const r=_go.call(this,e);if(isNew&&G&&!G.demo){G.fp={d:[]};fpSig='';save();}return r;};}
+{const _ser=serialize;serialize=function(){const s=_ser();if(!G||!G.fp)return s;return s.slice(0,-1)+',"fp":'+JSON.stringify(G.fp)+'}';};}
+{const _fs=fromSave;fromSave=function(d){const g=_fs(d);if(d&&d.fp)g.fp=d.fp;return g;};}
 /* casal da tela inicial (demo) usa os nomes da edição pública */
 if(G&&G.demo&&!ED_PERSONAL)G.sims.forEach((s,i)=>{if(DEFAULT_SIMS[i]&&!s.visitor)s.name=DEFAULT_SIMS[i].name;});
 </script>

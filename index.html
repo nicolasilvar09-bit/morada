@@ -4935,7 +4935,7 @@ function showSyncBanner(r){let b=$('#syncBanner');if(!b){b=document.createElemen
   b.textContent='☁️ Mudou no outro aparelho · tocar para carregar';b.hidden=false;b.onclick=()=>{b.hidden=true;startFromSave(r,'☁️ Jogo atualizado da nuvem!');};}
 setInterval(()=>{if(!document.hidden)cloudCheck();},20000);
 /* ---- aviso de versão nova do jogo ---- */
-const APPV='v79';
+const APPV='v80';
 async function checkAppVersion(){try{const t=await fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'');const m=t.match(/const APPV='([^']+)'/);
   if(m&&m[1]!==APPV){let b=$('#verBanner');if(!b){b=document.createElement('button');b.id='verBanner';b.className='glass';document.body.appendChild(b);}
     b.textContent=`✨ Versão nova (${m[1]}) · tocar para atualizar`;b.hidden=false;b.onclick=()=>{try{if(G&&!G.demo)save();}catch(_){}const go=()=>location.replace(location.pathname+'?v='+m[1]+'-'+Date.now());if(cloudCode&&G&&!G.demo)cloudPush(true).finally(go);else go();};}}catch(_){}}
@@ -7339,6 +7339,74 @@ function applyEdition(personal){ED_PERSONAL=!!personal;const S=personal?ED.P:ED.
   return _go.call(this,e);};
   const _up=updCloudMenu;updCloudMenu=function(){_up();const m=$('#mnCloud');if(m)m.hidden=!cloudCode;const b=$('#btnCloud');if(b){b.textContent='☁️ Tenho um código antigo do casal';b.style.fontSize='13px';}};
   updCloudMenu();}
+/* ================= v80: construir com o dedo — toque tolerante, tocar de novo troca o móvel, arrastar móvel novo, câmera enquadra a casa ================= */
+/* ---------- 1. tocar perto do móvel já seleciona (o dedo é maior que o móvel) ---------- */
+let PTYPE='mouse',LASTTAP=null;
+function segDist(px,py,a,b){const dx=b[0]-a[0],dy=b[1]-a[1],L=dx*dx+dy*dy;let t=L?((px-a[0])*dx+(py-a[1])*dy)/L:0;t=Math.max(0,Math.min(1,t));return Math.hypot(px-(a[0]+t*dx),py-(a[1]+t*dy));}
+function polyDist(px,py,pts){if(pointInPoly(px,py,pts))return 0;let m=1e9;for(let i=0,j=pts.length-1;i<pts.length;j=i++)m=Math.min(m,segDist(px,py,pts[j],pts[i]));return m;}
+function hitObjsNear(wx,wy,tol){const out=[];
+  for(let i=lastList.length-1;i>=0;i--){const it=lastList[i];if(it.upf||!it.o||(it.o.l||0)!==viewL)continue;if(out.some(c=>c.o===it.o))continue;
+    const [x0,y0,z0,x1,y1,z1]=vbox(it.b);let d=1e9;
+    for(const f of [[[x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1]],[[x1,y0,z0],[x1,y1,z0],[x1,y1,z1],[x1,y0,z1]],[[x0,y1,z0],[x1,y1,z0],[x1,y1,z1],[x0,y1,z1]]])d=Math.min(d,polyDist(wx,wy,f.map(p=>P0(p[0],p[1],p[2]))));
+    if(d<=tol)out.push({o:it.o,d,ord:i});}
+  return out.sort((a,b)=>(a.d-b.d)||(b.ord-a.ord));}
+const touchTol=()=>(PTYPE==='mouse'?5:24)/cam.z;
+{const _h=hitObj;hitObj=function(wx,wy){const r=_h(wx,wy);if(r||!G||G.demo)return r;try{const c=hitObjsNear(wx,wy,touchTol());return c.length?c[0].o:null;}catch(_){return null;}};}
+/* ---------- 2. tocar de novo no mesmo lugar troca para o móvel de baixo/ao lado (ex.: cafeteira → bancada) ---------- */
+{const _c=click;click=function(x,y,pt){PTYPE=pt||'mouse';
+  if(G&&!G.demo&&mode==='buy'&&!ghost&&$('#pie').hidden){const wx=(x-cam.x)/cam.z,wy=(y-cam.y)/cam.z,near=LASTTAP&&Math.hypot(x-LASTTAP.x,y-LASTTAP.y)<18&&Date.now()-LASTTAP.t<6000;LASTTAP={x,y,t:Date.now()};
+    if(selObj&&near){const c=hitObjsNear(wx,wy,touchTol());if(c.length>1){const i=c.findIndex(q=>q.o===selObj);selObj=c[(i+1)%c.length].o;showPlaceBar();SFX.click();return;}}}
+  return _c.apply(this,arguments);};}
+/* ---------- 3. arrastar: área de pegar maior no toque, e móvel novo (ainda não comprado) também arrasta ---------- */
+buyDragStart=function(e){if(mode!=='buy'||!G||G.demo)return false;PTYPE=e.pointerType||'mouse';const wx=(e.clientX-cam.x)/cam.z,wy=(e.clientY-cam.y)/cam.z;
+  const [gx,gy]=s2g(e.clientX,e.clientY,LZ());let o=null;
+  if(ghost){const [fw,fd]=fp(ghost),pad=PTYPE==='mouse'?.3:Math.max(.3,26/(32*cam.z));if(!(gx>=ghost.x-pad&&gx<=ghost.x+fw+pad&&gy>=ghost.y-pad&&gy<=ghost.y+fd+pad))return false;
+    o=ghost.moving||ghost;drag.newGhost=!ghost.moving;}
+  else{o=hitObj(wx,wy);if(!o||DEF[o.type].fixed)return false;}
+  drag.obj=o;drag.off=[(ghost?ghost.x:o.x)-gx,(ghost?ghost.y:o.y)-gy];return true;};
+buyDragMove=function(e){const d=drag;if(!d||!d.obj)return false;const dx=e.clientX-d.x,dy=e.clientY-d.y;
+  if(!d.moving){if(Math.hypot(dx,dy)<9)return true;
+    if(!d.newGhost&&!(ghost&&ghost.moving===d.obj)){if(inUse(d.obj)){toast('Alguém está usando isso agora.','bad');d.obj=null;return true;}ghost={type:d.obj.type,x:d.obj.x,y:d.obj.y,rot:d.obj.rot,color:d.obj.color,moving:d.obj,locked:true};selObj=null;}
+    d.moving=true;d.moved=true;closePie();$('#placeBar').hidden=true;}
+  if(!ghost)return true;const [gx,gy]=s2g(e.clientX,e.clientY,LZ());ghost.x=Math.round(gx+d.off[0]);ghost.y=Math.round(gy+d.off[1]);return true;};
+{const _e=buyDragEnd;buyDragEnd=function(){const d=drag;if(d&&d.newGhost&&ghost&&!ghost.moving){ghost.locked=true;showPlaceBar();
+    if(!canPlace(ghost.type,ghost.x,ghost.y,ghost.rot,null,viewL)){toast('Não cabe aí. Arraste para um espaço livre.','bad');SFX.bad();}return true;}
+  return _e.apply(this,arguments);};}
+/* ---------- 4. ao entrar em Comprar/Reformar, a câmera enquadra a casa no espaço livre da tela ---------- */
+let camTween=null;
+function camAnim(tz,tx,ty,ms){cancelAnimationFrame(camTween);const z0=cam.z,x0=cam.x,y0=cam.y,t0=performance.now();
+  const st=()=>{const k=Math.min(1,(performance.now()-t0)/ms),e=1-Math.pow(1-k,3);cam.z=z0+(tz-z0)*e;cam.x=x0+(tx-x0)*e;cam.y=y0+(ty-y0)*e;if(k<1)camTween=requestAnimationFrame(st);};camTween=requestAnimationFrame(st);}
+function frameHouse(){if(!G||G.demo||(mode!=='buy'&&mode!=='build'))return;
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;const F=FL(viewL);
+  const grow=(x,y)=>{x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x+1);y1=Math.max(y1,y+1);};
+  for(let y=LY0;y<LY1;y++)for(let x=LX0;x<LX1;x++)if(isIndoor(x,y,viewL))grow(x,y);
+  if(x0>x1)for(let y=LY0;y<LY1;y++)for(let x=LX0;x<LX1;x++)if(F[TI(x,y)])grow(x,y);
+  if(x0>x1){x0=LX0;y0=LY0;x1=LX1;y1=LY1;}
+  x0=Math.max(LX0,x0-.5);y0=Math.max(LY0,y0-.5);x1=Math.min(LX1,x1+.5);y1=Math.min(LY1,y1+.5);
+  const zb=viewL*HALL,pts=[];for(const [x,y] of [[x0,y0],[x1,y0],[x1,y1],[x0,y1]])for(const z of [zb,zb+HALL*.9])pts.push(P(x,y,z));
+  const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]),bw=Math.max(...xs)-Math.min(...xs),bh=Math.max(...ys)-Math.min(...ys);
+  const pan=$(mode==='buy'?'#catalog':'#buildPanel'),pr=pan&&!pan.hidden?pan.getBoundingClientRect():null;
+  const top=(H<500?58:96),bot=pr&&pr.top>H*.35?pr.top-10:H-10,lft=12,rgt=W-12;if(bot-top<80)return;
+  const tz=clamp(Math.min((rgt-lft)/bw,(bot-top)/bh),.3,1.3);
+  const cx=(Math.max(...xs)+Math.min(...xs))/2,cy=(Math.max(...ys)+Math.min(...ys))/2;
+  const sx=cx*cam.z+cam.x,sy=cy*cam.z+cam.y,off=sx<lft||sx>rgt||sy<top||sy>bot;
+  if(cam.z>=tz*.92&&!off)return;
+  const z=Math.max(tz,Math.min(cam.z,1.3));camAnim(z,(lft+rgt)/2-cx*z,(top+bot)/2-cy*z,380);}
+{const _sm=setMode;setMode=function(m){const was=mode;const r=_sm.apply(this,arguments);if((m==='buy'||m==='build')&&was!==m)setTimeout(()=>{try{frameHouse();}catch(e){console.warn(e);}},60);return r;};}
+{const _sv=setViewLevel;setViewLevel=function(l,quiet){const r=_sv.apply(this,arguments);if(mode==='buy'||mode==='build')setTimeout(()=>{try{frameHouse();}catch(_){}},60);return r;};}
+/* ---------- 4b. celular deitado: o catálogo recolhe quando você toca na casa (sobra espaço para ver e acertar os móveis) ---------- */
+{const st=document.createElement('style');st.textContent='body.catmin #catalog .cat-items{display:none}body.catmin #catalog .cat-tabs{padding-bottom:0}#catMin{flex:0 0 auto;margin-left:auto;min-width:40px;font-weight:900}';document.head.appendChild(st);
+  const small=()=>H<500||W<640;
+  const setMin=v=>{if(document.body.classList.contains('catmin')===v)return;document.body.classList.toggle('catmin',v);const b=$('#catMin');if(b)b.textContent=v?'▴ Catálogo':'▾';if(v)setTimeout(()=>{try{frameHouse();}catch(_){}},40);};
+  const _bc=buildCatalog;buildCatalog=function(){const r=_bc.apply(this,arguments);const t=$('#catTabs');if(t&&!$('#catMin')){t.insertAdjacentHTML('beforeend','<button id="catMin" aria-label="Recolher catálogo"></button>');}const b=$('#catMin');if(b){b.textContent=document.body.classList.contains('catmin')?'▴ Catálogo':'▾';b.hidden=!small();}return r;};
+  $('#catTabs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.id==='catMin'){e.stopPropagation();setMin(!document.body.classList.contains('catmin'));SFX.click();}else setMin(false);},true);
+  cv.addEventListener('pointerdown',()=>{if(mode==='buy'&&G&&!G.demo&&small()&&!ghost)setMin(true);});
+  const _sm2=setMode;setMode=function(m){if(m!=='buy')document.body.classList.remove('catmin');return _sm2.apply(this,arguments);};}
+/* ---------- 4c. celular deitado: menos avisos empilhados em cima da casa enquanto você constrói ---------- */
+{const _t=toast;toast=function(m,k){_t(m,k);if(innerHeight<=500){const box=$('#toasts');const max=(mode==='buy'||mode==='build')?1:2;while(box.children.length>max)box.firstChild.remove();}};}
+/* ---------- 5. nuvem: conta anônima não fica tentando a cada 10 s quando falha; ao voltar ao app, reenvia o que não subiu ---------- */
+{const _a=authAnon;authAnon=function(){if(Date.now()<(AUTH.backoff||0))return Promise.reject(new Error('aguardando'));return _a().catch(e=>{AUTH.backoff=Date.now()+5*60000;throw e;});};}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&G&&!G.demo&&AUTH.S&&AUTH.err)setTimeout(()=>acctPut(false),1500);});
 /* casal da tela inicial (demo) usa os nomes da edição pública */
 if(G&&G.demo&&!ED_PERSONAL)G.sims.forEach((s,i)=>{if(DEFAULT_SIMS[i]&&!s.visitor)s.name=DEFAULT_SIMS[i].name;});
 </script>

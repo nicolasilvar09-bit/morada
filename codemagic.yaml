@@ -22,7 +22,7 @@ workflows:
         script: |
           set -e
           mkdir -p www assets
-          cp index.html www/index.html
+          cp index.html manifest.json sw.js privacy.html favicon.png icone.png apple-touch-icon.png www/
           grep -c "APPV=" www/index.html
           cp icon-1024.png assets/icon-only.png
           cp splash.png assets/splash.png

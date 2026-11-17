@@ -4935,7 +4935,7 @@ function showSyncBanner(r){let b=$('#syncBanner');if(!b){b=document.createElemen
   b.textContent='☁️ Mudou no outro aparelho · tocar para carregar';b.hidden=false;b.onclick=()=>{b.hidden=true;startFromSave(r,'☁️ Jogo atualizado da nuvem!');};}
 setInterval(()=>{if(!document.hidden)cloudCheck();},20000);
 /* ---- aviso de versão nova do jogo ---- */
-const APPV='v78';
+const APPV='v79';
 async function checkAppVersion(){try{const t=await fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'');const m=t.match(/const APPV='([^']+)'/);
   if(m&&m[1]!==APPV){let b=$('#verBanner');if(!b){b=document.createElement('button');b.id='verBanner';b.className='glass';document.body.appendChild(b);}
     b.textContent=`✨ Versão nova (${m[1]}) · tocar para atualizar`;b.hidden=false;b.onclick=()=>{try{if(G&&!G.demo)save();}catch(_){}const go=()=>location.replace(location.pathname+'?v='+m[1]+'-'+Date.now());if(cloudCode&&G&&!G.demo)cloudPush(true).finally(go);else go();};}}catch(_){}}
@@ -7178,7 +7178,8 @@ for(let i=TREES.length-1;i>=0;i--){const [x,y]=TREES[i];if(x>FARM.x0-1&&x<FARM.x
       {id:'galinhas',label:'Dar milho às galinhas',icon:'🐔',price:0,dur:15,spot:['galinhas'],rates:{diversao:30},anim:'use',done:s=>{const B=bizS();if(Math.random()<.5){B.ovos=(B.ovos||0)+6;toast('🥚 As galinhas botaram! +6 ovos para a cafeteria.','good');}}}],staff:[]});
   venueInit();
   MAP_PLACES.push(['🌾','Fazenda Monte Horebe',()=>[FARM.gx,FARM.y0+3]]);}
-/* ================= v75: Cafeteria Monte Horebe — o negócio de Isabel e Nicolas ================= */
+/* ================= v75: Cafeteria Monte Horebe — o negócio do casal ================= */
+function bizOwners(){const n=((G&&G.sims)||[]).filter(s=>!s.visitor).slice(0,2).map(s=>s.name).filter(Boolean);return n.length?'O café de '+n.join(' e '):'O café do casal';}
 const CMH={x0:68,y0:14,x1:75,y1:18.6};
 function bizS(){if(!G.biz)G.biz={lvl:1,cafe:12,milho:8,ovos:0,qual:60,fama:5,caixa:0,dias:0,lastAuto:0};return G.biz;}
 function farmHarvest(s,k){const B=bizS(),lv=Math.floor(s.skills.jardinagem||0),n=k==='cafe'?6+lv:8+lv;B[k]+=n;toast(k==='cafe'?`☕ ${s.name} colheu ${n} kg de café · estoque ${B.cafe} kg`:`🌽 ${s.name} colheu ${n} espigas · estoque ${B.milho}`,'good');try{achCount('colheita');}catch(_){}save();}
@@ -7232,7 +7233,7 @@ setInterval(()=>{try{if(!G||G.demo||!G.biz||!$('#title').hidden)return;const B=G
   document.body.insertAdjacentHTML('beforeend','<div id="mhP" hidden><div class="card"><h2 style="color:#2f5d3a">☕ Monte Horebe</h2><div id="mhB"></div><button class="btn" id="mhX" style="margin-top:12px;width:100%">Fechar</button></div></div>');
   const st=document.createElement('style');st.textContent='#mhP{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;background:rgba(20,30,20,.4)}#mhP[hidden]{display:none}#mhP .card{text-align:left;background:#fbf7ef;border-radius:20px;padding:16px;max-width:400px;width:calc(100% - 32px);max-height:88vh;overflow:auto;box-shadow:0 12px 40px rgba(0,0,0,.25);border:3px solid #6b4a2f}#mhP h2{margin:0 0 4px}.mh-g{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}.mh-g div{background:#fff;border-radius:12px;padding:8px;border:1px solid #e4d9c4}#mhP .mh-g b{display:block;font-size:19px;color:#2f5d3a}.mh-g small{color:#6b4a2f}.mh-act{display:block;width:100%;text-align:left;border:0;background:#2f5d3a;color:#fff;border-radius:12px;padding:10px;margin-top:8px;font:inherit;cursor:pointer}.mh-act.brown{background:#6b4a2f}.mh-act:disabled{opacity:.45}.mh-act small{display:block;opacity:.85}';document.head.appendChild(st);
   const render=()=>{const B=bizS(),L=BIZ_LV[B.lvl],N=BIZ_LV[B.lvl+1];
-    $('#mhB').innerHTML=`<small style="color:#6b4a2f">O café de Isabel e Nicolas · ${L.n}</small><div class="mh-g"><div><b>${B.cafe} kg</b><small>☕ café em grão</small></div><div><b>${B.milho}</b><small>🌽 espigas de milho</small></div><div><b>${B.ovos||0}</b><small>🥚 ovos</small></div><div><b>${Math.round(B.qual)}%</b><small>🟤 qualidade do café</small></div><div><b>${Math.round(B.fama)}</b><small>⭐ fama</small></div><div><b>${fmt(B.caixa)}</b><small>💰 faturado até hoje</small></div></div>
+    $('#mhB').innerHTML=`<small style="color:#6b4a2f">${bizOwners()} · ${L.n}</small><div class="mh-g"><div><b>${B.cafe} kg</b><small>☕ café em grão</small></div><div><b>${B.milho}</b><small>🌽 espigas de milho</small></div><div><b>${B.ovos||0}</b><small>🥚 ovos</small></div><div><b>${Math.round(B.qual)}%</b><small>🟤 qualidade do café</small></div><div><b>${Math.round(B.fama)}</b><small>⭐ fama</small></div><div><b>${fmt(B.caixa)}</b><small>💰 faturado até hoje</small></div></div>
       <small style="color:#555">Cada turno no balcão usa 3 kg de café e 2 espigas. Colha na Fazenda Monte Horebe e mexa o café no terreiro para melhorar a qualidade.</small>
       ${N?`<button class="mh-act" id="mhUp" ${G.money<N.price?'disabled':''}>⬆️ ${N.n}<small>${fmt(N.price)} · ${N.auto?'o barista vende sozinho todo dia às 18h':'turnos rendem 50% mais'}</small></button>`:'<p style="color:#2f5d3a"><b>🏆 Cafeteria completa!</b></p>'}
       <button class="mh-act brown" id="mhSell" ${B.cafe<11?'disabled':''}>📦 Vender 10 kg de café para a cooperativa<small>${fmt(Math.round(10*(18+B.qual/5)))}</small></button>
@@ -7332,5 +7333,13 @@ function applyEdition(personal){ED_PERSONAL=!!personal;const S=personal?ED.P:ED.
 {const _fs=fromSave;fromSave=function(d){const leg=!!(d&&d.legacy!==0);applyEdition(leg);const g=_fs(d);g.legacy=leg?1:0;return g;};}
 {const _oc=openCreator;openCreator=function(m,idx){if(m==='new')applyEdition(false);return _oc(m,idx);};}
 {const g=$('#casGo'),_go=g.onclick;g.onclick=function(e){const isNew=casMode==='new';const r=_go.call(this,e);if(isNew&&G&&!G.demo){G.legacy=0;save();}return r;};}
+/* ================= v79: save por código só para jogos antigos — códigos novos não são mais criados (use Conta) ================= */
+{const go=$('#clGo'),_go=go.onclick;go.onclick=async function(e){
+  if(!cloudCode&&clMode==='menu'){$('#clMsg').textContent='O jogo na nuvem agora é pela Conta (entrar com e-mail), que é mais segura. Toque em "Conta" no menu.';return;}
+  return _go.call(this,e);};
+  const _up=updCloudMenu;updCloudMenu=function(){_up();const m=$('#mnCloud');if(m)m.hidden=!cloudCode;const b=$('#btnCloud');if(b){b.textContent='☁️ Tenho um código antigo do casal';b.style.fontSize='13px';}};
+  updCloudMenu();}
+/* casal da tela inicial (demo) usa os nomes da edição pública */
+if(G&&G.demo&&!ED_PERSONAL)G.sims.forEach((s,i)=>{if(DEFAULT_SIMS[i]&&!s.visitor)s.name=DEFAULT_SIMS[i].name;});
 </script>
 </body></html>

@@ -4935,7 +4935,7 @@ function showSyncBanner(r){let b=$('#syncBanner');if(!b){b=document.createElemen
   b.textContent='☁️ Mudou no outro aparelho · tocar para carregar';b.hidden=false;b.onclick=()=>{b.hidden=true;startFromSave(r,'☁️ Jogo atualizado da nuvem!');};}
 setInterval(()=>{if(!document.hidden)cloudCheck();},20000);
 /* ---- aviso de versão nova do jogo ---- */
-const APPV='v81';
+const APPV='v82';
 async function checkAppVersion(){try{const t=await fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'');const m=t.match(/const APPV='([^']+)'/);
   if(m&&m[1]!==APPV){let b=$('#verBanner');if(!b){b=document.createElement('button');b.id='verBanner';b.className='glass';document.body.appendChild(b);}
     b.textContent=`✨ Versão nova (${m[1]}) · tocar para atualizar`;b.hidden=false;b.onclick=()=>{try{if(G&&!G.demo)save();}catch(_){}const go=()=>location.replace(location.pathname+'?v='+m[1]+'-'+Date.now());if(cloudCode&&G&&!G.demo)cloudPush(true).finally(go);else go();};}}catch(_){}}
@@ -7469,6 +7469,143 @@ setInterval(()=>{try{if(G&&!G.demo&&G.fp&&!G.fp.fin)FP_STEPS.forEach((S,i)=>{if(
 {const g=$('#casGo'),_go=g.onclick;g.onclick=function(e){const isNew=casMode==='new';const r=_go.call(this,e);if(isNew&&G&&!G.demo){G.fp={d:[]};fpSig='';save();}return r;};}
 {const _ser=serialize;serialize=function(){const s=_ser();if(!G||!G.fp)return s;return s.slice(0,-1)+',"fp":'+JSON.stringify(G.fp)+'}';};}
 {const _fs=fromSave;fromSave=function(d){const g=_fs(d);if(d&&d.fp)g.fp=d.fp;return g;};}
+/* ================= v82: jogo mais completo — metas no trabalho, melhorias da casa, vizinhos com história, metas de vida ================= */
+/* ---------- janela simples reaproveitada pelas telas novas ---------- */
+(function(){const st=document.createElement('style');st.textContent=`.hvm{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;background:rgba(20,30,50,.35)}.hvm[hidden]{display:none}
+.hvm .card{background:#fff;border-radius:20px;padding:16px;max-width:420px;width:calc(100% - 32px);max-height:86vh;overflow:auto;box-shadow:0 12px 40px rgba(0,0,0,.25)}.hvm h2{margin:0 0 4px;font:900 20px/1.2 var(--display)}
+.hvm .sub{color:var(--ink2);font-size:13px;margin:0 0 10px}.hv-it{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid #eef0f3}.hv-it>span{font-size:22px;line-height:1}.hv-it b{display:block;font-size:14px}.hv-it small{display:block;color:var(--ink2);font-size:12px;margin-top:2px}
+.hv-it .btn{margin-left:auto;flex:0 0 auto;padding:7px 11px;font-size:12px}.hv-it.ok{opacity:.65}.hv-bar{height:6px;border-radius:4px;background:#eef0f3;margin-top:6px;overflow:hidden}.hv-bar i{display:block;height:100%;background:linear-gradient(90deg,#f0bd45,#ee5d7c)}
+.hvm .row{display:flex;gap:8px;margin-top:12px}.hvm .row .btn{flex:1;justify-content:center}
+#nbPill{pointer-events:auto;background:rgba(255,255,255,.93);border-radius:14px;box-shadow:0 6px 18px rgba(22,34,70,.16);padding:6px 10px;max-width:250px;font:700 12px/1.3 var(--display);color:var(--ink);cursor:pointer;border:2px solid rgba(61,127,209,.35)}#nbPill b{color:#3d7fd1}
+.jg{margin-top:6px;padding:8px 10px;border-radius:12px;background:#fff7e6;border:1px solid #f3dca6;font-size:12px}.jg b{font-size:13px}.jg .hv-bar i{background:linear-gradient(90deg,#f0bd45,#e08a1e)}`;document.head.appendChild(st);})();
+function hvModal(id,html){let m=document.getElementById(id);if(!m){m=document.createElement('div');m.id=id;m.className='hvm';m.hidden=true;document.body.appendChild(m);m.addEventListener('click',e=>{if(e.target===m){m.hidden=true;resumeFrom();}});}
+  m.innerHTML=`<div class="card">${html}</div>`;if(m.hidden){m.hidden=false;pauseFor();}const x=m.querySelector('[data-x]');if(x)x.onclick=()=>{m.hidden=true;resumeFrom();};return m;}
+function menuBtn(id,label,ic,fn){const mn=$('#mnLetters');if(!mn||$('#'+id))return;mn.insertAdjacentHTML('beforebegin',`<button class="btn" id="${id}">${label} <span>${ic}</span></button>`);$('#'+id).onclick=()=>{$('#menu').hidden=true;fn();};}
+const wkN=()=>Math.floor((dayN()-1+(G.dow0||0))/7);
+
+/* ---------- 1. carreiras com meta da semana ---------- */
+const JG_KINDS=[
+  {k:'dias',q:4,t:'Trabalhar 4 dias nesta semana',i:'📅'},
+  {k:'humor',q:3,t:'Voltar do trabalho de bom humor 3 vezes',i:'😊'},
+  {k:'skill',q:1,t:s=>`Subir 1 nível em ${SKILLS[CAREERS[s.job.id].sk][0]}`,i:'📈'}];
+function jgOf(s){if(!G.jg)G.jg={};const w=wkN();let g=G.jg[s.id];
+  if(!g||g.wk!==w){if(g&&!g.done&&!g.soft&&g.wk===w-1&&s.job){s.job.perf=Math.max(0,s.job.perf-10);addMoodlet(s,'Bronca do chefe',-5,720,'tenso');if(!G.demo)toast(`💼 ${s.name} não bateu a meta da semana passada. O chefe não gostou (desempenho −10%).`,'bad');}
+    const K=JG_KINDS[(w+s.id)%JG_KINDS.length];g={wk:w,k:K.k,n:0,q:K.q,done:0,soft:weekday()>0?1:0,sk0:s.job?Math.floor(s.skills[CAREERS[s.job.id].sk]||0):0};G.jg[s.id]=g;
+    if(!G.demo&&weekday()===0)toast(`💼 Nova meta da semana para ${s.name}: ${jgText(s,g)}. Veja na aba Carreira.`,'good');}
+  return g;}
+function jgText(s,g){const K=JG_KINDS.find(x=>x.k===g.k);return typeof K.t==='function'?K.t(s):K.t;}
+function jgProgress(s,kind,v){if(!s.job||G.demo||s.visitor)return;const g=jgOf(s);if(g.done||g.k!==kind)return;g.n=kind==='skill'?v:Math.min(g.q,g.n+1);
+  if(g.n>=g.q){g.done=1;const bonus=Math.round(wageOf(s)*8);s.job.perf=Math.min(100,s.job.perf+25);addMoney(bonus);addMoodlet(s,'Meta da semana batida',10,1440,'confiante');SFX.wish();
+    toast(`🏅 ${s.name} bateu a meta da semana! Bônus de ${fmt(bonus)} e desempenho +25%.`,'love');try{workPerf(s,0);}catch(_){}try{checkLife();}catch(_){}}
+  hudSig='';save();}
+{const _rw=returnFromWork;returnFromWork=function(s){const trip=s&&s.away&&(s.away.trip||'work');const r=_rw.apply(this,arguments);
+  if(trip==='work'&&s.job){try{jgProgress(s,'dias');if(moodOf(s)>15)jgProgress(s,'humor');}catch(e){console.warn(e);}}return r;};}
+{const _gs=gainSkill;gainSkill=function(s,k,amt){const r=_gs.apply(this,arguments);try{if(s&&s.job&&!s.visitor&&CAREERS[s.job.id].sk===k){const g=jgOf(s);if(g.k==='skill'&&!g.done){const d=Math.floor(s.skills[k])-g.sk0;if(d>g.n)jgProgress(s,'skill',d);}}}catch(_){}return r;};}
+function jgHTML(s){if(!s.job)return'';const g=jgOf(s),left=7-weekday();
+  return`<div class="jg" id="jgBox"><b>🎯 Meta da semana</b> ${g.done?'· <b style="color:#2f8f62">cumprida! ✅</b>':`· faltam ${left} dia${left>1?'s':''}`}<div>${JG_KINDS.find(x=>x.k===g.k).i} ${jgText(s,g)} (${Math.min(g.n,g.q)}/${g.q})</div><div class="hv-bar"><i style="width:${Math.min(100,g.n/g.q*100)}%"></i></div><small style="color:var(--ink2)">Cumprir dá um dia de salário de bônus e +25% de desempenho. Não cumprir, o chefe reclama.</small></div>`;}
+{const _uh=updHUD;updHUD=function(){const r=_uh.apply(this,arguments);try{if(G&&!G.demo&&curTab==='car'){const s=sel(),t=$('#tab-car');if(t&&s&&s.job&&!isKid(s)){const g=jgOf(s),sig=g.k+g.n+g.done+weekday()+s.id;const b=$('#jgBox');
+    if(!b||b.dataset.sig!==sig){if(b)b.remove();const job=t.querySelector('.job');if(job){job.insertAdjacentHTML('afterend',jgHTML(s));$('#jgBox').dataset.sig=sig;}}}}}catch(_){}return r;};}
+
+/* ---------- 2. melhorias da casa: onde gastar dinheiro ---------- */
+const UPG=[
+  {k:'solar',i:'☀️',n:'Painel solar',d:'A conta da semana fica 40% mais barata.',p:9000},
+  {k:'colchao',i:'🛏️',n:'Colchões ortopédicos',d:'Dormir recupera a energia mais rápido.',p:4500},
+  {k:'som',i:'🎵',n:'Som ambiente',d:'Em casa, a diversão cai bem mais devagar.',p:3500},
+  {k:'jardineiro',i:'🌿',n:'Jardineiro toda semana',d:'As plantas da horta e do jardim são regadas todo dia.',p:6000},
+  {k:'seguro',i:'🛡️',n:'Seguro residencial',d:'O que quebrar é consertado de graça na manhã seguinte.',p:3000},
+  {k:'clima',i:'❄️',n:'Ar-condicionado e aquecedor',d:'A casa fica sempre confortável: humor melhor todo dia.',p:7500},
+  {k:'piscina_aq',i:'🏊',n:'Spa no quintal',d:'Banho relaxante: higiene e diversão sobem um pouco toda noite.',p:12000},
+  {k:'reforma',i:'🏛️',n:'Reforma de luxo',d:'Acabamento nobre: a casa vale mais e todos ganham orgulho do lar.',p:25000}];
+const hasUp=k=>!!(G&&G.melh&&G.melh[k]);
+function upgValue(){return UPG.reduce((v,u)=>v+(hasUp(u.k)?u.p:0),0);}
+function openUpg(){const html=`<h2>🛠️ Melhorias da casa</h2><p class="sub">Investimentos que ficam para sempre. Você tem ${fmt(G.money)}.</p>`+UPG.map(u=>`<div class="hv-it ${hasUp(u.k)?'ok':''}"><span>${u.i}</span><div><b>${u.n}</b><small>${u.d}</small></div>${hasUp(u.k)?'<b style="margin-left:auto;color:#2f8f62;font-size:13px">✅ Feito</b>':`<button class="btn ${G.money>=u.p?'pri':''}" data-u="${u.k}">${fmt(u.p)}</button>`}</div>`).join('')+'<div class="row"><button class="btn" data-x>Fechar</button></div>';
+  const m=hvModal('upgM',html);m.querySelectorAll('[data-u]').forEach(b=>b.onclick=()=>{const u=UPG.find(x=>x.k===b.dataset.u);if(G.money<u.p){toast('Dinheiro insuficiente.','bad');SFX.bad();return;}
+    G.money-=u.p;(G.melh||(G.melh={}))[u.k]=dayN();SFX.cash();toast(`${u.i} ${u.n} instalado!`,'love');if(u.k==='reforma'||u.k==='clima')for(const s of household())addMoodlet(s,u.k==='reforma'?'Orgulho do lar':'Casa confortável',8,2880,'feliz');save();try{checkLife();}catch(_){}m.hidden=true;openUpg();});}
+menuBtn('mnUpg','Melhorias da casa','🛠️',openUpg);
+{const _dh=dayHook;dayHook=function(d){const r=_dh.apply(this,arguments);if(!G||G.demo)return r;
+  if(G.bill&&hasUp('solar')&&!G.bill.solar){G.bill.amount=Math.round(G.bill.amount*.6);G.bill.solar=1;}
+  if(hasUp('jardineiro'))for(const o of G.objects)if(o.plant)o.plant.w=100;
+  if(hasUp('seguro')){let n=0;for(const o of G.objects)if(o.broken){o.broken=0;n++;}if(n)toast(`🛡️ O seguro consertou ${n} ${n>1?'coisas':'coisa'} de graça.`,'good');}
+  if(hasUp('clima'))for(const s of household())addMoodlet(s,'Casa confortável',4,1440,'feliz');
+  if(hasUp('reforma'))for(const s of household())addMoodlet(s,'Orgulho do lar',5,1440,'feliz');
+  try{nbDay(d);}catch(e){console.warn(e);}try{checkLife();}catch(_){}
+  return r;};}
+let upgLast=0;
+setInterval(()=>{if(!G||G.demo||!G.melh){upgLast=G?G.min:0;return;}const dm=G.min-upgLast;upgLast=G.min;if(dm<=0||dm>240)return;const h=dm/60;
+  for(const s of household()){if(s.away||s.outside)continue;const a=s.cur&&s.cur.act,sleeping=a&&a.sleep&&s.cur.stage==='act';
+    if(hasUp('colchao')&&sleeping)s.needs.energia=Math.min(100,s.needs.energia+5*h);
+    if(hasUp('som')&&!sleeping)s.needs.diversao=Math.min(100,s.needs.diversao+2*h);
+    const hr=hourF();if(hasUp('piscina_aq')&&hr>=19&&hr<23&&!sleeping){s.needs.higiene=Math.min(100,s.needs.higiene+2*h);s.needs.diversao=Math.min(100,s.needs.diversao+1.5*h);}}},1000);
+
+/* ---------- 3. vizinhos com história: pedidos que viram amizade ---------- */
+const NB_TASKS=[
+  {k:'act:cozinhar',t:'cozinhar uma refeição caprichada (eu passo aí pra buscar um pratinho)',i:'🍳'},
+  {k:'act:ler',t:'ler um livro e me contar se vale a pena',i:'📖'},
+  {k:'venue:',t:'dar uma volta pela cidade e me contar as novidades',i:'🗺️'},
+  {k:'pet:',t:'brincar com o seu bichinho (eu adoro ver da janela)',i:'🐾',ok:()=>petsAll().length>0},
+  {k:'act:violao',t:'tocar violão à noite (a música chega aqui em casa)',i:'🎸',ok:()=>G.objects.some(o=>o.type==='violao')},
+  {k:'plantar',t:'plantar alguma coisa na horta (quero mudas depois!)',i:'🌱',ok:()=>G.objects.some(o=>o.plant!==undefined||/canteiro|horta/.test(o.type))},
+  {k:'buy',t:'comprar algo novo pra casa e me mostrar',i:'🛋️'}];
+const NB_STORY={
+  'Dona Lúcia':['Meu neto vem me visitar no domingo e eu queria impressionar.','Ele adorou! Disse que a vizinhança aqui é a melhor da cidade.','Vocês viraram família pra mim. Toma, é a receita do meu bolo de fubá, guardada há 40 anos.'],
+  'Seu Jorge':['Desde que me aposentei, os dias ficaram compridos demais.','Faz tempo que eu não conversava tanto. Obrigado pela companhia.','Voltei a pintar por causa de vocês. O primeiro quadro é seu, faço questão.'],
+  'Carol':['Comecei uma faculdade nova e estou meio perdida.','Passei na primeira prova! Vocês me deram coragem.','Fui aprovada com louvor. Quero vocês na minha formatura, primeira fila!'],
+  'Rafael':['Acabei de me mudar e não conheço ninguém por aqui.','Agora já sei onde fica tudo. Até arrumei um time de futebol!','Vocês foram os primeiros amigos que eu fiz aqui. Isso não se esquece.'],
+  'Juliana':['Estou abrindo uma lojinha de plantas e preciso de ideias.','A loja abriu! Vendi tudo no primeiro dia.','Dei o nome de vocês a uma orquídea nova. Passem lá pra ver!'],
+  'Thiago':['Estou treinando pra uma corrida e preciso me distrair.','Bati meu recorde pessoal hoje!','Terminei a maratona! Pensei em vocês no último quilômetro.'],
+  'Mariana':['Meu namorado vai me pedir em casamento e eu não sei disfarçar.','Ele pediu! Eu chorei tanto…','Querem ser nossos padrinhos? Não aceito não como resposta.'],
+  'Léo':['Montei uma banda na garagem, mas falta inspiração.','Fizemos nosso primeiro show no barzinho!','Gravamos uma música sobre a nossa rua. Tem um verso pra vocês.'],
+  'Camila':['Adotei um cachorro e não sei nada de bicho.','Ele já senta e dá a pata!','Ele ganhou o concurso de pets da praça. Metade do troféu é de vocês.'],
+  'Bruno':['Estou reformando minha casa sozinho e já me arrependi.','O telhado ficou pronto e não pinga mais!','A casa ficou linda. Vem tomar um café na varanda nova!']};
+function nbState(){if(!G.nbh)G.nbh={ch:{},next:dayN()+1,req:null};return G.nbh;}
+function nbPick(){const N=nbState(),T=G.townies.filter(t=>(N.ch[t.id]||0)<3&&NB_STORY[t.name]);if(!T.length)return null;
+  T.sort((a,b)=>(N.ch[b.id]||0)-(N.ch[a.id]||0));const t=Math.random()<.6?T[0]:T[Math.floor(Math.random()*T.length)];
+  const tasks=NB_TASKS.filter(k=>!k.ok||k.ok());const k=tasks[Math.floor(Math.random()*tasks.length)];return{tid:t.id,k:k.k,ti:NB_TASKS.indexOf(k),until:dayN()+2,acc:0};}
+function nbDay(d){const N=nbState();if(N.req&&d>N.req.until){const t=personById(N.req.tid);if(t&&N.req.acc){for(const s of household())addRel(s,t,-3);toast(`📨 ${t.name} ficou esperando o favor… quem sabe da próxima vez.`,'');}N.req=null;N.next=d+1;}
+  if(!N.req&&d>=N.next){N.req=nbPick();if(N.req&&personById(N.req.tid)){const t=personById(N.req.tid);toast(`📨 ${t.name} mandou um recado. Toque no cartão azul pra ler.`,'good');SFX.pop();}N.next=d+2+Math.floor(Math.random()*2);}
+  nbPill();save();}
+function nbEvent(k){const N=G&&G.nbh;if(!N||!N.req||!N.req.acc||G.demo)return;const T=NB_TASKS[N.req.ti];if(!T||(T.k.endsWith(':')?!k.startsWith(T.k):k!==T.k))return;
+  const t=personById(N.req.tid);if(!t){N.req=null;return;}N.req=null;N.next=dayN()+1;const c=(N.ch[t.id]||0)+1;N.ch[t.id]=c;for(const s of household())addRel(s,t,c>=3?25:15);
+  const L=NB_STORY[t.name],line=c===1?L[1]:c===2?'Obrigado(a) de novo! Já estou pensando em como retribuir.':L[2];const gift=c>=3?800:200;addMoney(gift);SFX.wish();
+  setTimeout(()=>hvModal('nbM',`<h2>💌 ${esc(t.name)}</h2><p class="sub">${c>=3?'Amizade para a vida toda':'Capítulo '+c+' de 3'}</p><p style="font:700 15px/1.45 var(--display);margin:6px 0 10px">“${esc(line)}”</p><small style="color:var(--ink2)">Vocês ficaram mais próximos de ${esc(t.name)} e ganharam ${fmt(gift)} de presente.</small><div class="row"><button class="btn pri" data-x>Que fofo 💕</button></div>`),600);
+  if(c>=3)toast(`🏡 ${t.name} agora é amigo(a) do peito da família!`,'love');nbPill();save();try{checkLife();}catch(_){}}
+function nbOpen(){const N=nbState(),r=N.req;if(!r||!personById(r.tid))return;const t=personById(r.tid),T=NB_TASKS[r.ti],c=N.ch[t.id]||0,left=r.until-dayN();
+  const m=hvModal('nbM',`<h2>📨 Recado de ${esc(t.name)}</h2><p class="sub">${c?`Capítulo ${c+1} de 3 da história de ${esc(t.name)}`:'Alguém da vizinhança que vocês ainda não conhecem bem'}</p><p style="font:700 15px/1.45 var(--display);margin:6px 0">“${esc(c===0?NB_STORY[t.name][0]:NB_STORY[t.name][1]+' Me ajudam mais uma vez?')} Vocês podem ${T.t}?”</p><small style="color:var(--ink2)">${r.acc?`Combinado! Vocês têm ${left>0?'até '+(left>1?'depois de amanhã':'amanhã'):'até hoje'} para fazer.`:'Ajudar aproxima vocês e conta mais um pedaço da história.'}</small>
+    <div class="row">${r.acc?'<button class="btn pri" data-x>Ok</button>':'<button class="btn" id="nbNo">Agora não</button><button class="btn pri" id="nbYes">Vamos ajudar</button>'}</div>`);
+  const y=m.querySelector('#nbYes'),n=m.querySelector('#nbNo');if(y)y.onclick=()=>{r.acc=1;SFX.click();toast(`${T.i} Combinado com ${t.name}: ${T.t.replace(/ \(.*\)$/,'')}.`,'good');m.hidden=true;resumeFrom();nbPill();save();};
+  if(n)n.onclick=()=>{N.req=null;N.next=dayN()+2;m.hidden=true;resumeFrom();nbPill();save();};}
+(function(){const tl=$('#topL');if(tl)tl.insertAdjacentHTML('beforeend','<div id="nbPill" hidden></div>');const p=$('#nbPill');if(p)p.onclick=()=>{SFX.click();nbOpen();};})();
+function nbPill(){const p=$('#nbPill');if(!p)return;const r=G&&!G.demo&&G.nbh&&G.nbh.req;const show=!!r&&!!personById(r.tid)&&mode==='live'&&$('#title').hidden;p.hidden=!show;if(!show)return;const t=personById(r.tid),T=NB_TASKS[r.ti];
+  p.innerHTML=r.acc?`${T.i} <b>${esc(t.name)}</b>: ${esc(T.t.replace(/ \(.*\)$/,''))}`:`📨 <b>${esc(t.name)}</b> mandou um recado`;}
+{const _cw=checkWish;checkWish=function(s,k){try{if(G&&!G.demo&&s&&!s.visitor&&typeof k==='string')nbEvent(k);}catch(_){}return _cw.apply(this,arguments);};}
+{const _sm=setMode;setMode=function(){const r=_sm.apply(this,arguments);try{nbPill();}catch(_){}return r;};}
+
+/* ---------- 4. metas de vida: objetivos de várias semanas ---------- */
+const relTop=t=>Math.max(0,...household().map(s=>G.rels[rkey(s.id,t.id)]||0));
+const LIFE=[
+  {k:'casa',i:'🏡',n:'Casa dos sonhos',d:'Casa e melhorias valendo R$ 60.000',v:()=>houseValue()+upgValue(),q:60000,r:3000,money:1},
+  {k:'carreira',i:'💼',n:'Topo da carreira',d:'Alguém chegar ao último nível de uma carreira',v:()=>Math.max(0,...household().map(s=>s.job?s.job.level+1:0)),q:6,r:5000},
+  {k:'familia',i:'👶',n:'Família crescendo',d:'Ter um bebê ou uma criança em casa',v:()=>household().some(isKid)||G.objects.some(o=>o.baby)?1:0,q:1,r:3000},
+  {k:'vizinhos',i:'🤝',n:'Queridos da vizinhança',d:'Ter 3 vizinhos como grandes amigos',v:()=>G.townies.filter(t=>relTop(t)>=60).length,q:3,r:2500},
+  {k:'historias',i:'📚',n:'Contadores de histórias',d:'Completar a história de 2 vizinhos',v:()=>Object.values((G.nbh&&G.nbh.ch)||{}).filter(c=>c>=3).length,q:2,r:3000},
+  {k:'pe',i:'💰',n:'Pé-de-meia',d:'Juntar R$ 100.000 na conta',v:()=>G.money,q:100000,r:0,money:1},
+  {k:'viagens',i:'✈️',n:'Pé na estrada',d:'Fazer 3 viagens de férias',v:()=>(G.achC&&G.achC.viagem)||0,q:3,r:2500},
+  {k:'missoes',i:'🎯',n:'Missão dada',d:'Cumprir 30 missões do dia',v:()=>G.misTot||0,q:30,r:2500},
+  {k:'melhorias',i:'🛠️',n:'Casa completa',d:'Fazer todas as melhorias da casa',v:()=>UPG.filter(u=>hasUp(u.k)).length,q:UPG.length,r:5000},
+  {k:'metas',i:'🏅',n:'Funcionário(a) do mês',d:'Bater 8 metas semanais no trabalho',v:()=>G.jgTot||0,q:8,r:3000}];
+{const _jp=jgProgress;jgProgress=function(s,kind,v){const g=s&&s.job&&G.jg&&G.jg[s.id],was=g&&g.done;const r=_jp.apply(this,arguments);const g2=G.jg&&G.jg[s.id];if(g2&&g2.done&&!was)G.jgTot=(G.jgTot||0)+1;return r;};}
+function checkLife(){if(!G||G.demo)return;G.life=G.life||{};for(const L of LIFE){if(G.life[L.k])continue;let v=0;try{v=L.v();}catch(_){}if(v>=L.q){G.life[L.k]=dayN();if(L.r)addMoney(L.r);for(const s of household())addMoodlet(s,'Meta de vida: '+L.n,15,4320,'feliz');
+  SFX.wish();try{confetti();}catch(_){}toast(`🏆 Meta de vida conquistada: ${L.i} ${L.n}!${L.r?' +'+fmt(L.r):''}`,'love');save();}}}
+function openLife(){checkLife();const n=LIFE.filter(L=>G.life&&G.life[L.k]).length;
+  const html=`<h2>🏆 Metas de vida</h2><p class="sub">Sonhos grandes, para várias semanas. ${n} de ${LIFE.length} conquistadas.</p>`+LIFE.map(L=>{const done=G.life&&G.life[L.k];let v=0;try{v=L.v();}catch(_){}const pct=Math.min(100,v/L.q*100);
+    return`<div class="hv-it ${done?'ok':''}"><span>${done?'✅':L.i}</span><div style="flex:1"><b>${L.n}</b><small>${L.d}${L.r?' · prêmio '+fmt(L.r):' · prêmio: humor especial'}</small>${done?`<small>Conquistada no dia ${done}</small>`:`<div class="hv-bar"><i style="width:${pct}%"></i></div><small>${L.money?fmt(Math.min(v,L.q))+' de '+fmt(L.q):Math.min(v,L.q)+' de '+L.q}</small>`}</div></div>`;}).join('')+'<div class="row"><button class="btn" data-x>Fechar</button></div>';
+  hvModal('lifeM',html);}
+menuBtn('mnLife','Metas de vida','🏆',openLife);
+setInterval(()=>{try{checkLife();}catch(_){}try{nbPill();}catch(_){}},3000);
+
+/* ---------- salvar ---------- */
+{const _ser=serialize;serialize=function(){const s=_ser();if(!G)return s;const x={jg:G.jg||null,jgTot:G.jgTot||0,melh:G.melh||null,nbh:G.nbh||null,life:G.life||null};return s.slice(0,-1)+','+JSON.stringify(x).slice(1);};}
+{const _fs=fromSave;fromSave=function(d){const g=_fs(d);if(d){for(const k of ['jg','melh','nbh','life'])if(d[k])g[k]=d[k];g.jgTot=d.jgTot||0;}return g;};}
 /* casal da tela inicial (demo) usa os nomes da edição pública */
 if(G&&G.demo&&!ED_PERSONAL)G.sims.forEach((s,i)=>{if(DEFAULT_SIMS[i]&&!s.visitor)s.name=DEFAULT_SIMS[i].name;});
 </script>

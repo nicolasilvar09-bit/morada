@@ -1,6 +1,6 @@
 /* Heartville: funciona offline. Página: rede primeiro (pega atualizações), cache se estiver sem internet.
    Imagens e fontes: cache primeiro, atualiza em segundo plano. */
-const C='heartville-v2';
+const C='heartville-v3';
 const CORE=['./','index.html','manifest.json','icone.png','apple-touch-icon.png','favicon.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(CORE)).catch(()=>{}));self.skipWaiting();});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==C).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});

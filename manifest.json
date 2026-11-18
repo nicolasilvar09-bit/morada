@@ -10,7 +10,17 @@
   "theme_color": "#159c93",
   "lang": "pt-BR",
   "icons": [
-    {"src": "apple-touch-icon.png", "sizes": "180x180", "type": "image/png"},
-    {"src": "icone.png", "sizes": "512x512", "type": "image/png", "purpose": "any"}
-  ]
+    {
+      "src": "apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "icone.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "version": "3.0.0"
 }

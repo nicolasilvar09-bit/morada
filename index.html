@@ -1,4 +1,4 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Heartville"><meta name="theme-color" content="#159c93"><meta name="description" content="Uma casinha, duas pessoas e uma vida inteira pra cuidar."><link rel="icon" type="image/png" href="favicon.png?v=31"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=31"><link rel="manifest" href="manifest.json"><meta property="og:type" content="website"><meta property="og:title" content="Heartville"><meta property="og:description" content="Uma casinha, duas pessoas e uma vida inteira pra cuidar."><meta property="og:image" content="https://nicolasilvar09-bit.github.io/morada/capa.jpg?v=31"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:url" content="https://nicolasilvar09-bit.github.io/morada/"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://nicolasilvar09-bit.github.io/morada/capa.jpg?v=31"><style>[hidden]{display:none!important}</style></head><body>
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Heartville"><meta name="theme-color" content="#159c93"><meta name="description" content="Uma casinha, duas pessoas e uma vida inteira pra cuidar."><link rel="icon" type="image/png" href="favicon.png?v=33"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=33"><link rel="manifest" href="manifest.json"><meta property="og:type" content="website"><meta property="og:title" content="Heartville"><meta property="og:description" content="Uma casinha, duas pessoas e uma vida inteira pra cuidar."><meta property="og:image" content="https://nicolasilvar09-bit.github.io/morada/capa.jpg?v=33"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:url" content="https://nicolasilvar09-bit.github.io/morada/"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://nicolasilvar09-bit.github.io/morada/capa.jpg?v=33"><style>[hidden]{display:none!important}</style></head><body>
 <title>Heartville</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -4935,7 +4935,7 @@ function showSyncBanner(r){let b=$('#syncBanner');if(!b){b=document.createElemen
   b.textContent='☁️ Mudou no outro aparelho · tocar para carregar';b.hidden=false;b.onclick=()=>{b.hidden=true;startFromSave(r,'☁️ Jogo atualizado da nuvem!');};}
 setInterval(()=>{if(!document.hidden)cloudCheck();},20000);
 /* ---- aviso de versão nova do jogo ---- */
-const APPV='v82';
+const APPV='v83';
 async function checkAppVersion(){try{const t=await fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'');const m=t.match(/const APPV='([^']+)'/);
   if(m&&m[1]!==APPV){let b=$('#verBanner');if(!b){b=document.createElement('button');b.id='verBanner';b.className='glass';document.body.appendChild(b);}
     b.textContent=`✨ Versão nova (${m[1]}) · tocar para atualizar`;b.hidden=false;b.onclick=()=>{try{if(G&&!G.demo)save();}catch(_){}const go=()=>location.replace(location.pathname+'?v='+m[1]+'-'+Date.now());if(cloudCode&&G&&!G.demo)cloudPush(true).finally(go);else go();};}}catch(_){}}
@@ -7608,5 +7608,355 @@ setInterval(()=>{try{checkLife();}catch(_){}try{nbPill();}catch(_){}},3000);
 {const _fs=fromSave;fromSave=function(d){const g=_fs(d);if(d){for(const k of ['jg','melh','nbh','life'])if(d[k])g[k]=d[k];g.jgTot=d.jgTot||0;}return g;};}
 /* casal da tela inicial (demo) usa os nomes da edição pública */
 if(G&&G.demo&&!ED_PERSONAL)G.sims.forEach((s,i)=>{if(DEFAULT_SIMS[i]&&!s.visitor)s.name=DEFAULT_SIMS[i].name;});
+/* ================= v83: HEARTVILLE 3.0 (feito no ChatGPT, encaixado sobre a v82) — cidade viva, negócios e histórias ================= */
+const HV3_VERSION=3;
+const HV3_BUSINESSES={
+  flores:{name:'Floricultura Jardim Secreto',icon:'🌷',kind:'Varejo',cost:1400,base:145,desc:'Buquês, plantas e presentes artesanais.'},
+  cafe:{name:'Café Coração Quente',icon:'☕',kind:'Alimentação',cost:1900,base:205,desc:'Cafés especiais, bolos e encontros.'},
+  padaria:{name:'Padaria Pão de Casa',icon:'🥐',kind:'Alimentação',cost:1750,base:190,desc:'Pães fresquinhos e receitas de família.'},
+  boutique:{name:'Boutique Laço & Linha',icon:'👗',kind:'Moda',cost:2300,base:235,desc:'Moda, acessórios e estilo.'}
+};
+const HV3_DISTRICTS=[
+  {id:'centro',name:'Centro de Heartville',icon:'🏙️',cost:0,fee:18,skill:'carisma',desc:'Praça central, lojas e encontros.'},
+  {id:'praia',name:'Orla das Conchas',icon:'🏖️',cost:500,fee:28,skill:'fitness',desc:'Calçadão, quiosques e pôr do sol.'},
+  {id:'arte',name:'Vila das Artes',icon:'🎨',cost:900,fee:35,skill:'pintura',desc:'Ateliês, galerias e oficinas.'},
+  {id:'gastronomia',name:'Rua Gastronômica',icon:'🍰',cost:1200,fee:42,skill:'culinaria',desc:'Restaurantes, padarias e sabores.'},
+  {id:'jardins',name:'Jardins do Lago',icon:'🌳',cost:1500,fee:22,skill:'fitness',desc:'Parques, trilhas e piqueniques.'},
+  {id:'universitaria',name:'Distrito Universitário',icon:'🎓',cost:1800,fee:30,skill:'logica',desc:'Campus, biblioteca e vida acadêmica.'}
+];
+const HV3_EVENTS=[
+ {id:'feira',title:'Feira de bairro',icon:'🧺',text:'A associação de moradores está organizando uma feira. Sua família pode participar com um pequeno estande.',choices:[{label:'Montar um estande',desc:'Invista tempo e dinheiro para divulgar a família.',money:-90,rep:5,skill:'carisma',skillGain:.5},{label:'Visitar e fazer contatos',desc:'Conheça pessoas e fortaleça amizades.',money:-25,rel:8,skill:'carisma',skillGain:.25},{label:'Agradecer e ficar em casa',desc:'Um dia tranquilo também faz bem.',mood:8}]},
+ {id:'oportunidade',title:'Uma oportunidade profissional',icon:'💼',text:'Um contato da cidade ofereceu um pequeno projeto remunerado. Alguém da família pode assumir o desafio.',choices:[{label:'Aceitar o projeto',desc:'Exige dedicação, mas pode render uma boa recompensa.',money:180,skill:'logica',skillGain:.6,perf:8},{label:'Negociar prazo e valor',desc:'Uma postura profissional pode render mais.',money:260,skill:'carisma',skillGain:.45,perf:5},{label:'Recusar por enquanto',desc:'Preserve o tempo livre da família.',mood:5}]},
+ {id:'animal',title:'Um visitante especial',icon:'🐾',text:'Um animalzinho perdido apareceu perto de casa. A vizinhança está procurando sua família.',choices:[{label:'Ajudar a encontrar o tutor',desc:'Uma boa ação fortalece os laços com a comunidade.',money:-20,rep:9,skill:'carisma',skillGain:.25},{label:'Levar ao abrigo',desc:'Ajude a garantir que ele fique em segurança.',money:-45,rep:6},{label:'Avisar os vizinhos',desc:'Compartilhe a notícia e acompanhe de longe.',rep:3}]},
+ {id:'talento',title:'Mostra de talentos',icon:'🎭',text:'A cidade abriu inscrições para uma mostra de talentos. É uma chance de desenvolver habilidades e conhecer novos amigos.',choices:[{label:'Participar da apresentação',desc:'Ganhe experiência e reconhecimento.',money:90,skill:'musica',skillGain:.7,rep:6},{label:'Expor uma criação',desc:'Mostre seu lado artístico.',money:110,skill:'pintura',skillGain:.7,rep:5},{label:'Assistir ao evento',desc:'Inspire-se sem compromisso.',money:-15,mood:10}]},
+ {id:'familia',title:'Domingo em família',icon:'👨‍👩‍👧‍👦',text:'Alguém sugeriu reunir a família para uma atividade especial. O momento pode virar uma memória importante.',choices:[{label:'Preparar um almoço',desc:'Gaste um pouco e aproxime todo mundo.',money:-75,rel:12,mood:12,skill:'culinaria',skillGain:.3},{label:'Fazer um passeio',desc:'Uma experiência compartilhada para todas as idades.',money:-45,rel:10,mood:14},{label:'Adiar para outro dia',desc:'A família pode combinar uma nova data.',mood:2}]},
+ {id:'cliente',title:'Cliente importante',icon:'⭐',text:'Uma pessoa conhecida da cidade demonstrou interesse em comprar ou contratar os serviços de um negócio da família.',choices:[{label:'Oferecer atendimento especial',desc:'Invista em qualidade e reputação.',money:220,rep:8},{label:'Fazer uma promoção',desc:'Menor margem, mais movimento.',money:125,rep:5},{label:'Não alterar a rotina',desc:'Mantenha a operação como está.',money:35}]}
+];
+const HV3_STYLE={
+  outfits:[['calca','Camiseta e calça'],['shorts','Camiseta e short'],['saia','Blusa e saia'],['vestido','Vestido'],['cropped','Cropped e calça'],['moletom','Moletom'],['social','Roupa social'],['macacao','Macacão']],
+  colors:['#f08aa6','#ec5f5c','#f2a65a','#f2d15e','#7bc96f','#1fa39a','#3d7fd1','#7a5cc7','#2c3e5a','#f4f1ec','#3a3a46','#b07a4f']
+};
+function hv3Default(){
+ return {version:HV3_VERSION,businesses:{},districts:{centro:true},visits:{},residentMood:{},bonds:{},careerLog:[],stories:[],event:null,eventCount:0,day:0,totalBusinessProfit:0,totalVisits:0,totalProjects:0,styleChanges:0,achievements:{},familyMilestones:{},lastRoutineDay:0};
+}
+function hv3Ensure(){
+ if(!G)return null;
+ if(!G.hv3||typeof G.hv3!=='object')G.hv3=hv3Default();
+ const h=G.hv3;
+ h.version=HV3_VERSION;h.businesses=h.businesses||{};h.districts=Object.assign({centro:true},h.districts||{});
+ h.visits=h.visits||{};h.residentMood=h.residentMood||{};h.bonds=h.bonds||{};h.careerLog=h.careerLog||[];
+ h.stories=h.stories||[];h.eventCount=h.eventCount||0;h.familyMilestones=h.familyMilestones||{};h.achievements=h.achievements||{};
+ for(const k of Object.keys(HV3_BUSINESSES))if(!h.businesses[k])h.businesses[k]={owned:false,level:0,staff:0,stock:0,price:1,open:true,profit:0,days:0};
+ return h;
+}
+function hv3Key(a,b){return [String(a),String(b)].sort().join('-');}
+function hv3Bond(a,b){const h=hv3Ensure();return h.bonds[hv3Key(a,b)]||0;}
+function hv3SetBond(a,b,v){const h=hv3Ensure(),k=hv3Key(a,b);h.bonds[k]=clamp((h.bonds[k]||0)+v,0,100);}
+function hv3Routine(t){
+ const m=hourF(),week=weekday();
+ if(m<6)return 'Dormindo e recuperando as energias';
+ if(m<9)return 'Começando o dia e tomando café';
+ if(m<12)return (t.house%3===0?'Trabalhando no comércio':t.house%3===1?'Estudando ou trabalhando':'Cuidando da casa');
+ if(m<14)return 'Almoçando e conversando';
+ if(m<18)return (t.house%2===0?'Trabalhando e fazendo compras':'Passeando pela cidade');
+ if(m<21)return 'Encontrando amigos e aproveitando o bairro';
+ return 'Voltando para casa e descansando';
+}
+function hv3ResidentTick(){
+ const h=hv3Ensure();if(!h||G.demo)return;
+ for(const t of (G.townies||[])){
+   const r=h.residentMood[t.id]||(h.residentMood[t.id]={mood:55,energy:75,lastSeen:0,activity:'Rotina diária'});
+   r.activity=hv3Routine(t);r.mood=clamp(r.mood+(Math.random()-.42)*3,10,100);
+ }
+ h.lastRoutineDay=dayN();
+}
+function hv3BusinessDaily(){
+ const h=hv3Ensure();if(!h||G.demo)return;
+ let total=0,details=[];
+ for(const [k,b] of Object.entries(h.businesses)){
+  const d=HV3_BUSINESSES[k];if(!b.owned||!b.open)continue;
+  const stockFactor=b.stock>0?1:0.18;
+  const gross=Math.round(d.base*Math.max(1,b.level)*(1+(b.staff||0)*.17)*(b.price||1)*stockFactor);
+  const upkeep=Math.round(18*b.level+35*(b.staff||0));
+  const net=gross-upkeep;
+  b.profit=(b.profit||0)+net;b.days=(b.days||0)+1;b.stock=Math.max(0,(b.stock||0)-Math.max(1,Math.ceil(b.level*.7)));
+  total+=net;details.push({name:d.name,net});
+ }
+ if(total){G.money+=total;h.totalBusinessProfit=(h.totalBusinessProfit||0)+total;
+   if(!G.demo)toast(`🏪 Negócios da família: ${total>=0?'+':''}${fmt(total)} no fechamento do dia.` ,total>=0?'good':'bad');
+ }
+ h.day=dayN();return details;
+}
+function hv3GenerateEvent(){
+ const h=hv3Ensure();if(!h||G.demo||h.event||Math.random()>.72)return;
+ const tpl=pick(HV3_EVENTS);
+ h.event={id:tpl.id,title:tpl.title,icon:tpl.icon,text:tpl.text,choices:tpl.choices.map(x=>Object.assign({},x)),day:dayN()};
+ if(!G.demo)toast(`${tpl.icon} Novo acontecimento: ${tpl.title}. Veja Histórias no menu!`,'love');
+}
+function hv3Day(){
+ const h=hv3Ensure();if(!h||G.demo)return;
+ hv3ResidentTick();hv3BusinessDaily();hv3GenerateEvent();
+ for(const s of household()){
+   const id=s.id,age=s.age||'adulto',mk=`${id}:${age}:${Math.floor((G.min-(s.born||0))/1440)}`;
+   if(age==='crianca'&&s.skills&&Object.values(s.skills).some(v=>v>=1)&&!h.familyMilestones[mk]){
+     h.familyMilestones[mk]=1;h.stories.unshift({day:dayN(),title:`${s.name} descobriu um talento`,text:'Uma nova habilidade começou a florescer. Incentive a curiosidade e acompanhe seu desenvolvimento.'});
+   }
+ }
+ h.stories=h.stories.slice(0,30);save();
+}
+function hv3CareerChallenge(s,kind){
+ if(!s||s.away||isKid(s)){toast('Este desafio é destinado a moradores adultos disponíveis.','bad');return;}
+ if(!s.job){toast('Escolha uma profissão primeiro na aba Carreiras.','bad');return;}
+ const career=CAREERS[s.job.id],skill=career&&career.sk||'carisma';
+ const hq=hv3Ensure();hq.lim=hq.lim||{};if(hq.lim['ch'+s.id]===dayN()){toast(`${s.name} já fez um desafio hoje. Amanhã tem mais!`);return;}
+ const levels={projeto:{name:'Projeto especial',reward:160,perf:13,skill:.55,energy:-12},atendimento:{name:'Atendimento a cliente',reward:115,perf:10,skill:.42,energy:-8},plantao:{name:'Turno extra',reward:190,perf:16,skill:.35,energy:-20}};
+ const a=levels[kind]||levels.projeto;
+ if(s.needs.energia<18){toast(`${s.name} está cansado(a) demais para assumir esse desafio.`,'bad');return;}
+ const bonus=Math.round((s.skills[skill]||0)*12+(s.job.level||0)*18);
+ const reward=a.reward+bonus;hq.lim['ch'+s.id]=dayN();G.money+=reward;s.job.perf=clamp((s.job.perf||0)+a.perf,0,100);
+ s.needs.energia=clamp(s.needs.energia+a.energy,0,100);gainSkill(s,skill,a.skill);
+ const h=hv3Ensure();h.totalProjects=(h.totalProjects||0)+1;h.careerLog.unshift({day:dayN(),name:s.name,task:a.name,reward});h.careerLog=h.careerLog.slice(0,12);
+ if(s.job.perf>=100&&s.job.level<5){s.job.level++;s.job.perf=15;toast(`🎉 ${s.name} recebeu uma promoção! ${career.lv[s.job.level]}`,'love');}
+ toast(`${a.name} concluído: ${fmt(reward)} recebidos.`,'good');save();hv3Render();
+}
+function hv3ApplyEvent(index){
+ const h=hv3Ensure(),ev=h.event;if(!ev)return;
+ const c=ev.choices[index];if(!c)return;
+ if(c.money)G.money=Math.max(0,G.money+c.money);
+ const target=sel();
+ if(c.skill&&target)gainSkill(target,c.skill,c.skillGain||.25);
+ if(c.perf&&target&&target.job)target.job.perf=clamp((target.job.perf||0)+c.perf,0,100);
+ if(c.rel){const people=household();if(people.length>1)addRel(people[0],people[1],c.rel);}
+ if(c.mood)for(const s of household())addMoodlet(s,'Momento especial',c.mood,360,'feliz');
+ if(c.rep)for(const t of (G.townies||[]).slice(0,4))hv3SetBond(target?target.id:1,t.id,c.rep);
+ h.stories.unshift({day:dayN(),title:ev.title,text:`A família escolheu: ${c.label}. ${c.desc}`});h.stories=h.stories.slice(0,30);
+ h.event=null;h.eventCount=(h.eventCount||0)+1;toast(`História registrada: ${ev.title}.`,'good');save();hv3Render();
+}
+function hv3BusinessAction(action,key){
+ const h=hv3Ensure(),b=h.businesses[key],d=HV3_BUSINESSES[key];if(!b||!d)return;
+ const pay=n=>{if(G.money<n){toast('Dinheiro insuficiente.','bad');return false;}G.money-=n;return true;};
+ if(action==='buy'){if(b.owned)return;if(!pay(d.cost))return;b.owned=true;b.level=1;b.stock=12;b.price=1;b.open=true;toast(`${d.name} agora pertence à sua família!`,'good');}
+ if(action==='upgrade'){const cost=Math.round(d.cost*(.55+b.level*.42));if(b.level>=5){toast('Este negócio já está no nível máximo.');return;}if(!pay(cost))return;b.level++;b.stock+=8;toast(`${d.name} evoluiu para o nível ${b.level}!`,'good');}
+ if(action==='hire'){if(b.staff>=5){toast('Equipe completa: máximo de 5 funcionários.');return;}if(!pay(280+b.staff*120))return;b.staff++;toast(`Funcionário contratado para ${d.name}.`,'good');}
+ if(action==='stock'){if(!pay(110+b.level*45))return;b.stock+=18;toast(`Estoque de ${d.name} reabastecido.`,'good');}
+ if(action==='toggle'){b.open=!b.open;toast(b.open?'Negócio aberto.':'Negócio fechado.');}
+ if(action==='price'){b.price=clamp(Math.round(((b.price||1)+.1)*10)/10,.7,1.5);toast(`Preço ajustado para ${Math.round(b.price*100)}% do padrão.`);}
+ if(action==='priceDown'){b.price=clamp(Math.round(((b.price||1)-.1)*10)/10,.7,1.5);toast(`Preço ajustado para ${Math.round(b.price*100)}% do padrão.`);}
+ save();hv3Render();
+}
+function hv3DistrictAction(action,id){
+ const h=hv3Ensure(),d=HV3_DISTRICTS.find(x=>x.id===id);if(!d)return;
+ if(action==='unlock'){
+  if(h.districts[id])return;
+  if(G.money<d.cost){toast('Dinheiro insuficiente para liberar este bairro.','bad');return;}
+  G.money-=d.cost;h.districts[id]=true;toast(`${d.name} foi desbloqueado!`,'good');
+ }else if(action==='visit'){
+  if(!h.districts[id])return;
+  if(G.money<d.fee){toast('Dinheiro insuficiente para este passeio.','bad');return;}
+  {const s0=sel();h.lim=h.lim||{};const lk='v'+(s0?s0.id:0)+id;if(h.lim[lk]===dayN()){toast(`${s0?s0.name:'A família'} já passeou por ${d.name} hoje.`);return;}h.lim[lk]=dayN();}
+  G.money-=d.fee;const s=sel();if(s){s.needs.diversao=clamp(s.needs.diversao+18,0,100);s.needs.social=clamp(s.needs.social+10,0,100);if(d.skill)gainSkill(s,d.skill,.18);addMoodlet(s,`Passeio: ${d.name}`,8,360,'feliz');}
+  h.visits[id]=(h.visits[id]||0)+1;h.totalVisits=(h.totalVisits||0)+1;
+  const bonus=Math.round(10+Math.random()*24);G.money+=bonus;
+  h.stories.unshift({day:dayN(),title:`Passeio em ${d.name}`,text:`A visita rendeu novas experiências e ${fmt(bonus)} em pequenas oportunidades.`});
+  toast(`Passeio concluído em ${d.name}! Bônus: ${fmt(bonus)}.`,'good');
+ }
+ save();hv3Render();
+}
+function hv3SetJob(s,id){
+ if(!s||isKid(s)||!CAREERS[id])return;
+ const C=CAREERS[id];
+ if(C.deg&&!(s.degrees||[]).includes(C.deg)){toast(`É necessário concluir o curso de ${COURSES[C.deg].n} para seguir esta carreira.`,'bad');return;}
+ s.job=s.job&&s.job.id===id?s.job:{id,level:0,perf:0};toast(`${s.name} agora segue carreira em ${C.n}.`,'good');save();hv3Render();
+}
+function hv3Style(s,field,value){
+ if(!s)return;
+ if(field==='outfit')s.outfit=value;
+ else if(field==='top')s.top=value;
+ else if(field==='bottom')s.bottom=value;
+ else if(field==='hairColor')s.hairColor=value;
+ else if(field==='acc'){s.acc=s.acc||[];const i=s.acc.indexOf(value);if(i>=0)s.acc.splice(i,1);else s.acc.push(value);}
+ hv3Ensure().styleChanges++;buildPortraits();hudSig='';save();hv3Render();
+}
+function hv3Talk(tid){
+ const s=sel(),t=(G.townies||[]).find(x=>x.id===Number(tid));if(!s||!t)return;{const hq=hv3Ensure();hq.lim=hq.lim||{};const lk='t'+s.id+'-'+t.id;if(hq.lim[lk]===dayN()){toast(`${s.name} já conversou com ${t.name} hoje.`);return;}hq.lim[lk]=dayN();}
+ hv3SetBond(s.id,t.id,7);addMoodlet(s,`Conversou com ${t.name}`,5,240,'sociavel');
+ const r=hv3Ensure().residentMood[t.id]||(hv3Ensure().residentMood[t.id]={mood:55,energy:70});
+ r.mood=clamp(r.mood+8,0,100);r.lastSeen=G.min;
+ toast(`${s.name} conversou com ${t.name}. A amizade cresceu!`,'love');save();hv3Render();
+}
+function hv3FamilyTask(sid,task){
+ const s=simById(Number(sid));if(!s)return;{const hq=hv3Ensure();hq.lim=hq.lim||{};const lk='f'+sid+task;if(hq.lim[lk]===dayN()){toast(`${s.name} já fez essa atividade hoje.`);return;}hq.lim[lk]=dayN();}
+ if(task==='study'){gainSkill(s,'logica',.35);s.needs.diversao=clamp(s.needs.diversao-3,0,100);addMoodlet(s,'Aprendizado',6,360,'confiante');}
+ else if(task==='play'){s.needs.diversao=clamp(s.needs.diversao+18,0,100);s.needs.social=clamp(s.needs.social+8,0,100);addMoodlet(s,'Brincadeira em família',8,360,'brincalhao');}
+ else if(task==='create'){gainSkill(s,'pintura',.3);gainSkill(s,'musica',.2);addMoodlet(s,'Criatividade estimulada',7,360,'confiante');}
+ toast(`${s.name}: atividade concluída.`,'good');save();hv3Render();
+}
+function hv3Esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function hv3Card(title,body,extra=''){return `<section class="hv3-card"><h3>${title}</h3>${body}${extra}</section>`;}
+function hv3Render(){
+ const root=document.getElementById('hv3Root');if(!root||!G)return;
+ hv3Ensure();
+ const tab=root.dataset.tab||'home',s=sel(),h=G.hv3;
+ const btn=(label,act,key='',disabled=false,cls='')=>`<button class="hv3-btn ${cls}" data-hv3="${act}" data-key="${hv3Esc(key)}" ${disabled?'disabled':''}>${label}</button>`;
+ const money=`<span class="hv3-money">${fmt(G.money)}</span>`;
+ let body='';
+ if(tab==='home'){
+  const owned=Object.values(h.businesses).filter(b=>b.owned).length,openEvent=h.event;
+  body+=`<div class="hv3-stats"><div><b>${money}</b><small>Saldo da família</small></div><div><b>${owned}/4</b><small>Negócios</small></div><div><b>${h.totalVisits||0}</b><small>Passeios</small></div><div><b>${h.totalProjects||0}</b><small>Projetos profissionais</small></div></div>`;
+  body+=hv3Card('🌟 Vida em Heartville',`<p>Uma cidade cheia de rotinas, oportunidades e histórias. Acompanhe os moradores, desenvolva negócios e construa o futuro da família.</p><div class="hv3-inline">${btn('👥 Moradores','tab','people')}${btn('🏪 Administrar negócios','tab','business')}${btn('💼 Carreiras','tab','career')}</div>`);
+  if(openEvent)body+=hv3Card(`${openEvent.icon} ${hv3Esc(openEvent.title)}`,`<p>${hv3Esc(openEvent.text)}</p><div class="hv3-actions">${openEvent.choices.map((c,i)=>btn(hv3Esc(c.label),'event',String(i))).join('')}</div>`);
+  else body+=hv3Card('📖 Histórias recentes',h.stories.length?h.stories.slice(0,3).map(x=>`<p class="hv3-story"><b>Dia ${x.day} · ${hv3Esc(x.title)}</b><br>${hv3Esc(x.text)}</p>`).join(''):'<p>As primeiras histórias da família ainda serão escritas.</p>');
+  body+=hv3Card('🏅 Progresso da expansão',`<div class="hv3-progress"><span>Eventos vividos</span><b>${h.eventCount||0}</b></div><div class="hv3-progress"><span>Lucro acumulado dos negócios</span><b>${fmt(h.totalBusinessProfit||0)}</b></div><div class="hv3-progress"><span>Mudanças de estilo</span><b>${h.styleChanges||0}</b></div>`);
+ }
+ if(tab==='people'){
+  body+=hv3Card('🧑‍🤝‍🧑 Moradores e rotinas',`<p class="hv3-muted">A rotina muda conforme o horário. Converse para criar vínculos e descobrir novas histórias.</p>`+
+   (G.townies||[]).map(t=>{const r=h.residentMood[t.id]||{mood:55,energy:70};return `<div class="hv3-row"><div class="hv3-emoji">🙂</div><div class="hv3-grow"><b>${hv3Esc(t.name)}</b><small>${hv3Esc(hv3Routine(t))} · Humor ${Math.round(r.mood)}%</small><div class="hv3-meter"><i style="width:${r.mood}%"></i></div><small>Amizade com ${hv3Esc(s.name)}: ${Math.round(hv3Bond(s.id,t.id))}%</small></div>${btn('Conversar','talk',String(t.id))}</div>`;}).join(''));
+ }
+ if(tab==='business'){
+  body+=`<p class="hv3-muted">Compre estabelecimentos, amplie a equipe, abasteça o estoque e ajuste os preços. O fechamento diário considera vendas, equipe, estoque e manutenção.</p>`;
+  body+=Object.entries(HV3_BUSINESSES).map(([k,d])=>{const b=h.businesses[k],cost=Math.round(d.cost*(.55+b.level*.42));return `<article class="hv3-business"><div class="hv3-biz-head"><span class="hv3-emoji">${d.icon}</span><div class="hv3-grow"><b>${d.name}</b><small>${d.kind} · ${d.desc}</small></div><strong>${b.owned?'Nível '+b.level:'Não adquirido'}</strong></div>${b.owned?`<div class="hv3-stats mini"><div><b>${b.stock}</b><small>Estoque</small></div><div><b>${b.staff}/5</b><small>Equipe</small></div><div><b>${fmt(b.profit||0)}</b><small>Lucro acumulado</small></div><div><b>${Math.round((b.price||1)*100)}%</b><small>Preço padrão</small></div></div><div class="hv3-actions">${btn('⬆️ Evoluir '+fmt(cost),'biz','upgrade:'+k,b.level>=5)}${btn('👩‍💼 Contratar '+fmt(280+b.staff*120),'biz','hire:'+k,b.staff>=5)}${btn('📦 Repor estoque','biz','stock:'+k)}${btn(b.open?'Fechar negócio':'Abrir negócio','biz','toggle:'+k)}${btn('Preço +','biz','price:'+k)}${btn('Preço −','biz','priceDown:'+k)}</div>`:`<p>${d.desc}</p>${btn('Comprar por '+fmt(d.cost),'biz','buy:'+k,G.money<d.cost,'primary')}`}</article>`;}).join('');
+ }
+ if(tab==='career'){
+  body+=hv3Card('💼 Carreira de '+hv3Esc(s.name),s.job?`<p><b>${hv3Esc(CAREERS[s.job.id]?.n||s.job.id)}</b> · ${hv3Esc(CAREERS[s.job.id]?.lv[s.job.level]||'Profissional')}</p><div class="hv3-meter"><i style="width:${clamp(s.job.perf||0,0,100)}%"></i></div><p class="hv3-muted">Desempenho: ${Math.round(s.job.perf||0)}% · Salário diário base: ${fmt(wageOf(s))}</p><div class="hv3-actions">${btn('📋 Projeto especial','challenge','projeto')}${btn('🤝 Atendimento','challenge','atendimento')}${btn('⏱️ Turno extra','challenge','plantao')}</div>`:'<p>Escolha uma profissão para '+hv3Esc(s.name)+'. Algumas carreiras exigem formação universitária.</p>');
+  body+=hv3Card('Escolher ou mudar de profissão',Object.entries(CAREERS).map(([k,c])=>btn(`${hv3Esc(c.n)}${c.deg?' 🎓':''}`,'job',k,false,'')).join(''));
+  body+=hv3Card('📈 Projetos recentes',h.careerLog.length?h.careerLog.slice(0,6).map(x=>`<p class="hv3-story">Dia ${x.day}: <b>${hv3Esc(x.name)}</b> · ${hv3Esc(x.task)} · ${fmt(x.reward)}</p>`).join(''):'<p>Nenhum projeto concluído ainda.</p>');
+ }
+ if(tab==='districts'){
+  body+='<p class="hv3-muted">Desbloqueie novos bairros e escolha passeios. Cada visita consome uma pequena taxa, desenvolve habilidades e pode render oportunidades.</p>';
+  body+=HV3_DISTRICTS.map(d=>{const open=!!h.districts[d.id];return `<article class="hv3-business"><div class="hv3-biz-head"><span class="hv3-emoji">${d.icon}</span><div class="hv3-grow"><b>${d.name}</b><small>${d.desc}</small></div><strong>${open?'Desbloqueado':'Bloqueado'}</strong></div><div class="hv3-actions">${open?btn('🚶 Visitar · '+fmt(d.fee),'district','visit:'+d.id,G.money<d.fee,'primary'):btn('Desbloquear · '+fmt(d.cost),'district','unlock:'+d.id,G.money<d.cost)}</div><small class="hv3-muted">Visitas realizadas: ${h.visits[d.id]||0}</small></article>`;}).join('');
+ }
+ if(tab==='family'){
+  const members=household();
+  body+=hv3Card('🌳 Família e gerações',`<p>Os moradores crescem, desenvolvem habilidades e acumulam memórias. O envelhecimento segue as regras já existentes no jogo.</p>`+
+   members.map(p=>`<div class="hv3-row"><span class="hv3-emoji">${p.age==='crianca'?'🧒':p.age==='adolescente'?'🧑':p.age==='idoso'?'👵':'🧑‍🦱'}</span><div class="hv3-grow"><b>${hv3Esc(p.name)}</b><small>${hv3Esc(p.age||'adulto')} · ${p.parents?'Filho(a) de '+hv3Esc((simById(p.parents[0])||{}).name||'morador'):'Geração atual'}</small></div></div>`).join(''));
+  const kids=members.filter(isKid);
+  if(kids.length)body+=hv3Card('🎒 Desenvolvimento infantil',kids.map(k=>`<div class="hv3-row"><div class="hv3-grow"><b>${hv3Esc(k.name)}</b><small>Incentive aprendizado, criatividade e brincadeiras.</small></div>${btn('📚 Estudar','family',k.id+':study')}${btn('🎨 Criar','family',k.id+':create')}${btn('🧸 Brincar','family',k.id+':play')}</div>`).join(''));
+  body+=hv3Card('📜 Memórias da família',h.stories.length?h.stories.slice(0,12).map(x=>`<p class="hv3-story"><b>Dia ${x.day} · ${hv3Esc(x.title)}</b><br>${hv3Esc(x.text)}</p>`).join(''):'<p>As memórias aparecerão conforme a família viver novas experiências.</p>');
+ }
+ if(tab==='style'){
+  body+=`<p class="hv3-muted">Personalize a roupa e as cores do morador selecionado. As opções usam os estilos e paletas já presentes no criador de personagens.</p><div class="hv3-row"><b>Personagem</b><select id="hv3Person">${household().map(p=>`<option value="${p.id}" ${p.id===s.id?'selected':''}>${hv3Esc(p.name)}</option>`).join('')}</select></div>`;
+  body+=hv3Card('👕 Roupas',HV3_STYLE.outfits.map(([k,n])=>btn(n,'style','outfit:'+k,false,s.outfit===k?'primary':'')).join(''));
+  body+=hv3Card('🎨 Cor da roupa superior',`<div class="hv3-swatches">${HV3_STYLE.colors.map(c=>`<button data-hv3="style" data-key="top:${c}" title="${c}" style="background:${c}" aria-label="Cor ${c}"></button>`).join('')}</div>`);
+  body+=hv3Card('👖 Cor da roupa inferior',`<div class="hv3-swatches">${HV3_STYLE.colors.map(c=>`<button data-hv3="style" data-key="bottom:${c}" title="${c}" aria-label="Cor ${c}" style="background:${c}"></button>`).join('')}</div>`);
+  body+=hv3Card('💇 Cor do cabelo',`<div class="hv3-swatches">${['#1d1512','#3b2416','#6b4226','#b07a4f','#d8b56d','#e8e8e8','#f08aa6','#3d7fd1'].map(c=>`<button data-hv3="style" data-key="hairColor:${c}" title="${c}" aria-label="Cor ${c}" style="background:${c}"></button>`).join('')}</div>`);
+  body+=hv3Card('✨ Acessórios',ACCS.map(([k,n])=>btn(n,'style','acc:'+k,false,(s.acc||[]).includes(k)?'primary':'')).join(''));
+ }
+ if(tab==='stories'){
+  body+=h.event?hv3Card(`${h.event.icon} ${hv3Esc(h.event.title)}`,`<p>${hv3Esc(h.event.text)}</p><div class="hv3-actions">${h.event.choices.map((c,i)=>btn(hv3Esc(c.label),'event',String(i))).join('')}</div>`):hv3Card('✨ Nenhum evento aguardando',`<p>Novas histórias podem surgir no início de cada dia. Continue vivendo, trabalhando e conhecendo os moradores.</p>`);
+  body+=hv3Card('📚 Diário de Heartville',h.stories.length?h.stories.map(x=>`<p class="hv3-story"><b>Dia ${x.day} · ${hv3Esc(x.title)}</b><br>${hv3Esc(x.text)}</p>`).join(''):'<p>O diário ainda está em branco.</p>');
+ }
+ root.innerHTML=`<div class="hv3-top"><div><b>Heartville 3.0</b><small>Uma Cidade, Mil Histórias</small></div><span>${money}</span><button data-hv3="close" aria-label="Fechar">✕</button></div><nav class="hv3-tabs">${[['home','✨ Início'],['people','👥 Moradores'],['business','🏪 Negócios'],['career','💼 Carreiras'],['districts','🗺️ Bairros'],['family','🌳 Família'],['style','👗 Estilo'],['stories','📖 Histórias']].map(([k,n])=>`<button data-hv3="tab" data-key="${k}" class="${tab===k?'on':''}">${n}</button>`).join('')}</nav><div class="hv3-content">${body}</div><div class="hv3-bottom"><span>Dia ${dayN()} · ${['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'][weekday()]}</span><button class="hv3-btn" data-hv3="save">💾 Salvar progresso</button></div>`;
+}
+function hv3Open(){
+ if(!G||G.demo){toast('Comece ou carregue uma partida para acessar Heartville 3.0.','bad');return;}
+ hv3Ensure();let root=document.getElementById('hv3Root');
+ if(!root){root=document.createElement('div');root.id='hv3Root';root.className='hv3-overlay';document.body.appendChild(root);}
+ root.dataset.tab='home';hv3Render();root.hidden=false;pauseFor();
+}
+function hv3Close(){const r=document.getElementById('hv3Root');if(r)r.hidden=true;resumeFrom();}
+function hv3Click(e){
+ const b=e.target.closest('[data-hv3]');if(!b)return;
+ const act=b.dataset.hv3,key=b.dataset.key||'';
+ if(act==='close'){hv3Close();return;}
+ if(act==='tab'){const root=document.getElementById('hv3Root');root.dataset.tab=key;hv3Render();return;}
+ if(act==='save'){save(true);return;}
+ if(act==='event'){hv3ApplyEvent(Number(key));return;}
+ if(act==='biz'){const [a,k]=key.split(':');hv3BusinessAction(a,k);return;}
+ if(act==='district'){const [a,k]=key.split(':');hv3DistrictAction(a,k);return;}
+ if(act==='talk'){hv3Talk(key);return;}
+ if(act==='challenge'){hv3CareerChallenge(sel(),key);return;}
+ if(act==='job'){hv3SetJob(sel(),key);return;}
+ if(act==='family'){const [id,t]=key.split(':');hv3FamilyTask(id,t);return;}
+ if(act==='style'){const [field,value]=key.split(':');const person=document.getElementById('hv3Person');const s=simById(Number(person&&person.value)||sel().id)||sel();hv3Style(s,field,value);return;}
+}
+function hv3InitUI(){
+ const menu=document.getElementById('menu'),close=document.getElementById('mnClose');
+ if(menu&&close&&!document.getElementById('mnHV3'))close.insertAdjacentHTML('beforebegin','<button class="btn pri" id="mnHV3">🌟 Central Heartville 3.0 <span>↗</span></button>');
+ const b=document.getElementById('mnHV3');if(b)b.onclick=()=>{document.getElementById('menu').hidden=true;hv3Open();};
+ const st=document.createElement('style');st.textContent=`
+ .hv3-overlay{position:fixed;inset:0;z-index:10050;background:rgba(21,31,51,.56);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px;font-family:var(--body);width:100%;max-height:100vh}
+ .hv3-overlay[hidden]{display:none!important}.hv3-overlay *{box-sizing:border-box}
+ .hv3-overlay .hv3-shell{max-width:880px}
+ #hv3Root{overflow:hidden;flex-direction:column;width:min(900px,100%);max-height:calc(100vh - 24px);border-radius:20px}.hv3-top,.hv3-tabs,.hv3-content,.hv3-bottom{width:min(900px,100%);margin:auto}
+ .hv3-top{background:#fff;border-radius:20px 20px 0 0;padding:14px 18px;display:flex;align-items:center;gap:14px;box-shadow:0 12px 30px #17233b33}
+ .hv3-top>div{flex:1}.hv3-top b{display:block;font:800 23px/1.1 var(--display);color:#22304a}.hv3-top small{color:#6a7590;font-size:12px}.hv3-top>button{width:36px;height:36px;border-radius:12px;background:#f1f3f8;font-size:18px}
+ .hv3-money{color:#bd8208;font-weight:900;white-space:nowrap}
+ .hv3-tabs{display:flex;gap:5px;padding:9px;background:#edf2f6;overflow-x:auto;scrollbar-width:thin}
+ .hv3-tabs button{white-space:nowrap;padding:9px 12px;border-radius:12px;font-weight:900;font-size:12px;color:#5d6984;background:#fff}
+ .hv3-tabs button.on{background:#159c93;color:white}
+ .hv3-content{max-height:min(67vh,680px);overflow:auto;background:#f8fafc;padding:14px;display:flex;flex-direction:column;gap:12px}
+ .hv3-bottom{background:#fff;border-radius:0 0 20px 20px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;color:#68738c;font-size:12px}
+ .hv3-card,.hv3-business{background:#fff;border:1px solid #e4e9f0;border-radius:16px;padding:13px}
+ .hv3-card h3{font:800 17px/1.2 var(--display);margin:0 0 8px;color:#26344d}.hv3-card p,.hv3-business p{margin:6px 0;color:#58657d;font-size:13px;line-height:1.45}
+ .hv3-muted{color:#718097;font-size:12px}.hv3-btn{border-radius:11px;background:#eef2f7;padding:8px 11px;font-weight:900;font-size:12px;color:#293650;margin:3px}
+ .hv3-btn.primary{background:#159c93;color:#fff}.hv3-btn:disabled{opacity:.45;cursor:not-allowed}
+ .hv3-inline,.hv3-actions{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+ .hv3-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+ .hv3-stats>div{background:#fff;border:1px solid #e4e9f0;border-radius:14px;padding:10px;min-width:0}
+ .hv3-stats b{display:block;font:800 17px/1.2 var(--display);color:#26344d;overflow-wrap:anywhere}
+ .hv3-stats small{display:block;color:#718097;font-size:10px;font-weight:800}
+ .hv3-stats.mini{margin:10px 0}
+ .hv3-biz-head,.hv3-row{display:flex;align-items:center;gap:10px;margin:5px 0}
+ .hv3-biz-head strong{font-size:11px;color:#159c93;white-space:nowrap}
+ .hv3-emoji{width:38px;height:38px;flex:none;border-radius:12px;background:#edf7f6;display:grid;place-items:center;font-size:22px}
+ .hv3-grow{flex:1;min-width:0}.hv3-grow b{display:block;font-size:13px}.hv3-grow small{display:block;font-size:11px;color:#718097;line-height:1.35}
+ .hv3-meter{height:7px;background:#e9edf2;border-radius:99px;overflow:hidden;margin:6px 0}.hv3-meter i{display:block;height:100%;background:#159c93;border-radius:99px}
+ .hv3-story{padding:8px 0;border-bottom:1px solid #edf0f4}.hv3-progress{display:flex;justify-content:space-between;padding:5px 0;font-size:12px}
+ .hv3-swatches{display:flex;gap:8px;flex-wrap:wrap}.hv3-swatches button{width:31px;height:31px;border-radius:50%;border:3px solid white;box-shadow:0 0 0 1px #cbd3df}
+ #hv3Person{padding:7px 10px;border:1px solid #dce3ec;border-radius:10px;background:#fff;font:inherit}
+ @media(max-width:600px){.hv3-overlay{padding:0;align-items:stretch}#hv3Root{max-height:100vh;border-radius:0}.hv3-top{border-radius:0;padding-top:calc(12px + env(safe-area-inset-top,0px))}.hv3-content{max-height:none;flex:1}.hv3-tabs{padding:7px}.hv3-bottom{border-radius:0 0 0 0;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}.hv3-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.hv3-btn{padding:9px 10px}}
+ `;
+ document.head.appendChild(st);
+ document.addEventListener('click',hv3Click);
+ document.addEventListener('change',e=>{if(e.target&&e.target.id==='hv3Person'){const root=document.getElementById('hv3Root');if(root){const s=simById(Number(e.target.value));if(s){G.sel=G.sims.indexOf(s);buildPortraits();root.dataset.tab='style';hv3Render();}}}});
+}
+hv3InitUI();
+
+/* New walk-in venues: these buildings are added to the existing isometric neighborhood map. */
+NB.push(
+ {x:80,y:15,w:6,d:5,wall:'#f8dce7',roof:'#c65c83',name:'Floricultura Jardim Secreto',floricultura:1,shop:1,sign:'FLORICULTURA',signCol:'#b0476b',awn:['#f3a6c0','#fff6ef']},
+ {x:90,y:15,w:6,d:5,wall:'#f5dfbd',roof:'#bd7a42',name:'Padaria Pão de Casa',padaria2:1,shop:1,sign:'PÃO DE CASA',signCol:'#8a4a1e',signBg:'#fff8ea',awn:['#e3a15a','#fff8ea']},
+ {x:78,y:27,w:6,d:5,wall:'#e6d9f3',roof:'#7860a4',name:'Boutique Laço & Linha',boutique2:1,shop:1,sign:'LAÇO & LINHA',signCol:'#5d4690',awn:['#a48ad0','#f7f2fb']},
+ {x:91,y:27,w:7,d:5,wall:'#d6e8ef',roof:'#4b8299',name:'Livraria Ponto & Vírgula',livraria:1,shop:1,sign:'LIVRARIA',signCol:'#2f6680',awn:['#7fb3c9','#f2f8fa']}
+);
+defVenue('floricultura',{name:'Floricultura Jardim Secreto',icon:'🌷',flag:'floricultura',indoor:true,doorU:3.5,floor:'#d7c9ae',wallIn:'#f9eaf0',
+ spots:[{k:'bancada',u:1.1,w:2.2,pose:'stand',z:0,face:[1,0]},{k:'bancada',u:3.1,w:2.2,pose:'stand',z:0,face:[-1,0]},{k:'mesa',u:4.8,w:3.1,pose:'sit',z:.45,face:[0,-1]}],
+ acts:[{id:'buque',label:'Montar um buquê',icon:'💐',price:35,dur:35,spot:['bancada'],rates:{diversao:38,social:8},skill:'pintura',skillRate:1.1,anim:'use'},
+ {id:'planta',label:'Comprar uma plantinha',icon:'🪴',price:28,dur:25,spot:['bancada'],rates:{diversao:28},skill:'pintura',skillRate:.5,anim:'use'},
+ {id:'oficina_flores',label:'Oficina de arranjos',icon:'🎨',price:45,dur:55,spot:['mesa'],rates:{diversao:35,social:18},skill:'pintura',skillRate:1.4,anim:'use'}],
+ staff:[{u:2.0,w:.6,face:[0,1],look:{name:'Mila',skin:'#e0a87e',hair:'cacheado',hairColor:'#3b2416',outfit:'saia',top:'#f08aa6',bottom:'#2c3e5a',acc:['flor']},anims:['talk','use','wave']}]});
+defVenue('padaria2',{name:'Padaria Pão de Casa',icon:'🥐',flag:'padaria2',indoor:true,doorU:3.5,floor:'#d9b98e',wallIn:'#f7e8cf',
+ spots:[{k:'balcao',u:1.4,w:1.8,pose:'stand',z:0,face:[1,0]},{k:'mesa',u:4.4,w:3.2,pose:'sit',z:.45,face:[0,-1]},{k:'mesa',u:2.2,w:3.2,pose:'sit',z:.45,face:[0,-1]}],
+ acts:[{id:'pao',label:'Comprar pão quentinho',icon:'🥖',price:18,dur:22,spot:['balcao','mesa'],rates:{fome:95,diversao:12},skill:'culinaria',skillRate:.25,anim:'eat',prop:'prato'},
+ {id:'cafe_padaria',label:'Café com pão na chapa',icon:'☕',price:26,dur:28,spot:['mesa'],rates:{fome:120,energia:28,social:10},skill:'culinaria',skillRate:.35,anim:'eat',prop:'caneca'},
+ {id:'aula_pao',label:'Aprender uma receita',icon:'👩‍🍳',price:55,dur:60,spot:['balcao'],rates:{diversao:24},skill:'culinaria',skillRate:1.5,anim:'use'}],
+ staff:[{u:2.0,w:.6,face:[0,1],look:{name:'Seu Augusto',skin:'#c68642',hair:'curto',hairColor:'#e8e8e8',outfit:'social',top:'#f4f1ec',bottom:'#8b5e3c',acc:['oculos']},anims:['use','talk','use']}]});
+defVenue('boutique2',{name:'Boutique Laço & Linha',icon:'👗',flag:'boutique2',indoor:true,doorU:3.5,floor:'#d7c6b6',wallIn:'#f2e6f0',
+ spots:[{k:'provador',u:1.4,w:2.0,pose:'stand',z:0,face:[1,0]},{k:'espelho',u:4.5,w:2.0,pose:'stand',z:0,face:[-1,0]},{k:'balcao',u:3.0,w:3.5,pose:'stand',z:0,face:[0,-1]}],
+ acts:[{id:'look_novo',label:'Experimentar um look',icon:'👚',price:45,dur:35,spot:['provador','espelho'],rates:{diversao:45},skill:'carisma',skillRate:.35,anim:'use'},
+ {id:'acessorio',label:'Comprar acessório',icon:'👜',price:65,dur:25,spot:['balcao'],rates:{diversao:35},skill:'carisma',skillRate:.25,anim:'use'},
+ {id:'consultoria',label:'Consultoria de estilo',icon:'✨',price:90,dur:50,spot:['espelho'],rates:{diversao:55,social:12},skill:'carisma',skillRate:1.1,anim:'talk'}],
+ staff:[{u:3.0,w:.6,face:[0,1],look:{name:'Bia',skin:'#f1c6a4',hair:'longo',hairColor:'#6b4226',outfit:'social',top:'#7a5cc7',bottom:'#2c3e5a',acc:['brincos']},anims:['talk','wave','use']}]});
+defVenue('livraria',{name:'Livraria Ponto & Vírgula',icon:'📚',flag:'livraria',indoor:true,doorU:4,floor:'#c8b9a4',wallIn:'#e6edf0',
+ spots:[{k:'estante',u:1.0,w:1.8,pose:'stand',z:0,face:[1,0]},{k:'estante',u:2.3,w:1.8,pose:'stand',z:0,face:[1,0]},{k:'leitura',u:4.5,w:3.1,pose:'sit',z:.45,face:[0,-1]}],
+ acts:[{id:'livro',label:'Comprar um livro',icon:'📖',price:32,dur:25,spot:['estante'],rates:{diversao:30},skill:'logica',skillRate:.25,anim:'read',prop:'livro'},
+ {id:'ler_livraria',label:'Ler por alguns minutos',icon:'📚',price:8,dur:40,spot:['leitura'],rates:{diversao:25},skill:'logica',skillRate:.7,anim:'read',prop:'livro'},
+ {id:'clube_livro',label:'Participar do clube do livro',icon:'🗣️',price:18,dur:55,spot:['leitura'],rates:{social:35,diversao:25},skill:'carisma',skillRate:.6,anim:'read',prop:'livro'}],
+ staff:[{u:3.0,w:.6,face:[0,1],look:{name:'Ravi',skin:'#c68642',hair:'black',hairColor:'#1d1512',outfit:'calca',top:'#1fa39a',bottom:'#2c3e5a',acc:['oculos']},anims:['read','talk','wave']}]});
+{const nw=NB.filter(h=>h.floricultura||h.padaria2||h.boutique2||h.livraria);for(let i=TREES.length-1;i>=0;i--){const [x,y]=TREES[i];if(nw.some(a=>x>=a.x-.6&&x<a.x+a.w+.6&&y>=a.y-.6&&y<a.y+a.d+1.6))TREES.splice(i,1);}}
+venueInit();NBC.clear();dirtyLayer();
+
+/* Preserve older saves: Heartville 3 data is additive and optional. */
+{
+ const _hv3Serialize=serialize;
+ serialize=function(){const d=JSON.parse(_hv3Serialize());d.hv3=G&&G.hv3?G.hv3:null;return JSON.stringify(d);};
+ const _hv3FromSave=fromSave;
+ fromSave=function(d){const g=_hv3FromSave(d);g.hv3=d.hv3||hv3Default();return g;};
+ const _hv3NewWorld=newWorld;
+ newWorld=function(specs){const g=_hv3NewWorld(specs);g.hv3=hv3Default();return g;};
+ const _hv3NewDay=newDay;
+ newDay=function(){_hv3NewDay();hv3Day();};
+}
+if(G&&!G.demo)hv3Ensure();
 </script>
 </body></html>
